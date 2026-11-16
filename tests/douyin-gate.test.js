@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import vm from 'node:vm';
+import {getRegistry} from '@jackwener/opencli/registry';
 import {detectDouyinGate,RENDER_TIMEOUT_MS,waitForDouyinCards,douyinTimeoutMessage} from '../adapters/zhichao-sources/douyin-search.js';
 import {cliFailure} from '../server/cli.js';
 
@@ -33,4 +35,15 @@ test('慢速页面只追加一次等待，验证与登录限制不重试',async(
   calls=0;
   assert.deepEqual(await waitForDouyinCards({evaluate:async()=>{calls++;return {state:'timeout'};}}),{state:'timeout'});
   assert.equal(calls,2);
+});
+
+test('完成验证后隐藏或被遮挡的 iframe 不阻止读取视频，真正可见的验证仍停止',async()=>{
+  assert.equal(getRegistry().get('zhichao/douyin-search')?.navigateBefore,false);
+  for(const mode of ['hidden','covered','visible']){
+    const frame={src:'https://captcha.example.com/challenge',checkVisibility:()=>mode!=='hidden',getBoundingClientRect:()=>({left:100,top:100,right:500,bottom:500})};
+    const card={querySelector:()=>({getAttribute:()=>'/video/123'}),querySelectorAll:selector=>selector==='*'?[{children:[],textContent:'品牌发布联名新品'}]:[]};
+    const document={title:'抖音搜索',body:{innerText:'品牌发布联名新品'},querySelectorAll:selector=>selector==='iframe'?[frame]:selector==='[data-e2e="scroll-list"] li'?[card]:[],elementFromPoint:()=>mode==='covered'?{}:frame};
+    const result=await waitForDouyinCards({evaluate:async script=>vm.runInNewContext(script,{document,innerWidth:1440,innerHeight:1000})});
+    assert.equal(result.state,mode==='visible'?'verification_required':'rendered');
+  }
 });

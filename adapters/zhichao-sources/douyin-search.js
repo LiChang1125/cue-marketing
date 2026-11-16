@@ -212,6 +212,14 @@ export function projectSearchCards(cards, limit) {
 // round-trip per poll iteration.
 const WAIT_AND_EXTRACT_JS = (timeoutMs) => `
   new Promise((resolve) => {
+    const visibleFrames = () => Array.from(document.querySelectorAll('iframe')).filter(frame => {
+      if (!frame.checkVisibility({opacityProperty:true, visibilityProperty:true})) return false;
+      const r = frame.getBoundingClientRect();
+      const left=Math.max(0,r.left), right=Math.min(innerWidth,r.right);
+      const top=Math.max(0,r.top), bottom=Math.min(innerHeight,r.bottom);
+      if (right-left<=100 || bottom-top<=100) return false;
+      return document.elementFromPoint((left+right)/2,(top+bottom)/2)===frame;
+    });
     const collectCards = () => {
       const cards = [];
       const lis = document.querySelectorAll('[data-e2e="scroll-list"] li');
@@ -233,11 +241,7 @@ const WAIT_AND_EXTRACT_JS = (timeoutMs) => `
       const text = (document.body && document.body.innerText) || '';
       const gate = (${detectDouyinGate.toString()})(document.title, text);
       if (gate === 'verification_required') return { state: gate };
-      const visibleFrames = Array.from(document.querySelectorAll('iframe')).filter(frame => {
-        const rect = frame.getBoundingClientRect(), style = getComputedStyle(frame);
-        return rect.width > 100 && rect.height > 100 && style.display !== 'none' && style.visibility !== 'hidden';
-      });
-      if (visibleFrames.some(frame => /captcha|verifycenter|verify_center/.test(frame.src))) return { state: 'verification_required' };
+      if (visibleFrames().some(frame => /captcha|verifycenter|verify_center/.test(frame.src))) return { state: 'verification_required' };
       const cards = collectCards();
       if (cards.length > 0) return { state: 'rendered', cards };
       // Anonymous gate: Douyin renders a centered "登录后查看更多内容"
@@ -269,10 +273,7 @@ const WAIT_AND_EXTRACT_JS = (timeoutMs) => `
         readyState: document.readyState,
         resultLists: document.querySelectorAll('[data-e2e="scroll-list"]').length,
         videoLinks: document.querySelectorAll('a[href*="/video/"]').length,
-        visibleFrames: Array.from(document.querySelectorAll('iframe')).filter(frame => {
-          const rect = frame.getBoundingClientRect(), style = getComputedStyle(frame);
-          return rect.width > 100 && rect.height > 100 && style.display !== 'none' && style.visibility !== 'hidden';
-        }).length
+        visibleFrames: visibleFrames().length
       }});
     }, ${timeoutMs});
   })
@@ -302,6 +303,9 @@ cli({
     description: '关键词搜索抖音视频',
     domain: 'www.douyin.com',
     strategy: Strategy.COOKIE,
+    // This adapter already navigates directly to the requested search. The
+    // default COOKIE pre-navigation would load the homepage unnecessarily.
+    navigateBefore: false,
     args: [
         { name: 'query', required: true, positional: true, help: '搜索关键词' },
         { name: 'limit', type: 'int', default: 10, help: `结果数量 (1-${MAX_SEARCH_LIMIT})` },
