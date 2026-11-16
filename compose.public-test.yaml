@@ -1,0 +1,8 @@
+# Temporary HTTP preview for public news only. Enable only after reviewing
+# public exposure; keep the administrator desktop and CDP private.
+# docker compose -p cue -f compose.yaml -f compose.public-test.yaml up -d
+# Return to the private test configuration: docker compose -p cue up -d
+services:
+  cue:
+    ports:
+      - "0.0.0.0:80:4173"

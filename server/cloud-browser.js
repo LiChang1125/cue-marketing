@@ -17,7 +17,10 @@ export async function ensureCloudBrowser(env=process.env){
     context.on('close',()=>{context=null;});
     if(!context.pages().length)await context.newPage();
     return 'http://127.0.0.1:9222';
-  })().finally(()=>{starting=null;});
+  })().catch(error=>{
+    console.error('云端浏览器启动失败：',error.message);
+    throw Error('云端浏览器暂不可用，请管理员检查运行环境');
+  }).finally(()=>{starting=null;});
   return starting;
 }
 export async function closeCloudBrowser(){await context?.close();context=null;}

@@ -49,7 +49,16 @@ export const MAX_SEARCH_LIMIT = 30;
 // scroll-list `<li>` rows appear within 2-4s of navigation when logged
 // in; 15s covers slow networks without blocking on a permanently-empty
 // page (anonymous gate, network error).
-export const RENDER_TIMEOUT_MS = 45000;
+// Keep below OpenCLI's 30-second CDP command deadline so an empty/blocked
+// page returns a useful state instead of a generic transport timeout.
+export const RENDER_TIMEOUT_MS = 20000;
+
+export function detectDouyinGate(title, text) {
+    if (/验证码中间页|安全验证|安全校验/.test(title || '') ||
+        /点击两个形状相同的物体|请完成下方验证|拖动滑块完成拼图|verify_check/.test(text || '')) return 'verification_required';
+    if (/登录后查看|请先登录|登录后查看更多/.test(text || '')) return 'login_wall';
+    return null;
+}
 
 export function parseSearchLimit(raw) {
     const parsed = Number(raw ?? 10);
@@ -215,13 +224,15 @@ const WAIT_AND_EXTRACT_JS = (timeoutMs) => `
       return cards;
     };
     const detectState = () => {
+      const text = (document.body && document.body.innerText) || '';
+      const gate = (${detectDouyinGate.toString()})(document.title, text);
+      if (gate === 'verification_required') return { state: gate };
       const cards = collectCards();
       if (cards.length > 0) return { state: 'rendered', cards };
       // Anonymous gate: Douyin renders a centered "登录后查看更多内容"
       // overlay on /search/ for visitors without sessionid. Match either
       // the literal Chinese prompt or a visible login modal/mask.
-      const text = (document.body && document.body.innerText) || '';
-      if (/登录后查看|请先登录|登录抖音|验证码|验证|verify_check|安全校验/.test(text)) return { state: 'login_wall' };
+      if (gate === 'login_wall') return { state: gate };
       if (/暂无相关搜索结果|没有找到相关结果|搜索结果为空|暂无结果/.test(text)) return { state: 'empty' };
       const modal = document.querySelector('[class*="login-mask"], [class*="LoginMask"], [class*="login-modal"], dialog[role="dialog"]');
       if (modal && modal instanceof HTMLElement) {
@@ -282,6 +293,9 @@ cli({
         }
         if (!result || typeof result !== 'object') {
             throw new CommandExecutionError('Douyin search: unexpected evaluator payload shape');
+        }
+        if (result.state === 'verification_required') {
+            throw new CommandExecutionError('Douyin verification_required: complete the platform verification in the administrator browser.');
         }
         if (result.state === 'login_wall') {
             throw new AuthRequiredError(

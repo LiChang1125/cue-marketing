@@ -1,5 +1,6 @@
 services:
   cue:
+    hostname: cue-browser
     build:
       context: .
       args:
