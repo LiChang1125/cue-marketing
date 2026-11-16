@@ -1,6 +1,6 @@
 # 腾讯云购买、上线与更新指南
 
-核对日期：2026-11-16。当前仓库已准备 Docker 部署文件，但尚未在腾讯云构建和运行。以下是执行步骤，不是已完成的云端验收报告。
+核对日期：2026-11-16。代码已保存到私有仓库 `LiChang1125/cue-marketing`，GitHub 单元测试、前端构建及 Linux 容器启动检查已通过。腾讯云实例已购买并配置专用 SSH 部署密钥；云端平台登录与持续采集需分别验收，CI 通过不代表平台接入通过。
 
 ## 1. 购买配置
 
@@ -42,7 +42,7 @@
 
 现有 .gitignore 排除了 data、.env、.tools、.artifacts、node_modules 和 dist。不要强制加入这些目录，也不要把平台 Cookie、浏览器配置、私钥或本地数据库上传 GitHub。仓库根目录应能看到 Dockerfile、compose.yaml、package-lock.json、src 和 server。GitHub Actions 中 Verify CUE 应通过。
 
-当前 GitHub 工作流只做测试和前端构建，不会自动发布到腾讯云。GitHub Pages 不负责本项目的定时采集和日报后台。
+当前 GitHub 工作流执行测试、前端构建及 Linux 容器启动检查，不会自动发布到腾讯云。GitHub Pages 不负责本项目的定时采集和日报后台。
 
 ## 4. 服务器安装 Docker
 
@@ -69,7 +69,15 @@ sudo docker run --rm hello-world
 
 安装依据：https://docs.docker.com/engine/install/ubuntu/ 。如果 GitHub、Docker Hub 或浏览器下载地址在该地域访问超时，首次构建可能失败；需解决镜像/下载网络后再继续，不能把失败当作成功。
 
+本次实测 Docker 官方软件源连接被重置，使用 Ubuntu 自带的已签名软件源安装成功：`sudo apt-get install -y docker.io docker-compose-v2`。不要同时混装两套 Docker 软件包。
+
+腾讯云内网可使用官方容器镜像加速 `https://mirror.ccs.tencentyun.com`。Debian 安装包下载慢时，在项目 `.env` 增加 `DEBIAN_MIRROR=mirrors.cloud.tencent.com`，随后重新构建；这不会关闭软件包签名校验。镜像源说明：https://cloud.tencent.com/document/product/213/8623 。
+
+Docker 使用 Debian 软件源维护的 Chromium，路径为 `/usr/bin/chromium`，不再额外下载 Playwright 的浏览器压缩包。每次修改镜像或浏览器版本后，仍需检查 CDP 启动和实际平台读取；可启动不代表采集成功。
+
 ## 5. 让服务器读取私有仓库
+
+本次部署已通过加密 SSH 上传 Git bundle 并克隆源码，服务器没有保存 GitHub 账号令牌。下面的只读部署密钥是另一种后续更新方式；没有配置时，服务器不能直接 `git pull` 私有仓库，可继续从本机推送 GitHub 后上传 bundle 更新。
 
 在服务器上生成仅供该仓库使用的密钥：
 

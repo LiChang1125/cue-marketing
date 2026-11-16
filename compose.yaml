@@ -1,6 +1,9 @@
 services:
   cue:
-    build: .
+    build:
+      context: .
+      args:
+        DEBIAN_MIRROR: ${DEBIAN_MIRROR:-deb.debian.org}
     restart: unless-stopped
     init: true
     shm_size: 512mb

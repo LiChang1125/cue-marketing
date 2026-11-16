@@ -10,6 +10,7 @@ export async function ensureCloudBrowser(env=process.env){
     context=await chromium.launchPersistentContext(profile,{
       headless:env.CLOUD_BROWSER_HEADLESS!=='false',
       ...(env.CLOUD_BROWSER_CHANNEL?{channel:env.CLOUD_BROWSER_CHANNEL}:{}),
+      ...(env.CLOUD_BROWSER_EXECUTABLE?{executablePath:env.CLOUD_BROWSER_EXECUTABLE}:{}),
       viewport:{width:1440,height:1000},timeout:30000,
       args:['--remote-debugging-port=9222','--remote-debugging-address=127.0.0.1','--disable-dev-shm-usage']
     });
