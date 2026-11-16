@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 169 58" role="img" aria-label="CUE">
+ <g fill="none" stroke="#202226" stroke-width="10" stroke-linecap="square" stroke-linejoin="miter">
+  <path d="M43 13C37 7 24 6 15 14C6 22 6 37 15 45C24 53 37 51 43 45"/>
+  <path d="M62 10V34C62 45 68 49 77 49S92 45 92 34V10"/>
+  <path d="M140 10H113V49H140M114 29H136"/>
+ </g>
+ <rect x="155" y="3" width="10" height="10" fill="#e48159"/>
+</svg>
