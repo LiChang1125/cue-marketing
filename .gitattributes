@@ -1,0 +1,5 @@
+# Keep Linux deployment files executable after cloning from Windows.
+*.sh text eol=lf
+Dockerfile text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf

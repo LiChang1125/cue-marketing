@@ -1,0 +1,9 @@
+{
+  "name": "opencli-plugin-zhichao-sources",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Read-only adapters verified for Zhichao",
+  "peerDependencies": {
+    "@jackwener/opencli": ">=2.0.3"
+  }
+}

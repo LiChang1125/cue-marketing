@@ -1,0 +1,25 @@
+services:
+  cue:
+    build: .
+    restart: unless-stopped
+    init: true
+    shm_size: 512mb
+    ports:
+      - "127.0.0.1:4173:4173"
+      # Admin browser screen: SSH tunnel only. No CDP port is published.
+      - "127.0.0.1:6080:6080"
+    environment:
+      PLATFORM_PROVIDER: selfhosted
+      ADMIN_TOKEN: ${ADMIN_TOKEN:?Set ADMIN_TOKEN in .env}
+      VNC_PASSWORD: ${VNC_PASSWORD:?Set VNC_PASSWORD in .env}
+      CLOUD_BROWSER_HEADLESS: "false"
+    volumes:
+      - cue-data:/var/data/cue
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4173/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    stop_grace_period: 30s
+volumes:
+  cue-data:

@@ -1,0 +1,5 @@
+# Replace the domain, point DNS to this server, and complete any applicable
+# hosting requirements. Caddy runs on the host, not inside the cue container.
+cue.example.com {
+    reverse_proxy 127.0.0.1:4173
+}

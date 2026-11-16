@@ -1,0 +1,29 @@
+# GitHub -> Render Blueprint. Paid service + disk; review pricing before creating.
+services:
+  - type: web
+    name: cue-marketing
+    runtime: node
+    plan: 0.5c-512mb
+    region: singapore
+    numInstances: 1
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeployTrigger: checksPass
+    disk:
+      name: cue-data
+      mountPath: /var/data/cue
+      sizeGB: 1
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: DATA_DIR
+        value: /var/data/cue
+      - key: PLATFORM_PROVIDER
+        value: public
+      - key: ADMIN_TOKEN
+        generateValue: true

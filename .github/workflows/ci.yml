@@ -1,0 +1,41 @@
+name: Verify CUE
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+  linux-container:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t cue-smoke .
+      - name: Start cloud browser and app
+        run: docker run -d --name cue-smoke --shm-size=512m -p 127.0.0.1:4173:4173 cue-smoke
+      - name: Verify app and Chromium CDP
+        shell: bash
+        run: |
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:4173/api/health; then break; fi
+            sleep 2
+          done
+          curl --fail http://127.0.0.1:4173/api/health
+          docker exec cue-smoke node --input-type=module -e "const r=await fetch('http://127.0.0.1:9222/json/version');if(!r.ok)process.exit(1);const v=await r.json();if(!v.webSocketDebuggerUrl)process.exit(1);console.log('Cloud Chromium CDP available');"
+      - name: Container diagnostics
+        if: always()
+        run: docker logs --tail=80 cue-smoke || true
+      - name: Stop test container
+        if: always()
+        run: docker rm -f cue-smoke || true
