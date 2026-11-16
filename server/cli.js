@@ -5,9 +5,9 @@ import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import { classify, safeImage, parseDate } from './sources.js';
-import {createPlatformClient,metricNumber,platformMode} from './platform-api.js';
+import {createPlatformClient,metricNumber,platformProvider} from './platform-api.js';
 import {createPublicClient,publicPlatforms} from './public-platforms.js';
-import {ensureCloudBrowser} from './cloud-browser.js';
+import {cloudEndpointForSource} from './cloud-browser.js';
 
 const exec = promisify(execFile);
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -83,12 +83,14 @@ export async function publicCollection(id,at,reason=null){
   items.collectionInfo={backend:'public-http',scope:'hotlist',supportsSearch:false,...(reason?{fallbackReason:reason}:{})};return items;
 }
 export async function collectCli(id,at,query='',options={}){
-  const mode=platformMode();
+  const mode=platformProvider(id);
   if(mode==='disabled')throw Error('平台采集尚未配置');
   if(mode==='public')return publicCollection(id,at);
   if(mode==='tikhub'){
     cloudClient??=createPlatformClient({directory:process.env.DATA_DIR||resolve(root,'data')});
-    return normalizeCli(await cloudClient.search(id,query||'品牌联名'),id,at,query||'品牌联名');
+    const items=normalizeCli(await cloudClient.search(id,query||'品牌联名'),id,at,query||'品牌联名');
+    items.collectionInfo={backend:'tikhub',scope:'search',supportsSearch:true};
+    return items;
   }
   if(!['browser','selfhosted'].includes(mode))throw Error('未知平台接入方式');
   if(mode==='selfhosted'){
@@ -116,7 +118,7 @@ export async function collectCli(id,at,query='',options={}){
 }
 async function browserCollection(id,at,query,options,mode){
   let data;
-  const browserEnv=mode==='selfhosted'?{OPENCLI_CDP_ENDPOINT:await ensureCloudBrowser(),OPENCLI_SITE_SESSION:'ephemeral',OPENCLI_SITE_SLOTS:''}:{};
+  const browserEnv=mode==='selfhosted'?{OPENCLI_CDP_ENDPOINT:await cloudEndpointForSource(id),OPENCLI_SITE_SESSION:'ephemeral',OPENCLI_SITE_SLOTS:''}:{};
   const limit=String(Math.min(40,options.limit||20));
   if(mode==='browser'&&id==='xiaohongshu'&&existsSync(xhs)){
     const args=query?['search',query,'--sort','general','--json']:['feed','--json'];

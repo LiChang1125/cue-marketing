@@ -1,6 +1,7 @@
 import {mkdirSync} from 'node:fs';
 import {resolve} from 'node:path';
-let context=null,starting=null;
+import {createSourcePageRouter} from './source-pages.js';
+let context=null,starting=null,sourcePages=null;
 export async function ensureCloudBrowser(env=process.env){
   if(context)return 'http://127.0.0.1:9222';
   if(starting)return starting;
@@ -14,7 +15,8 @@ export async function ensureCloudBrowser(env=process.env){
       viewport:{width:1440,height:1000},timeout:30000,
       args:['--remote-debugging-port=9222','--remote-debugging-address=127.0.0.1','--disable-dev-shm-usage']
     });
-    context.on('close',()=>{context=null;});
+    sourcePages=createSourcePageRouter(context);
+    context.on('close',()=>{context=null;sourcePages=null;});
     if(!context.pages().length)await context.newPage();
     return 'http://127.0.0.1:9222';
   })().catch(error=>{
@@ -24,3 +26,4 @@ export async function ensureCloudBrowser(env=process.env){
   return starting;
 }
 export async function closeCloudBrowser(){await context?.close();context=null;}
+export async function cloudEndpointForSource(id){await ensureCloudBrowser();return sourcePages.endpointFor(id);}

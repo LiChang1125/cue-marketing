@@ -12,7 +12,9 @@ export function metricNumber(value){
 }
 export const cloudPlatforms=['xiaohongshu','douyin'];
 export function platformMode(env=process.env){return env.PLATFORM_PROVIDER||(env.NODE_ENV==='production'?'disabled':'browser');}
-export function platformEnabled(id,env=process.env){const mode=platformMode(env);return mode==='browser'||mode==='selfhosted'||mode==='public'&&['weibo','zhihu'].includes(id)||mode==='tikhub'&&cloudPlatforms.includes(id)&&!!env.TIKHUB_API_KEY;}
+// An explicit Douyin override never changes the other four collectors.
+export function platformProvider(id,env=process.env){return id==='douyin'&&env.DOUYIN_PROVIDER?env.DOUYIN_PROVIDER:platformMode(env);}
+export function platformEnabled(id,env=process.env){const mode=platformProvider(id,env);return mode==='browser'||mode==='selfhosted'||mode==='public'&&['weibo','zhihu'].includes(id)||mode==='tikhub'&&cloudPlatforms.includes(id)&&!!env.TIKHUB_API_KEY;}
 
 export function platformRows(payload,source){
   const data=payload?.data;
@@ -47,11 +49,13 @@ export function platformRows(payload,source){
 export function createPlatformClient({env=process.env,fetcher=fetch,now=Date.now,directory}={}){
   let ledger={day:'',count:0};
   const file=directory?resolve(directory,'platform-budget.json'):null;
-  if(file){mkdirSync(directory,{recursive:true});try{ledger=JSON.parse(readFileSync(file,'utf8'));}catch{}}
+  let ledgerError=false;
+  if(file){mkdirSync(directory,{recursive:true});try{ledger=JSON.parse(readFileSync(file,'utf8'));if(typeof ledger.day!=='string'||!Number.isSafeInteger(ledger.count)||ledger.count<0)ledgerError=true;}catch(error){if(error.code!=='ENOENT')ledgerError=true;}}
   const jobs=new Map(),cache=new Map();
   const configured=Number(env.PLATFORM_DAILY_REQUEST_LIMIT??300);
-  const limit=Number.isInteger(configured)&&configured>=0?configured:300;
+  const limit=Number.isSafeInteger(configured)&&configured>=0?configured:0;
   function reserve(){
+    if(ledgerError)throw Error('平台接口额度记录不可用，请管理员检查后恢复');
     const day=new Date(now()+8*3600000).toISOString().slice(0,10);
     if(ledger.day!==day)ledger={day,count:0};
     if(ledger.count>=limit)throw Error('今日平台接口请求额度已用完，保留已有内容');
