@@ -30,6 +30,7 @@ export function cliFailure(payload) {
   const code=String(payload?.error?.code || '');
   const msg=String(payload?.error?.message || '');
   if(/NOT_FOUND|EMPTY_RESULT/.test(code))return '未找到相关结果';
+  if(/TIMEOUT/i.test(code)||/timed out|within the timeout/i.test(msg))return '平台响应超时，后台将稍后重试';
   if(/AUTH|not_authenticated|LOGIN|SESSION/i.test(code+' '+msg))return '请在采集电脑登录对应平台，再检查连接';
   if(/captcha|verification|blocked|风控|验证码/i.test(code+' '+msg))return '平台要求人工验证，已停止本次采集；请在浏览器完成验证';
   if(/filter chip|filter layout/i.test(msg))return '平台筛选界面发生变化，当前筛选条件未能生效';

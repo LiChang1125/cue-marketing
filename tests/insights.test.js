@@ -30,6 +30,9 @@ test('主题匹配支持香氛、圈层同义词，搜索标签不构成内容�
   assert.equal(topicMatches(row('b','哥特与朋克的文化表达'),'亚文化'),true);
   assert.equal(topicMatches({...row('c','篮球比赛'),tags:['香水'],searchQuery:'香水'},'香水'),false);
   assert.equal(topicMatches(row('d','香氛新品'),'快闪'),false);
+  assert.equal(topicMatches(row('e','品牌代言人推荐香水椰子水'),'香水'),false);
+  assert.equal(topicMatches(row('f','香水柠檬风味饮料新品'),'香氛'),false);
+  assert.equal(topicMatches(row('g','香水品牌推出椰子香调新品'),'香水'),true);
 });
 test('公共热榜排除旧闻、未注明日期和无关新闻，合并重复事件',()=>{
   const items=[row('a','某品牌推出香氛新品'),row('b','某品牌推出香氛新品',{source:'weibo',url:'https://weibo.com/1/2'}),row('c','军事战火消息',{source:'weibo'}),row('old','品牌旧款',{publishedAt:'2026-10-01T00:00:00Z'}),row('no','品牌话题',{publishedAt:null})];

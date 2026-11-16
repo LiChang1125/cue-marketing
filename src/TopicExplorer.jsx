@@ -1,6 +1,6 @@
 import React,{useEffect,useState} from 'react';
 import {Search,ArrowUpRight} from 'lucide-react';
-import {isMarketingCase,topicMatches,uniqueCases} from '../shared/insights.js';
+import {topicMatches,uniqueCases} from '../shared/insights.js';
 import CaseCard from './CaseCard.jsx';
 import TrendOverview from './TrendOverview.jsx';
 import AttentionPanel from './AttentionPanel.jsx';
@@ -10,7 +10,7 @@ export default function TopicExplorer({feed,activeTopic,query,onQuery,onSearch,o
   const [limit,setLimit]=useState(6);
   useEffect(()=>setLimit(6),[activeTopic?.id]);
   const now=Date.now();
-  const items=activeTopic?uniqueCases(feed.items.filter(i=>!i.historical&&topicMatches(i,activeTopic.query)&&i.contentType!=='topic'&&!Number.isFinite(i.metrics?.topicViews)&&(i.publishedAt?Date.parse(i.publishedAt)>=now-7*86400000&&Date.parse(i.publishedAt)<=now:Date.parse(i.fetchedAt)>=now-86400000))).sort((a,b)=>Number(isMarketingCase(b))-Number(isMarketingCase(a))):[];
+  const items=activeTopic?uniqueCases((feed.editorialCandidates||[]).filter(i=>!i.historical&&topicMatches(i,activeTopic.query)&&i.contentType!=='topic'&&!Number.isFinite(i.metrics?.topicViews)&&(i.publishedAt?Date.parse(i.publishedAt)>=now-7*86400000&&Date.parse(i.publishedAt)<=now:Date.parse(i.fetchedAt)>=now-86400000))):[];
   const searching=['queued','running'].includes(activeTopic?.state);
   return <section className="topic-explorer"><SearchBox value={query} onChange={onQuery} onSearch={onSearch} busy={busy} suggestions={false}/>
     <div className="public-topics" aria-label="主题目录"><button className={!activeTopic?'active':''} onClick={onReset}>全部趋势</button>{feed.topics?.map(t=><button className={activeTopic?.id===t.id?'active':''} key={t.id} onClick={()=>onSelect(t)}>{t.query}</button>)}</div>

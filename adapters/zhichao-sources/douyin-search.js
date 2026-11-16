@@ -266,6 +266,16 @@ function unwrapEvaluateResult(payload) {
     return payload;
 }
 
+export async function waitForDouyinCards(page) {
+    let result = unwrapEvaluateResult(await page.evaluate(WAIT_AND_EXTRACT_JS(RENDER_TIMEOUT_MS)));
+    // Allow one additional render window on a slow connection without another
+    // navigation/request. An explicit platform gate stops immediately.
+    if (result?.state === 'timeout') {
+        result = unwrapEvaluateResult(await page.evaluate(WAIT_AND_EXTRACT_JS(RENDER_TIMEOUT_MS)));
+    }
+    return result;
+}
+
 cli({
     site: 'zhichao',
     name: 'douyin-search',
@@ -287,7 +297,7 @@ cli({
         await page.goto(`https://www.douyin.com/search/${encodeURIComponent(keyword)}?type=video`);
         let result;
         try {
-            result = unwrapEvaluateResult(await page.evaluate(WAIT_AND_EXTRACT_JS(RENDER_TIMEOUT_MS)));
+            result = await waitForDouyinCards(page);
         } catch (error) {
             throw new CommandExecutionError(`Douyin search extraction failed: ${error instanceof Error ? error.message : String(error)}`);
         }
@@ -307,7 +317,7 @@ cli({
             throw new EmptyResultError('douyin search', `No Douyin videos matched "${keyword}".`);
         }
         if (result.state === 'timeout') {
-            throw new CommandExecutionError('Douyin search did not render result cards within the timeout. Open the same search in Chrome and verify login/security state before retrying.');
+            throw new CommandExecutionError('Douyin search timed out before result cards appeared. The administrator should inspect the collector page; this does not establish an authentication failure.');
         }
         if (!Array.isArray(result.cards)) {
             throw new CommandExecutionError('Douyin search: evaluator returned malformed cards payload');

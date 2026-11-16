@@ -24,8 +24,10 @@ export function isMarketingCase(item){
 }
 export function topicMatches(item,query){
   const word=String(query||'').trim().toLowerCase();if(!word)return false;
-  const text=contentText(item).toLowerCase();
+  let text=contentText(item).toLowerCase();
   const terms=aliases.find(group=>group.some(t=>t.toLowerCase()===word))||[word];
+  // Fruit variety names are not evidence of perfume discussion.
+  if(terms===aliases[0])text=text.replace(/香水(?:椰子|柠檬|菠萝)/g,'');
   return terms.some(term=>text.includes(term.toLowerCase()));
 }
 export const directionIds=item=>directions.filter(d=>d.pattern.test(contentText(item))).map(d=>d.id);
