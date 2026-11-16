@@ -16,6 +16,8 @@ test('Douyin paid routing preserves four browser sources and fails closed withou
   }
   assert.equal(platformEnabled('douyin',{...env,TIKHUB_API_KEY:'test'}),true);
   assert.equal(platformEnabled('douyin',{...env,DOUYIN_PROVIDER:'typo'}),false);
+  assert.equal(platformEnabled('douyin',{...env,DOUYIN_PROVIDER:'tikhub-trial',TIKHUB_API_KEY:'test'}),true);
+  assert.equal(platformEnabled('xiaohongshu',{PLATFORM_PROVIDER:'tikhub-trial',TIKHUB_API_KEY:'test'}),false);
 });
 
 test('paid collector records searchable data, preserves observation age and never falls back to a browser',async()=>{

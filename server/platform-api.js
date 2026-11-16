@@ -14,7 +14,7 @@ export const cloudPlatforms=['xiaohongshu','douyin'];
 export function platformMode(env=process.env){return env.PLATFORM_PROVIDER||(env.NODE_ENV==='production'?'disabled':'browser');}
 // An explicit Douyin override never changes the other four collectors.
 export function platformProvider(id,env=process.env){return id==='douyin'&&env.DOUYIN_PROVIDER?env.DOUYIN_PROVIDER:platformMode(env);}
-export function platformEnabled(id,env=process.env){const mode=platformProvider(id,env);return mode==='browser'||mode==='selfhosted'||mode==='public'&&['weibo','zhihu'].includes(id)||mode==='tikhub'&&cloudPlatforms.includes(id)&&!!env.TIKHUB_API_KEY;}
+export function platformEnabled(id,env=process.env){const mode=platformProvider(id,env);return mode==='browser'||mode==='selfhosted'||mode==='public'&&['weibo','zhihu'].includes(id)||mode==='tikhub'&&cloudPlatforms.includes(id)&&!!env.TIKHUB_API_KEY||mode==='tikhub-trial'&&id==='douyin'&&!!env.TIKHUB_API_KEY;}
 
 export function platformRows(payload,source){
   const data=payload?.data;

@@ -8,6 +8,7 @@ import { classify, safeImage, parseDate } from './sources.js';
 import {createPlatformClient,metricNumber,platformProvider} from './platform-api.js';
 import {createPublicClient,publicPlatforms} from './public-platforms.js';
 import {cloudEndpointForSource} from './cloud-browser.js';
+import {createDouyinTrial} from './douyin-trial.js';
 
 const exec = promisify(execFile);
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -86,10 +87,17 @@ export async function collectCli(id,at,query='',options={}){
   const mode=platformProvider(id);
   if(mode==='disabled')throw Error('平台采集尚未配置');
   if(mode==='public')return publicCollection(id,at);
-  if(mode==='tikhub'){
-    cloudClient??=createPlatformClient({directory:process.env.DATA_DIR||resolve(root,'data')});
+  if(mode==='tikhub'||mode==='tikhub-trial'){
+    if(!cloudClient){
+      const directory=process.env.DATA_DIR||resolve(root,'data');
+      if(mode==='tikhub-trial'){
+        if(id!=='douyin')throw Error('限额试用仅支持抖音');
+        const trial=createDouyinTrial({directory});
+        cloudClient=createPlatformClient({directory:resolve(directory,'douyin-trial-client'),env:{...process.env,PLATFORM_DAILY_REQUEST_LIMIT:'20'},fetcher:trial.fetcher});
+      }else cloudClient=createPlatformClient({directory});
+    }
     const items=normalizeCli(await cloudClient.search(id,query||'品牌联名'),id,at,query||'品牌联名');
-    items.collectionInfo={backend:'tikhub',scope:'search',supportsSearch:true};
+    items.collectionInfo={backend:mode,scope:'search',supportsSearch:true};
     return items;
   }
   if(!['browser','selfhosted'].includes(mode))throw Error('未知平台接入方式');
