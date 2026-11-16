@@ -1,0 +1,5 @@
+# Prepared only: enable after domain registration, DNS, ICP filing and launch review.
+# Caddy runs on the host; the application remains bound to loopback.
+cuefankeji.cn {
+    reverse_proxy 127.0.0.1:4173
+}

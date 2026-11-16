@@ -166,9 +166,13 @@ sudo docker compose -p cue exec cue npm run collector:resume
 
 ## 8. 域名和 HTTPS
 
+本项目选定域名为 `cuefankeji.cn`。2026-11-16 腾讯云购物车显示可注册、1 年 33 元；域名信息模板仍在实名审核，订单未提交、未付款，域名尚未取得。准备好的站点配置为 `deploy/Caddyfile.cuefankeji.cn`，尚未启用。
+
+注册及实名认证通过后，在 DNSPod 为 `cuefankeji.cn` 添加 A 记录：主机记录 `@`，记录值 `82.157.82.111`，使用默认 TTL。这里使用根域名，不是 `cue.fankeji.cn`，主机记录不要填 `cue`。完成北京服务器所需 ICP 备案并审核开放后，将上述配置安装到 `/etc/caddy/Caddyfile`，验证配置、启动 HTTPS，再做外部设备访问验收。安装 Caddy 软件包可能自动启动默认站点，因此私有测试阶段不直接执行下面的安装命令。
+
 已有公司域名时可申请一个子域名，例如 cue.公司域名；没有域名则先购买并完成实名认证。中国内地正式提供网站服务前，按腾讯云流程完成所需备案；已有备案也需要核对接入和主体。备案办理入口：https://console.cloud.tencent.com/beian 。测试阶段可以继续通过上述 SSH 隧道使用。
 
-在域名 DNS 控制台添加 A 记录，主机记录 cue，记录值为服务器公网 IPv4。等待解析正确后，在服务器安装 Caddy（以下为首次安装）：
+其他使用子域名的项目在 DNS 控制台添加对应主机记录；本项目按上方 `@` 记录配置。等待解析正确后，在服务器安装 Caddy（以下为首次安装）：
 
 ```bash
 sudo apt-get install -y debian-keyring debian-archive-keyring apt-transport-https gnupg
@@ -179,10 +183,10 @@ sudo apt-get update
 sudo apt-get install -y caddy
 ```
 
-安装依据：https://caddyserver.com/docs/install 。用 `sudo nano /etc/caddy/Caddyfile` 将默认配置替换为以下内容，把 cue.example.com 换成自己的真实域名：
+安装依据：https://caddyserver.com/docs/install 。用 `sudo nano /etc/caddy/Caddyfile` 将默认配置替换为以下内容：
 
 ```caddyfile
-cue.example.com {
+cuefankeji.cn {
     reverse_proxy 127.0.0.1:4173
 }
 ```
