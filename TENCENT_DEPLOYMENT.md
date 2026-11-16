@@ -1,6 +1,6 @@
 # 腾讯云购买、上线与更新指南
 
-核对日期：2026-11-16。代码已保存到私有仓库 `LiChang1125/cue-marketing`，GitHub 单元测试、前端构建及 Linux 容器启动检查已通过。腾讯云实例已购买并配置专用 SSH 部署密钥；云端平台登录与持续采集需分别验收，CI 通过不代表平台接入通过。
+核对日期：2026-11-16。代码已保存到私有仓库 `LiChang1125/cue-marketing`，GitHub 单元测试、前端构建及 Linux 容器启动检查已通过。腾讯云实例已购买并配置专用 SSH 部署密钥，网站运行于私有测试环境。当前实测结果及未通过项见 [云端验收记录](DEPLOYMENT_STATUS.md)；CI 通过不代表平台接入通过。
 
 ## 1. 购买配置
 
@@ -38,7 +38,7 @@
 
 `C:\Users\李畅\Documents\ChatGPT\智能营销`
 
-若提示不是 Git 仓库，按界面提示在该目录创建仓库。建议仓库名 cue，默认分支 main。检查待提交文件，提交代码，然后 Publish repository，保留私有仓库选项。
+当前目录已经是 Git 仓库，已连接私有仓库 `LiChang1125/cue-marketing`，默认分支 main。以后检查待提交文件、提交并推送即可，不要重复创建仓库。
 
 现有 .gitignore 排除了 data、.env、.tools、.artifacts、node_modules 和 dist。不要强制加入这些目录，也不要把平台 Cookie、浏览器配置、私钥或本地数据库上传 GitHub。仓库根目录应能看到 Dockerfile、compose.yaml、package-lock.json、src 和 server。GitHub Actions 中 Verify CUE 应通过。
 
