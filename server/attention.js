@@ -13,6 +13,7 @@ export function attentionTrends(items,historyFor,{query='',sector=null,days=7,no
       const buckets=new Map();
       for(const item of eligible)for(const p of histories.get(item.id)||[]){
         if(!Number.isFinite(p[metric])||p[metric]<0)continue;
+        if(source==='douyin'&&metric==='views'&&p.views===0&&[p.likes,p.comments,p.saves,p.shares].some(v=>v>0))continue;
         const values=buckets.get(p.at)||new Map();values.set(item.id,p[metric]);buckets.set(p.at,values);
       }
       const times=[...buckets.keys()].sort((a,b)=>Date.parse(a)-Date.parse(b));

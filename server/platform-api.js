@@ -25,9 +25,13 @@ export function platformRows(payload,source){
     return rows.flatMap(entry=>{
       const video=entry.data?.aweme_info??entry.aweme_info;
       if(!video?.aweme_id||video.status?.is_delete||video.status?.is_private)return [];
+      const stats=video.statistics||{};
+      // Search responses can supply a zero placeholder for unavailable views,
+      // even when likes/comments are positive. Do not display that as zero reach.
+      const plays=metricNumber(stats.play_count)===0&&[stats.digg_count,stats.comment_count,stats.share_count,stats.collect_count].some(v=>metricNumber(v)>0)?null:stats.play_count;
       return [{id:String(video.aweme_id),title:video.desc,url:`https://www.douyin.com/video/${video.aweme_id}`,contentType:'video',author:video.author?.nickname,
         image:video.video?.origin_cover?.url_list?.[0]||video.video?.cover?.url_list?.[0],pubdate_ts:video.create_time,
-        likes:video.statistics?.digg_count,comments:video.statistics?.comment_count,shares:video.statistics?.share_count,saves:video.statistics?.collect_count,plays:video.statistics?.play_count}];
+        likes:stats.digg_count,comments:stats.comment_count,shares:stats.share_count,saves:stats.collect_count,plays}];
     });
   }
   const rows=data.items??data.notes??data.data?.items??data.data?.notes;

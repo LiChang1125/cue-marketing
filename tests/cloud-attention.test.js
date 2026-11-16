@@ -41,6 +41,17 @@ test('固定内容样本画互动趋势，新加入的文章不能制造热度�
   const once=attentionTrends([item('new')],id=>history[id],{query:'香水',now}).platforms[0].series[0];assert.equal(once.points.length,1);assert.equal(once.delta,null);
   const absent=attentionTrends([item('x')],()=>[],{now});assert.deepEqual(absent.platforms,[]);
 });
+
+test('抖音搜索有正互动却返回零播放时，不将占位值展示为真实播放量',()=>{
+  const payload={data:{business_data:[{data:{aweme_info:{aweme_id:'123',desc:'香水品牌联名',statistics:{digg_count:400,comment_count:20,play_count:0}}}}]}};
+  const rows=platformRows(payload,'douyin');assert.equal(rows[0].plays,null);
+  const items=normalizeCli(rows,'douyin',at,'香水');
+  const result=attentionTrends(items,()=>[{at,likes:400,comments:20,views:0}],{query:'香水',now});
+  assert.equal(result.platforms[0].series.some(s=>s.metric==='views'),false);
+  assert.equal(result.platforms[0].series.find(s=>s.metric==='likes').value,400);
+  payload.data.business_data[0].data.aweme_info.statistics.play_count=1200;
+  assert.equal(platformRows(payload,'douyin')[0].plays,1200);
+});
 test('话题累计播放不混入视频互动，不汇总重叠话题；失效数据标记未更新',()=>{
   const items=[{id:'exact',title:'香水',source:'douyin',contentType:'topic',metrics:{topicViews:900}},{id:'other',title:'香水新品',source:'douyin',metrics:{topicViews:100}}];
   const d=attentionTrends(items,()=>[{at,topicViews:900}],{query:'香水',now,sources:[{id:'douyin',state:'error'}]});
