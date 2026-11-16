@@ -1,3 +1,4 @@
+import {contentNow} from './urls.js';
 import React,{useEffect,useState} from 'react';
 import {Search,ArrowUpRight} from 'lucide-react';
 import {topicMatches,uniqueCases} from '../shared/insights.js';
@@ -9,7 +10,7 @@ export function SearchBox({value,onChange,onSearch,busy=false,suggestions=true})
 export default function TopicExplorer({feed,activeTopic,query,onQuery,onSearch,onSelect,onOpen,onReset,busy}){
   const [limit,setLimit]=useState(6);
   useEffect(()=>setLimit(6),[activeTopic?.id]);
-  const now=Date.now();
+  const now=contentNow();
   const items=activeTopic?uniqueCases((feed.editorialCandidates||[]).filter(i=>!i.historical&&topicMatches(i,activeTopic.query)&&i.contentType!=='topic'&&!Number.isFinite(i.metrics?.topicViews)&&(i.publishedAt?Date.parse(i.publishedAt)>=now-7*86400000&&Date.parse(i.publishedAt)<=now:Date.parse(i.fetchedAt)>=now-86400000))):[];
   const searching=['queued','running'].includes(activeTopic?.state);
   return <section className="topic-explorer"><SearchBox value={query} onChange={onQuery} onSearch={onSearch} busy={busy} suggestions={false}/>

@@ -1,9 +1,10 @@
+import {contentNow} from './urls.js';
 import React,{useState} from 'react';
 import {directions,directionIds,recentPublication,uniqueCases,marketingLogic,isMarketingCase} from '../shared/insights.js';
 import CaseCard from './CaseCard.jsx';
 export default function MarketingBoard({items,sources,onOpen}){
   const [focus,setFocus]=useState(null),[limit,setLimit]=useState(12);
-  const cases=uniqueCases(items.filter(i=>isMarketingCase(i)&&recentPublication(i))).sort((a,b)=>Date.parse(b.publishedAt)-Date.parse(a.publishedAt));
+  const cases=uniqueCases(items.filter(i=>isMarketingCase(i)&&recentPublication(i,contentNow()))).sort((a,b)=>Date.parse(b.publishedAt)-Date.parse(a.publishedAt));
   const map=directions.map(d=>({...d,count:cases.filter(i=>directionIds(i).includes(d.id)).length})).filter(d=>d.count).sort((a,b)=>b.count-a.count);
   const filtered=focus?cases.filter(i=>directionIds(i).includes(focus)):cases;
   const methods=Object.entries(filtered.reduce((m,i)=>{const label=marketingLogic(i).label;if(label!=='待补充')m[label]=(m[label]||0)+1;return m;},{})).sort((a,b)=>b[1]-a[1]);

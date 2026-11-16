@@ -1,3 +1,4 @@
+import {apiFetch} from './urls.js';
 import React,{useEffect,useState} from 'react';
 import './attention.css';
 const num=n=>new Intl.NumberFormat('zh-CN').format(n);
@@ -5,7 +6,7 @@ const stamp=t=>new Date(t).toLocaleString('zh-CN',{timeZone:'Asia/Shanghai',mont
 export default function AttentionPanel({query='',sector=null}){
   const [data,setData]=useState(null),[error,setError]=useState(false),[days,setDays]=useState(7),[source,setSource]=useState('xiaohongshu'),[metric,setMetric]=useState('comments'),[chart,setChart]=useState('line'),[focus,setFocus]=useState(null);
   useEffect(()=>{let alive=true,busy=false;const ctl=new AbortController();setData(null);setFocus(null);setError(false);
-    async function read(){if(busy)return;busy=true;try{const r=await fetch('/api/attention?'+new URLSearchParams({query,sector:sector||'',days}),{signal:AbortSignal.any([ctl.signal,AbortSignal.timeout(8000)]),cache:'no-store'});if(!r.ok)throw Error();const next=await r.json();if(alive){setData(next);setError(false);}}catch(e){if(alive&&e.name!=='AbortError')setError(true);}finally{busy=false;}}
+    async function read(){if(busy)return;busy=true;try{const r=await apiFetch('/api/attention?'+new URLSearchParams({query,sector:sector||'',days}),{signal:AbortSignal.any([ctl.signal,AbortSignal.timeout(8000)]),cache:'no-store'});if(!r.ok)throw Error();const next=await r.json();if(alive){setData(next);setError(false);}}catch(e){if(alive&&e.name!=='AbortError')setError(true);}finally{busy=false;}}
     read();const timer=setInterval(read,15000);return()=>{alive=false;ctl.abort();clearInterval(timer);};
   },[query,sector,days]);
   const platform=data?.platforms.find(p=>p.source===source)||data?.platforms[0];

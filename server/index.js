@@ -1,4 +1,5 @@
 import express from 'express';
+import {publicCors} from './cors.js';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { existsSync } from 'node:fs';
@@ -54,6 +55,8 @@ async function refreshPublicPlatforms(){
   })().finally(()=>{publicRunning=null;});return publicRunning;
 }
 app.disable('x-powered-by');
+const pagesCors=publicCors(process.env.PUBLIC_WEB_ORIGINS||'');
+app.use('/api',pagesCors.middleware);
 if(process.env.NODE_ENV==='production')app.set('trust proxy',1);
 app.use(express.json({ limit: '8kb' }));
 app.use((req,res,next)=>{res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','no-referrer');if(req.path.startsWith('/api')) res.setHeader('Cache-Control','no-store');next();});
@@ -144,7 +147,7 @@ function seedTopic(topic){
   const items=scopedItems(store.items()).filter(i=>topicMatches(i,topic.query));
   for(const source of new Set(items.map(i=>i.source)))store.saveTopicRun(topic.id,source,items.filter(i=>i.source===source),new Date().toISOString(),'ok');
 }
-app.use('/api/topics',(req,res,next)=>{const origin=req.get('origin');if(req.method!=='GET'&&origin&&origin!==`${req.protocol}://${req.get('host')}`)return res.status(403).json({error:'请从本站操作'});next();});
+app.use('/api/topics',(req,res,next)=>{const origin=req.get('origin');if(req.method!=='GET'&&origin&&origin!==`${req.protocol}://${req.get('host')}`&&!(req.method==='POST'&&req.path==='/'&&pagesCors.trusted(origin)))return res.status(403).json({error:'请从本站操作'});next();});
 app.post('/api/topics',(req,res)=>{
   const query=typeof req.body?.query==='string'?req.body.query.trim():'';
   if(!query||query.length>40)return res.status(400).json({error:'主题请输入 1—40 个字'});

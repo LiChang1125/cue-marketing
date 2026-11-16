@@ -1,3 +1,4 @@
+import {apiFetch,assetUrl,previewMode,contentNow} from './urls.js';
 import OriginalLink from './OriginalLink.jsx';
 import React,{useEffect,useRef,useState} from 'react';
 import {createRoot} from 'react-dom/client';
@@ -22,22 +23,22 @@ function App(){
   const [feed,setFeed]=useState({items:[],sources:[],topics:[],hotlist:[],editorial:[]});
   const [view,setView]=useState('discover'),[query,setQuery]=useState(''),[topicId,setTopicId]=useState(null),[topicBusy,setTopicBusy]=useState(false);
   const [tab,setTab]=useState('all'),[source,setSource]=useState('all'),[period,setPeriod]=useState('7'),[limit,setLimit]=useState(18);
-  const [error,setError]=useState(''),[searchError,setSearchError]=useState(''),[now,setNow]=useState(Date.now()),[loaded,setLoaded]=useState(false);
+  const [error,setError]=useState(''),[searchError,setSearchError]=useState(''),[now,setNow]=useState(contentNow()),[loaded,setLoaded]=useState(false);
   const [selected,setSelected]=useState(null),[history,setHistory]=useState(null);
   const loading=useRef(false),dialog=useRef(null),searching=useRef(false);
   async function load(){
     if(loading.current)return;loading.current=true;
-    try{const r=await fetch('/api/feed',{cache:'no-store',signal:AbortSignal.timeout(8000)});if(!r.ok)throw Error();const data=await r.json();data.sources=data.sources.map(s=>s.id==='brandstar'?{...s,name:'精选资讯'}:s);setFeed(data);setError('');setLoaded(true);setNow(Date.now());}
+    try{const r=await apiFetch('/api/feed',{cache:'no-store',signal:AbortSignal.timeout(8000)});if(!r.ok)throw Error();const data=await r.json();data.sources=data.sources.map(s=>s.id==='brandstar'?{...s,name:'精选资讯'}:s);setFeed(data);setError('');setLoaded(true);setNow(contentNow());}
     catch{setError('连接暂时中断，正在重新连接。');}finally{loading.current=false;}
   }
   useEffect(()=>{load();const tick=()=>{if(!document.hidden)load();};const timer=setInterval(tick,10000);window.addEventListener('online',tick);document.addEventListener('visibilitychange',tick);return()=>{clearInterval(timer);window.removeEventListener('online',tick);document.removeEventListener('visibilitychange',tick);};},[]);
   useEffect(()=>setLimit(18),[tab,source,period]);
   useEffect(()=>{if(selected)dialog.current?.showModal();else dialog.current?.close();},[selected]);
-  useEffect(()=>{if(!selected)return;const ctl=new AbortController();setHistory(null);fetch('/api/items/'+encodeURIComponent(selected.id)+'/history',{signal:ctl.signal}).then(r=>r.ok?r.json():Promise.reject()).then(d=>setHistory(d.points)).catch(()=>setHistory([]));return()=>ctl.abort();},[selected?.id]);
+  useEffect(()=>{if(!selected)return;const ctl=new AbortController();setHistory(null);apiFetch('/api/items/'+encodeURIComponent(selected.id)+'/history',{signal:ctl.signal}).then(r=>r.ok?r.json():Promise.reject()).then(d=>setHistory(d.points)).catch(()=>setHistory([]));return()=>ctl.abort();},[selected?.id]);
   const activeTopic=feed.topics.find(t=>t.id===topicId);
   async function searchTopic(word){
     word=word.trim();if(!word||searching.current)return;searching.current=true;setTopicBusy(true);setSearchError('');
-    try{const r=await fetch('/api/topics',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:word}),signal:AbortSignal.timeout(15000)});const d=await r.json();if(!r.ok)throw Error(d.error||'搜索暂不可用');setQuery(word);setTopicId(d.id);setView('stats');await load();}
+    try{const r=await apiFetch('/api/topics',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:word}),signal:AbortSignal.timeout(15000)});const d=await r.json();if(!r.ok)throw Error(d.error||'搜索暂不可用');setQuery(word);setTopicId(d.id);setView('stats');await load();}
     catch(e){setSearchError(e.name==='TimeoutError'?'搜索暂时超时，请重试。':e.message);}
     finally{searching.current=false;setTopicBusy(false);}
   }
@@ -50,8 +51,8 @@ function App(){
   const featured=(feed.editorial||[]).filter(i=>Date.parse(i.publishedAt)>=now-7*86400000).slice(0,3);
   const page=pages.find(p=>p[0]===view),logic=selected?marketingLogic(selected):null;
   return <>
-    <header className="header"><div className="header-inner"><a className="logo" href="/" aria-label="CUE 首页"><img className="brand-wordmark" src="/cue-logo.svg" alt="CUE"/><span className="brand-descriptor">MARKETING<br/>& CULTURE</span></a><nav className="top-nav" aria-label="主导航">{pages.map(([id,name,,meaning])=><button key={id} className={view===id?'active':''} onClick={()=>navigate(id)}>{name}<span className="nav-meaning"> · {meaning}</span></button>)}</nav><div className="internal-use"><img src="/baidu.ico" alt="百度" width="20" height="20"/><span><span>泛科技通用拓展二组</span><span>内部使用</span></span></div></div></header>
-    <main className="shell"><div className="edition-line"><span>Where brands meet culture.</span><span>{new Date(now).toLocaleDateString('zh-CN',{timeZone:'Asia/Shanghai',month:'long',day:'numeric',weekday:'long'})}</span></div><div className="page-intro"><div><h1>{page[1]}</h1><p>{page[2]}</p></div></div>
+    <header className="header"><div className="header-inner"><a className="logo" href={assetUrl('/')} aria-label="CUE 首页"><img className="brand-wordmark" src={assetUrl('/cue-logo.svg')} alt="CUE"/><span className="brand-descriptor">MARKETING<br/>& CULTURE</span></a><nav className="top-nav" aria-label="主导航">{pages.map(([id,name,,meaning])=><button key={id} className={view===id?'active':''} onClick={()=>navigate(id)}>{name}<span className="nav-meaning"> · {meaning}</span></button>)}</nav><div className="internal-use"><img src={assetUrl('/baidu.ico')} alt="百度" width="20" height="20"/><span><span>泛科技通用拓展二组</span><span>内部使用</span></span></div></div></header>
+    <main className="shell">{previewMode&&<p className="preview-notice" role="status">内容预览 · 截至 {new Date(contentNow()).toLocaleString('zh-CN',{timeZone:'Asia/Shanghai',hour12:false})}（北京时间） · 搜索限当前内容，暂不自动更新</p>}<div className="edition-line"><span>Where brands meet culture.</span><span>{new Date(now).toLocaleDateString('zh-CN',{timeZone:'Asia/Shanghai',month:'long',day:'numeric',weekday:'long'})}</span></div><div className="page-intro"><div><h1>{page[1]}</h1><p>{page[2]}</p></div></div>
       {error&&<div className="error-box" role="alert">{error}<button onClick={load}>重试</button></div>}{searchError&&<div className="error-box" role="alert">{searchError}</div>}
       {view==='curated'?<Curated onOpen={setSelected}/>:view==='reports'?<Reports/>:view==='board'?<MarketingBoard items={feed.items} sources={feed.sources} onOpen={setSelected}/>:view==='stats'?<TopicExplorer feed={feed} activeTopic={activeTopic} query={query} onQuery={setQuery} onSearch={searchTopic} onSelect={selectTopic} onOpen={setSelected} onReset={()=>{setTopicId(null);setQuery('');}} busy={topicBusy}/>:<>
         <SearchBox value={query} onChange={setQuery} onSearch={searchTopic} busy={topicBusy}/>

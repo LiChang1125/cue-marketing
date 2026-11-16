@@ -2,6 +2,10 @@
 
 供内部共享的营销、品牌、商业 IP 与文化消费信息平台。React + Node.js + SQLite，无账号、个人收藏或个人关注功能。
 
+## GitHub 网页预览
+
+预览地址：[CUE 网页](https://lichang1125.github.io/cue-marketing/)。GitHub Pages 使用 `gh-pages` 分支发布现有真实内容快照；首页标注快照时间，搜索限当前内容，暂不自动更新。完整实时版仍由腾讯云后台提供，等待域名、备案和 HTTPS 开通。构建与切换步骤见 [Pages 发布说明](GITHUB_PAGES.md)。源码仓库已按用户批准公开，不包含平台凭据和数据库。
+
 ## 推荐共享部署
 
 推荐 GitHub + 国内云厂商常驻 Linux 云主机 + Docker Compose，使用免费 OpenCLI/CDP 和持久化浏览器会话。完整步骤与实测边界见 [部署说明](DEPLOYMENT.md)。访客无需扫码；首次服务器登录、会话失效验证仍由管理员完成。

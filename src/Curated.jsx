@@ -1,3 +1,4 @@
+import {apiFetch} from './urls.js';
 import OriginalLink from './OriginalLink.jsx';
 import React,{useEffect,useState} from 'react';
 import {curatedTabs} from '../shared/curated.js';
@@ -5,7 +6,7 @@ import Cover from './Cover.jsx';
 export default function Curated({onOpen}){
   const [kind,setKind]=useState('all'),[page,setPage]=useState(1),[items,setItems]=useState([]),[busy,setBusy]=useState(false),[error,setError]=useState(''),[hasMore,setHasMore]=useState(false),[reload,setReload]=useState(0);
   useEffect(()=>{const timer=setInterval(()=>{if(page===1)setReload(n=>n+1);},60000);return()=>clearInterval(timer);},[page]);
-  useEffect(()=>{const ctl=new AbortController();let alive=true;setBusy(true);setError('');fetch(`/api/curated?kind=${kind}&page=${page}`,{signal:ctl.signal}).then(async r=>{const d=await r.json();if(!r.ok)throw Error(d.error);return d;}).then(d=>{if(!alive)return;setItems(previous=>page===1?d.items:[...new Map([...previous,...d.items].map(i=>[i.id,i])).values()]);setHasMore(d.hasMore);}).catch(e=>{if(alive&&e.name!=='AbortError')setError(e.message);}).finally(()=>{if(alive)setBusy(false);});return()=>{alive=false;ctl.abort();};},[kind,page,reload]);
+  useEffect(()=>{const ctl=new AbortController();let alive=true;setBusy(true);setError('');apiFetch(`/api/curated?kind=${kind}&page=${page}`,{signal:ctl.signal}).then(async r=>{const d=await r.json();if(!r.ok)throw Error(d.error);return d;}).then(d=>{if(!alive)return;setItems(previous=>page===1?d.items:[...new Map([...previous,...d.items].map(i=>[i.id,i])).values()]);setHasMore(d.hasMore);}).catch(e=>{if(alive&&e.name!=='AbortError')setError(e.message);}).finally(()=>{if(alive)setBusy(false);});return()=>{alive=false;ctl.abort();};},[kind,page,reload]);
   const days=Object.entries(items.reduce((map,item)=>{const day=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Shanghai'}).format(new Date(item.publishedAt));(map[day]??=[]).push(item);return map;},{})).sort((a,b)=>b[0].localeCompare(a[0]));
   return <section className="curated-page"><div className="curated-tabs" role="tablist" aria-label="精选分类">{curatedTabs.map(([id,name])=><button role="tab" aria-selected={kind===id} className={kind===id?'active':''} key={id} onClick={()=>{setKind(id);setPage(1);setItems([]);}}>{name}</button>)}</div>
     {error&&<div className="error-box" role="alert">{error}<button onClick={()=>setReload(n=>n+1)}>重试</button></div>}

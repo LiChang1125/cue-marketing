@@ -1,3 +1,4 @@
+import {apiFetch} from './urls.js';
 import OriginalLink from './OriginalLink.jsx';
 import React, {useEffect,useState} from 'react';
 import Cover from './Cover.jsx';
@@ -5,7 +6,7 @@ import {ArrowUpRight,FileText} from 'lucide-react';
 const time=value=>new Date(value).toLocaleString('zh-CN',{timeZone:'Asia/Shanghai',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false});
 export default function Reports(){
   const [data,setData]=useState(null),[day,setDay]=useState(''),[error,setError]=useState('');
-  async function load(){try{const r=await fetch('/api/reports',{cache:'no-store',signal:AbortSignal.timeout(8000)});if(!r.ok)throw Error();setData(await r.json());setError('');}catch{setError('暂时无法读取日报，服务恢复后会自动重试。');}}
+  async function load(){try{const r=await apiFetch('/api/reports',{cache:'no-store',signal:AbortSignal.timeout(8000)});if(!r.ok)throw Error();setData(await r.json());setError('');}catch{setError('暂时无法读取日报，服务恢复后会自动重试。');}}
   useEffect(()=>{load();const id=setInterval(load,10000);return()=>clearInterval(id);},[]);
   const report=data?.reports.find(r=>r.date===day)||data?.reports[0];
   const sections=['品牌与公司','联名与 IP','新品与消费','平台与营销','社交平台线索'];

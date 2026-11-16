@@ -14,6 +14,7 @@ services:
       - "127.0.0.1:6080:6080"
     environment:
       PLATFORM_PROVIDER: selfhosted
+      PUBLIC_WEB_ORIGINS: ${PUBLIC_WEB_ORIGINS:-}
       # Optional paid Douyin transport. Empty keeps the existing browser source.
       DOUYIN_PROVIDER: ${DOUYIN_PROVIDER:-}
       TIKHUB_API_KEY: ${TIKHUB_API_KEY:-}

@@ -1,3 +1,4 @@
+import {apiFetch} from './urls.js';
 import React,{useEffect,useState} from 'react';
 import {ArrowUpRight} from 'lucide-react';
 const fmt=n=>n.toLocaleString('zh-CN');
@@ -5,7 +6,7 @@ const time=t=>new Date(t).toLocaleString('zh-CN',{timeZone:'Asia/Shanghai',month
 const metricNames={views:'视频播放量',likes:'点赞数',topicViews:'话题累计播放量'};
 export default function TrendStats({topicId=null,sources=[]}){
   const [stats,setStats]=useState(null),[error,setError]=useState(false);
-  useEffect(()=>{let active=true;const controller=new AbortController();setStats(null);async function read(){try{const r=await fetch('/api/stats'+(topicId?'?topic='+encodeURIComponent(topicId):''),{cache:'no-store',signal:controller.signal});if(!r.ok)throw Error();const data=await r.json();if(active){setStats(data);setError(false);}}catch(e){if(active&&e.name!=='AbortError')setError(true);}}read();const id=setInterval(read,30000);return()=>{active=false;controller.abort();clearInterval(id);};},[topicId]);
+  useEffect(()=>{let active=true;const controller=new AbortController();setStats(null);async function read(){try{const r=await apiFetch('/api/stats'+(topicId?'?topic='+encodeURIComponent(topicId):''),{cache:'no-store',signal:controller.signal});if(!r.ok)throw Error();const data=await r.json();if(active){setStats(data);setError(false);}}catch(e){if(active&&e.name!=='AbortError')setError(true);}}read();const id=setInterval(read,30000);return()=>{active=false;controller.abort();clearInterval(id);};},[topicId]);
   if(error)return <div className="inline-note">统计数据暂不可用，正在等待采集服务恢复。</div>;
   if(!stats)return <div className="inline-note">正在读取实际观测记录…</div>;
   const max=Math.max(1,...stats.hourly.map(p=>p.count));
