@@ -60,6 +60,12 @@ export function detectDouyinGate(title, text) {
     return null;
 }
 
+export function douyinTimeoutMessage(diagnostic = {}) {
+    const number = value => Number.isSafeInteger(value) && value >= 0 ? value : 0;
+    const ready = ['loading', 'interactive', 'complete'].includes(diagnostic.readyState) ? diagnostic.readyState : 'unknown';
+    return `Douyin search timed out before result cards appeared (document=${ready}, resultLists=${number(diagnostic.resultLists)}, videoLinks=${number(diagnostic.videoLinks)}, visibleFrames=${number(diagnostic.visibleFrames)}).`;
+}
+
 export function parseSearchLimit(raw) {
     const parsed = Number(raw ?? 10);
     if (!Number.isFinite(parsed) || !Number.isInteger(parsed)) {
@@ -227,6 +233,11 @@ const WAIT_AND_EXTRACT_JS = (timeoutMs) => `
       const text = (document.body && document.body.innerText) || '';
       const gate = (${detectDouyinGate.toString()})(document.title, text);
       if (gate === 'verification_required') return { state: gate };
+      const visibleFrames = Array.from(document.querySelectorAll('iframe')).filter(frame => {
+        const rect = frame.getBoundingClientRect(), style = getComputedStyle(frame);
+        return rect.width > 100 && rect.height > 100 && style.display !== 'none' && style.visibility !== 'hidden';
+      });
+      if (visibleFrames.some(frame => /captcha|verifycenter|verify_center/.test(frame.src))) return { state: 'verification_required' };
       const cards = collectCards();
       if (cards.length > 0) return { state: 'rendered', cards };
       // Anonymous gate: Douyin renders a centered "登录后查看更多内容"
@@ -254,7 +265,15 @@ const WAIT_AND_EXTRACT_JS = (timeoutMs) => `
     setTimeout(() => {
       observer.disconnect();
       const fallback = detectState();
-      resolve(fallback ?? { state: 'timeout' });
+      resolve(fallback ?? { state: 'timeout', diagnostic: {
+        readyState: document.readyState,
+        resultLists: document.querySelectorAll('[data-e2e="scroll-list"]').length,
+        videoLinks: document.querySelectorAll('a[href*="/video/"]').length,
+        visibleFrames: Array.from(document.querySelectorAll('iframe')).filter(frame => {
+          const rect = frame.getBoundingClientRect(), style = getComputedStyle(frame);
+          return rect.width > 100 && rect.height > 100 && style.display !== 'none' && style.visibility !== 'hidden';
+        }).length
+      }});
     }, ${timeoutMs});
   })
 `;
@@ -317,7 +336,7 @@ cli({
             throw new EmptyResultError('douyin search', `No Douyin videos matched "${keyword}".`);
         }
         if (result.state === 'timeout') {
-            throw new CommandExecutionError('Douyin search timed out before result cards appeared. The administrator should inspect the collector page; this does not establish an authentication failure.');
+            throw new CommandExecutionError(douyinTimeoutMessage(result.diagnostic));
         }
         if (!Array.isArray(result.cards)) {
             throw new CommandExecutionError('Douyin search: evaluator returned malformed cards payload');

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {detectDouyinGate,RENDER_TIMEOUT_MS,waitForDouyinCards} from '../adapters/zhichao-sources/douyin-search.js';
+import {detectDouyinGate,RENDER_TIMEOUT_MS,waitForDouyinCards,douyinTimeoutMessage} from '../adapters/zhichao-sources/douyin-search.js';
 import {cliFailure} from '../server/cli.js';
 
 test('抖音图片验证与登录区分，营销正文的验证措辞不误判',()=>{
@@ -13,8 +13,11 @@ test('抖音图片验证与登录区分，营销正文的验证措辞不误判',
 });
 
 test('抖音加载超时不误报为需要重新登录',()=>{
-  const message=cliFailure({error:{code:'COMMAND_EXECUTION_ERROR',message:'Douyin search timed out before result cards appeared. The administrator should inspect the collector page; this does not establish an authentication failure.'}});
+  const message=cliFailure({error:{code:'COMMAND_EXECUTION_ERROR',message:douyinTimeoutMessage({readyState:'complete',resultLists:1,videoLinks:0,visibleFrames:0})}});
   assert.doesNotMatch(message,/登录|人工验证/);
+  const diagnostic=douyinTimeoutMessage({readyState:'private-value',resultLists:'private-value',videoLinks:2,visibleFrames:0});
+  assert.match(diagnostic,/videoLinks=2/);
+  assert.doesNotMatch(diagnostic,/private-value/);
 });
 
 test('慢速页面只追加一次等待，验证与登录限制不重试',async()=>{
