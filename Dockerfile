@@ -11,7 +11,7 @@ RUN sed -i "s|http://deb.debian.org|http://${DEBIAN_MIRROR}|g" /etc/apt/sources.
     && apt-get update && apt-get install -y --no-install-recommends chromium fonts-wqy-zenhei fonts-noto-color-emoji xvfb x11vnc novnc websockify openbox tini \
     && rm -rf /var/lib/apt/lists/*
 COPY . .
-RUN npm run build && npm run sources:install && mkdir -p /var/data/cue && chown -R node:node /app /var/data/cue && cp -a /root/.opencli /home/node/.opencli && chown -R node:node /home/node/.opencli
+RUN npm run build && npm run sources:install && mkdir -p /var/data/cue && chown node:node /var/data/cue && cp -a /root/.opencli /home/node/.opencli && chown -R node:node /home/node/.opencli
 USER node
 ENV HOST=0.0.0.0 PORT=4173 DATA_DIR=/var/data/cue PLATFORM_PROVIDER=selfhosted CLOUD_BROWSER_HEADLESS=false CLOUD_BROWSER_EXECUTABLE=/usr/bin/chromium DISPLAY=:99
 EXPOSE 4173

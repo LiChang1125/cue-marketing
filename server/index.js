@@ -298,5 +298,14 @@ function checkReport(){
 }
 const reportTimer=setInterval(checkReport,30000);
 const reportStartup=setTimeout(checkReport,30000);
-function shutdown(){closeCloudBrowser().catch(()=>{});clearInterval(publicTimer);clearInterval(timer);clearInterval(cliTimer);clearInterval(topicTimer);clearInterval(reportTimer);clearTimeout(reportStartup);server.close(()=>{store.close();process.exit(0);});}
+let shuttingDown=false;
+async function shutdown(){
+  if(shuttingDown)return;shuttingDown=true;
+  clearInterval(publicTimer);clearInterval(timer);clearInterval(cliTimer);clearInterval(topicTimer);clearInterval(reportTimer);clearTimeout(reportStartup);
+  // Flush the persistent browser profile before exiting the app process.
+  const closed=new Promise(resolve=>server.close(resolve));
+  const deadline=setTimeout(()=>process.exit(1),25000);deadline.unref();
+  await Promise.all([closed,closeCloudBrowser().catch(()=>{})]);
+  store.close();clearTimeout(deadline);process.exit(0);
+}
 process.on('SIGINT',shutdown);process.on('SIGTERM',shutdown);
