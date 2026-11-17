@@ -3,6 +3,7 @@ import {mediaSources,mediaSource} from '../shared/media-sources.js';
 import {collectMediaSource,selectMediaNews,marketingArticle,fetchPublicText,parseMediaHtml} from '../server/media-news.js';
 import {mergeRankHistory} from '../shared/pulse.js';
 import {buildPulseItems} from '../shared/pulse-content.js';
+import {researchValue} from '../shared/research.js';
 import {uniqueCases} from '../shared/insights.js';
 import {curatedPage} from '../server/curated.js';
 import {curatedTabs} from '../shared/curated.js';
@@ -16,7 +17,7 @@ if(process.env.PUBLIC_DATA_PREVIOUS){previous=JSON.parse(await readFile(process.
 else for(const path of ['content-data.json','preview-data.json']){try{const r=await fetch(site+path,{signal:AbortSignal.timeout(20000)});if(r.ok){previous=await r.json();break;}}catch{}}
 if(!previous?.curated||!previous?.reports)throw Error('Previous published content is required to preserve curated articles and report archives');
 const collected=[],sources=[];let cursor=0;
-await Promise.all(Array.from({length:5},async()=>{while(cursor<mediaSources.length){const source=mediaSources[cursor++];try{const result=await collectMediaSource(source,{details:12});collected.push(...result.items);sources.push(result.status);console.log(source.name+': '+result.items.length);}catch(e){sources.push({id:source.id,name:source.name,state:'unavailable',count:0,message:e.message,checkedAt:now.toISOString()});console.log(source.name+': unavailable');}}}));
+await Promise.all(Array.from({length:5},async()=>{while(cursor<mediaSources.length){const source=mediaSources[cursor++];try{const result=await collectMediaSource(source,{details:48});collected.push(...result.items);sources.push(result.status);console.log(source.name+': '+result.items.length);}catch(e){sources.push({id:source.id,name:source.name,state:'unavailable',count:0,message:e.message,checkedAt:now.toISOString()});console.log(source.name+': unavailable');}}}));
 // Walk public editorial archives to broaden keyword coverage, never platform accounts.
 const archives=[];
 for(let page=2;page<=6;page++){archives.push(['socialbeta',`https://socialbeta.com/campaign?page=${page}`]);archives.push(['brandstar',`https://radar.brandstar.com.cn/?pno=${page}`]);}
@@ -26,7 +27,8 @@ const items=selectMediaNews([...collected,...oldItems],now.getTime(),1200);
 if(!items.length)throw Error('No verified editorial articles; leaving the published site intact');
 const service=createArticleService('.artifacts/public-articles');
 const curated={...previous.curated};
-for(const [kind] of curatedTabs){try{const page=await curatedPage(kind);if(page.items.length)curated[kind]=page.items;}catch{}}
+for(const [kind] of curatedTabs){try{const page=await curatedPage(kind);if(page.items.length)curated[kind]=uniqueCases([...page.items,...(previous.curated[kind]||[])]);}catch{}}
+for(let page=2;page<=5;page++){try{const more=await curatedPage('all',page);curated.all=uniqueCases([...(curated.all||[]),...more.items]);if(!more.items.length)break;}catch{break;}}
 const resolveItems=uniqueCases([...items.filter(i=>i.source==='brandstar'),...Object.values(curated).flat()]);
 const resolved=new Map();for(let i=0;i<resolveItems.length;i+=6)await Promise.all(resolveItems.slice(i,i+6).map(async item=>{try{resolved.set(item.id,await service.resolveLink(item));}catch{}}));
 const imageCache=new Map();const priority=selectMediaNews(items,now.getTime(),24);
@@ -34,6 +36,8 @@ for(let i=0;i<priority.length;i+=5)await Promise.all(priority.slice(i,i+5).map(a
 const decorate=i=>{const item={...i,...resolved.get(i.id)};delete item.imageLocal;return {...item,...imageCache.get(i.id)};};
 const cleanItems=items.map(decorate);for(const kind of Object.keys(curated))curated[kind]=curated[kind].map(decorate);
 let radar={sources:[],items:[]};try{radar=JSON.parse(await readFile('.artifacts/trendradar-current.json','utf8'));}catch{}
+let research={items:[],health:[]};try{research=JSON.parse(await readFile('.artifacts/research-current.json','utf8'));}catch{}
+const researchItems=uniqueCases([...research.items,...(radar.articles||[]),...(previous.feed?.publicPulse?.researchItems||[])]).filter(i=>researchValue(i)&&Date.parse(i.publishedAt)>=now.getTime()-180*86400000&&Date.parse(i.publishedAt)<=now.getTime());
 const history=mergeRankHistory(previous.feed?.publicPulse?.history,radar.items,now.getTime());
 const pulseItems=buildPulseItems(radar,previous.feed?.publicPulse?.items,cleanItems,now.getTime());
 const editorial=selectMediaNews(cleanItems,now.getTime(),90);
@@ -45,6 +49,6 @@ if(schedule.ready&&!reports.reports.some(r=>r.date===schedule.day&&r.entries.len
  if(entries.length)reports.reports.unshift({date:schedule.day,newsDate:window.newsDate,title:'CUE 早报',subtitle:entries.slice(0,3).map(i=>i.title).join('；'),scheduledAt:schedule.due,generatedAt:now.toISOString(),status:'ready',entries});
 }
 reports.reports=reports.reports.slice(0,90);
-const data={schemaVersion:3,generatedAt:now.toISOString(),translationCache:previous.translationCache||{},feed:{items:cleanItems,editorial,editorialCandidates:cleanItems,sources:activeSources,topics:[],hotlist:editorial.slice(0,8),publicPulse:{engine:'TrendRadar',revision:radar.revision,sources:radar.sources,history,items:pulseItems,feedHealth:radar.feedHealth||[]}},curated,reports,histories:{},sourceHealth:sources};
+const data={schemaVersion:3,generatedAt:now.toISOString(),translationCache:previous.translationCache||{},feed:{items:cleanItems,editorial,editorialCandidates:cleanItems,sources:activeSources,topics:[],hotlist:editorial.slice(0,8),publicPulse:{engine:'TrendRadar',revision:radar.revision,sources:radar.sources,history,items:pulseItems,feedHealth:radar.feedHealth||[],researchItems,researchHealth:research.health}},curated,reports,histories:{},sourceHealth:sources};
 await mkdir(output.replace(/[\\/][^\\/]+$/,''),{recursive:true});await writeFile(output,JSON.stringify(data));
 console.log(JSON.stringify({articles:cleanItems.length,activeMedia:activeSources.length,hotlistPoints:history.length,platforms:radar.sources,reports:reports.reports.length,output}));

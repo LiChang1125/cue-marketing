@@ -1,0 +1,24 @@
+services:
+  cue-public:
+    build:
+      context: .
+      dockerfile: Dockerfile.public
+    restart: unless-stopped
+    init: true
+    ports:
+      - "127.0.0.1:4173:4173"
+    environment:
+      COLLECT_INTERVAL_MS: ${COLLECT_INTERVAL_MS:-600000}
+      TZ: Asia/Shanghai
+    volumes:
+      - cue-public-data:/var/data/cue
+      - cue-translation:/app/.tools/translation
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4173/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    stop_grace_period: 30s
+volumes:
+  cue-public-data:
+  cue-translation:

@@ -56,5 +56,6 @@ export function marketingLogic(item){
 }
 export function recentPublication(item,now=Date.now(),days=7){const at=Date.parse(item.publishedAt);return Number.isFinite(at)&&at<=now&&at>=now-days*86400000;}
 export function uniqueCases(items){
-  const seen=new Set();return items.filter(item=>{const key=String(item.title).replace(/[\s\p{P}]/gu,'').toLowerCase();const url=item.url?.split('?')[0];if(seen.has(key)||(url&&seen.has(url)))return false;seen.add(key);if(url)seen.add(url);return true;});
+  const seen=new Set();return items.filter(item=>{const key=String(item.originalTitle||item.title).replace(/[\s\p{P}]/gu,'').toLowerCase();const url=canonicalArticleUrl(item.url);if(seen.has(key)||(url&&seen.has(url)))return false;seen.add(key);if(url)seen.add(url);return true;});
 }
+export function canonicalArticleUrl(value){try{const url=new URL(value);url.hash='';for(const key of [...url.searchParams.keys()])if(/^(utm_|itm_|fbclid|gclid|from$|ref$|spm$)/i.test(key))url.searchParams.delete(key);url.searchParams.sort();return url.href;}catch{return value;}}

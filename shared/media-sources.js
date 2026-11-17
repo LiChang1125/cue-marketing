@@ -32,7 +32,7 @@ const rows=[
  ['adquan','广告门','https://www.adquan.com/'],
  ['shichangbu','市场部网','https://www.shichangbu.com/'],
  ['media360','媒介360','https://www.media360.info/'],
- ['socialone','胖鲸','https://socialone.com.cn/','https://socialone.com.cn/feed/'],
+ ['socialone','胖鲸','https://pangjing.cn/','https://pangjing.cn/feed/'],
  ['asahi','广告朝日','https://adv.asahi.com/'],
  ['adcn','中国广告','https://www.ad-cn.net/'],
  ['trendwatching','TrendWatching','https://www.trendwatching.com/','https://www.trendwatching.com/innovation-of-the-day/rss.xml'],
@@ -44,6 +44,23 @@ const rows=[
  ['36kr','36氪','https://36kr.com/','https://36kr.com/feed',false],
  ['yuansugu','元素谷','https://www.osogoo.com/'],
 ];
-export const mediaSources=rows.map(([key,name,url,feed,specialized=true])=>({id:['socialbeta','brandstar'].includes(key)?key:'media-'+key,key,name,url,feed,specialized}));
+const entries={
+ campaignbrief:['https://campaignbrief.com/feed/?paged=2','https://campaignbrief.com/feed/?paged=3'],
+ adweek:['https://www.adweek.com/category/brand-marketing/','https://www.adweek.com/category/creativity/'],
+ digiday:['https://digiday.com/marketing/feed/','https://digiday.com/feed/?paged=2'],
+ topys:['https://www.topys.cn/article','https://www.topys.cn/pick'],
+ opp2:['https://www.opp2.com/tag/品牌营销','https://www.opp2.com/feed?paged=2'],
+ woshipm:['https://www.woshipm.com/category/marketing','https://www.woshipm.com/category/operate'],
+ brandingmag:['https://www.brandingmag.com/branding/','https://www.brandingmag.com/feed/?paged=2'],
+ meihua:['https://www.meihua.info/articles'],
+ digitaling:['https://www.digitaling.com/projects'],
+ warc:['https://www.warc.com/latest'],
+ brain:['https://www.brain.com.tw/news'],
+ socialbeta:['https://socialbeta.com/article','https://socialbeta.com/campaign?page=2','https://socialbeta.com/campaign?page=3'],
+ brandstar:['https://radar.brandstar.com.cn/?pno=2','https://radar.brandstar.com.cn/?pno=3'],
+ socialmediatoday:['https://www.socialmediatoday.com/topic/content-marketing/'],
+ prnasia:['https://www.prnasia.com/releases/all/listpage-all-all-RETAIL.shtml'],
+};
+export const mediaSources=rows.map(([key,name,url,feed,specialized=true])=>({id:['socialbeta','brandstar'].includes(key)?key:'media-'+key,key,name,url,feed,specialized,entries:entries[key]||[]}));
 export const mediaIds=new Set(mediaSources.map(s=>s.id));
 export const mediaSource=id=>mediaSources.find(s=>s.id===id);

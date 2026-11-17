@@ -1,0 +1,11 @@
+import {readFile,writeFile} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
+import {searchResearch,researchTopics} from '../shared/research.js';
+const path=process.env.PUBLIC_DATA_OUTPUT||'.artifacts/public-data/content-data.json';
+const data=JSON.parse(await readFile(path,'utf8'));
+const names=process.argv[2]?[process.argv[2]]:researchTopics.map(t=>t.name);
+const selections=names.map(query=>({...searchResearch(data.feed.publicPulse.researchItems||[],{query,days:90}),key:createHash('sha256').update(query).digest('hex').slice(0,16)}));
+await writeFile('.artifacts/report-selections.json',JSON.stringify(selections));
+data.feed.publicPulse.researchReports=Object.fromEntries(selections.map(r=>[r.query,{url:'research/'+r.key+'.html',count:r.articles.length}]));
+await writeFile(path,JSON.stringify(data));
+console.log(JSON.stringify(selections.map(r=>({query:r.query,count:r.articles.length,total:r.total}))));

@@ -1,4 +1,6 @@
+import {searchResearch} from '../shared/research.js';
 import {attentionTrends} from '../server/attention.js';
+import {curatedSelection} from '../shared/geography.js';
 let loaded;
 export function createPreviewFetch(data){
   const topics=data.feed.topics.map(t=>({...t,state:'done'}));
@@ -14,10 +16,11 @@ export function createPreviewFetch(data){
     }
     if(method!=='GET')return response({error:'预览版不执行采集操作'},405);
     if(url.pathname==='/api/feed')return response({...data.feed,topics});
+    if(url.pathname==='/api/research'){const query=url.searchParams.get('query')||'',days=[30,90,180].includes(Number(url.searchParams.get('days')))?Number(url.searchParams.get('days')):90;return response({...searchResearch(data.feed.publicPulse?.researchItems||[],{query,days}),reportUrl:days===90?data.feed.publicPulse?.researchReports?.[query]?.url:null});}
     if(url.pathname==='/api/reports')return response(data.reports);
     if(url.pathname==='/api/attention')return response(attentionTrends(data.feed.items,id=>data.histories[id]||[],{query:url.searchParams.get('query')||'',sector:url.searchParams.get('sector')||null,days:url.searchParams.get('days')==='30'?30:7,now:Date.parse(data.generatedAt),sources:data.feed.sources}));
     if(url.pathname==='/api/curated'){
-      const kind=url.searchParams.get('kind')||'all',page=Math.max(1,Number(url.searchParams.get('page'))||1),all=data.curated[kind]||[],start=(page-1)*24;
+      const kind=url.searchParams.get('kind')||'all',page=Math.max(1,Number(url.searchParams.get('page'))||1),all=curatedSelection(data.curated,kind,url.searchParams.get('region')==='china'),start=(page-1)*24;
       return response({items:all.slice(start,start+24),kind,page,hasMore:start+24<all.length});
     }
     const match=url.pathname.match(/^\/api\/items\/([^/]+)\/history$/);

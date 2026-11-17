@@ -21,10 +21,10 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - run: docker build -t cue-smoke .
-      - name: Start cloud browser and app
-        run: docker run -d --name cue-smoke --shm-size=512m -p 127.0.0.1:4173:4173 cue-smoke
-      - name: Verify app and Chromium CDP
+      - run: docker build -f Dockerfile.public -t cue-smoke .
+      - name: Start autonomous public cloud service
+        run: docker run -d --name cue-smoke -p 127.0.0.1:4173:4173 cue-smoke
+      - name: Verify shared public data and automatic collector
         shell: bash
         run: |
           for attempt in $(seq 1 30); do
@@ -32,7 +32,9 @@ jobs:
             sleep 2
           done
           curl --fail http://127.0.0.1:4173/api/health
-          docker exec cue-smoke node --input-type=module -e "const r=await fetch('http://127.0.0.1:9222/json/version');if(!r.ok)process.exit(1);const v=await r.json();if(!v.webSocketDebuggerUrl)process.exit(1);console.log('Cloud Chromium CDP available');"
+          docker exec cue-smoke node --input-type=module -e "const r=await fetch('http://127.0.0.1:4173/api/health');const d=await r.json();if(!d.collector.lastAttempt)process.exit(1);console.log('Cloud collector started without visitor action');"
+          curl --fail 'http://127.0.0.1:4173/api/curated?region=china'
+
       - name: Container diagnostics
         if: always()
         run: docker logs --tail=80 cue-smoke || true

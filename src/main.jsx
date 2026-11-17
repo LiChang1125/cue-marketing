@@ -18,7 +18,7 @@ import {freshness} from './freshness.js';
 import {sectors,sectorId,marketingLogic,isMarketingCase,uniqueCases} from '../shared/insights.js';
 
 const date=t=>t?new Date(t).toLocaleDateString('zh-CN',{timeZone:'Asia/Shanghai',year:'numeric',month:'2-digit',day:'2-digit'}):'日期未标注';
-const pages=[['discover','视野','营销、品牌与文化动态','发现潮流'],['curated','选刊','品牌与消费文化','精选'],['stats','脉动','品牌营销 · IP 联名 · 潮玩消费','趋势观察'],['board','灵感档案','热点分布与案例思路','营销看板'],['reports','晨报','品牌动态 · 联名 IP · 新消费','营销日报']];
+const pages=[['discover','视野','营销、品牌与文化动态','发现潮流'],['curated','选刊','品牌与消费文化','精选'],['stats','脉动','市场研究 · 消费洞察 · 品牌策略','报告搜索'],['board','灵感档案','热点分布与案例思路','营销看板'],['reports','晨报','品牌动态 · 联名 IP · 新消费','营销日报']];
 
 function App(){
   const [feed,setFeed]=useState({items:[],sources:[],topics:[],hotlist:[],editorial:[]});

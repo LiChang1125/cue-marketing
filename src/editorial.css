@@ -22,3 +22,5 @@ footer{border-color:var(--line);color:var(--muted);font-size:11px;gap:20px}dialo
 .feature-side article>div{display:flex;flex-direction:column;align-items:flex-start;min-width:0}.feature-side article>div>button{display:block;width:100%}.feature-side small{display:block}.metric-changes .change-copy svg{width:14px;height:14px;color:inherit}.hour-bars>div>span{bottom:auto;top:-19px}
 
 .section-empty{font-size:12px;color:#8a8e95;padding:10px 0 20px}.page-intro{margin-bottom:26px}.feature-layout{margin-top:26px}
+
+.curated-region{display:flex;gap:8px;margin-bottom:22px}.curated-region button{border:1px solid #e5e7e5;padding:9px 18px;background:white;color:#6d756f;border-radius:4px}.curated-region button[aria-pressed="true"]{background:#22272a;color:white;border-color:#22272a}
