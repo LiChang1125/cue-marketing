@@ -45,6 +45,10 @@ test('research search returns ten dated market reports, excludes hotlist pointer
  const rows=Array.from({length:12},(_,n)=>({...base,id:String(n),title:'亚文化品牌消费研究报告 '+n,url:'https://a.test/'+n,publishedAt:new Date(now-n*86400000).toISOString()}));
  const result=searchResearch([...rows,{...base,id:'hot',title:'亚文化热搜',contentType:'hot-topic'},{...base,id:'unrelated',title:'农业机械行业报告',publishedAt:'2026-11-16',url:'https://a.test/other'}],{query:'亚文化',now});
  assert.equal(result.articles.length,10);assert.equal(result.total,12);assert.equal(result.articles[0].id,'0');assert.equal(searchResearch(rows,{query:'香水',now}).total,0);
+ const business={id:'genz',source:'pulse-glossy',title:'How a retailer is using Gen Z shopping data',excerpt:'A holiday campaign based on shopping research.',url:'https://a.test/genz',publishedAt:'2026-11-16'};
+ assert.equal(searchResearch([business],{query:'亚文化',now}).articles.length,1);
+ const incidental={...business,id:'beauty',title:'Beauty Briefing: skin undertone analysis',excerpt:'This week also includes fragrance news.'};
+ assert.equal(searchResearch([incidental],{query:'香水',now}).articles.length,0);
 });
 test('cloud collector runs without visitors, avoids overlap, retries failure and retains last successful data',async()=>{
  const dir=await mkdtemp(join(tmpdir(),'cue-worker-'));await writeFile(join(dir,'content-data.json'),'previous');let calls=0,release;

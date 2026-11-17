@@ -1,12 +1,133 @@
 [
- {"name":"亚文化","terms":["亚文化","圈层","兴趣消费","二次元","谷子","痛包","动漫","潮玩","青年文化","青年消费","新青年","新生代","subculture","streetwear","fandom","anime","collectible","Gen Z"]},
- {"name":"香水","terms":["香水","香氛","香薰","fragrance","perfume","scent"]},
- {"name":"品牌营销","terms":["品牌","营销","广告","brand","marketing","advertising","campaign"]},
- {"name":"潮玩","terms":["潮玩","盲盒","手办","泡泡玛特","labubu","collectible","designer toy"]},
- {"name":"新消费","terms":["消费","消费者","零售","consumer","retail"]},
- {"name":"美妆","terms":["美妆","护肤","化妆品","beauty","skincare","cosmetics"]},
- {"name":"IP联名","terms":["联名","授权","IP","collaboration","licensing","collab"]},
- {"name":"情绪价值","terms":["情绪价值","悦己","疗愈","陪伴","兴趣消费","情绪消费","wellness"]},
- {"name":"户外运动","terms":["户外","运动","徒步","露营","outdoor","sportswear","athleisure"]},
- {"name":"咖啡","terms":["咖啡","coffee","cafe"]}
+  {
+    "name": "亚文化",
+    "terms": [
+      "亚文化",
+      "圈层",
+      "兴趣消费",
+      "二次元",
+      "谷子",
+      "痛包",
+      "动漫",
+      "潮玩",
+      "青年文化",
+      "青年消费",
+      "新青年",
+      "新生代",
+      "subculture",
+      "streetwear",
+      "fandom",
+      "anime",
+      "collectible",
+      "Gen Z",
+      "密室逃脱",
+      "剧本杀",
+      "桌游",
+      "角色扮演",
+      "同人",
+      "cosplay",
+      "role-playing",
+      "goth",
+      "punk"
+    ]
+  },
+  {
+    "name": "香水",
+    "terms": [
+      "香水",
+      "香氛",
+      "香薰",
+      "fragrance",
+      "perfume",
+      "scent"
+    ]
+  },
+  {
+    "name": "品牌营销",
+    "terms": [
+      "品牌",
+      "营销",
+      "广告",
+      "brand",
+      "marketing",
+      "advertising",
+      "campaign"
+    ]
+  },
+  {
+    "name": "潮玩",
+    "terms": [
+      "潮玩",
+      "盲盒",
+      "手办",
+      "泡泡玛特",
+      "labubu",
+      "collectible",
+      "designer toy"
+    ]
+  },
+  {
+    "name": "新消费",
+    "terms": [
+      "消费",
+      "消费者",
+      "零售",
+      "consumer",
+      "retail"
+    ]
+  },
+  {
+    "name": "美妆",
+    "terms": [
+      "美妆",
+      "护肤",
+      "化妆品",
+      "beauty",
+      "skincare",
+      "cosmetics"
+    ]
+  },
+  {
+    "name": "IP联名",
+    "terms": [
+      "联名",
+      "授权",
+      "IP",
+      "collaboration",
+      "licensing",
+      "collab"
+    ]
+  },
+  {
+    "name": "情绪价值",
+    "terms": [
+      "情绪价值",
+      "悦己",
+      "疗愈",
+      "陪伴",
+      "兴趣消费",
+      "情绪消费",
+      "wellness"
+    ]
+  },
+  {
+    "name": "户外运动",
+    "terms": [
+      "户外",
+      "运动",
+      "徒步",
+      "露营",
+      "outdoor",
+      "sportswear",
+      "athleisure"
+    ]
+  },
+  {
+    "name": "咖啡",
+    "terms": [
+      "咖啡",
+      "coffee",
+      "cafe"
+    ]
+  }
 ]
