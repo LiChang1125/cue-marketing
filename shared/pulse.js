@@ -10,7 +10,7 @@ export function mergeRankHistory(previous=[],current=[],now=Date.now()){
   }
   return [...points.values()].sort((a,b)=>Date.parse(a.at)-Date.parse(b.at));
 }
-export function topicPulse(items,history,{query='',days=7,platform='all',now=Date.now()}={}){
+export function topicPulse(items,history,{query='',days=7,platform='all',now=Date.now(),allowRecentFallback=false}={}){
   const match=i=>query?topicMatches({...i,excerpt:[i.excerpt,i.originalTitle,i.originalExcerpt].join(' ')},query):defaultPulseValue(i);
   const start=Date.parse(day(now)+'T00:00:00+08:00')-(days-1)*86400000;
   const articles=uniqueCases(items.filter(i=>pulseValue(i)&&match(i)&&Date.parse(pulseDate(i))>=start&&Date.parse(pulseDate(i))<=now)).sort((a,b)=>(a.contentType==='hot-topic')-(b.contentType==='hot-topic')||Date.parse(pulseDate(b))-Date.parse(pulseDate(a)));
@@ -21,5 +21,7 @@ export function topicPulse(items,history,{query='',days=7,platform='all',now=Dat
   // Diversify ten results first; then fill remaining slots without discarding relevance.
   const selected=[],counts=new Map();for(const item of articles){if((counts.get(item.source)||0)>=3)continue;selected.push(item);counts.set(item.source,(counts.get(item.source)||0)+1);if(selected.length===10)break;}
   for(const item of articles){if(selected.length===10)break;if(!selected.includes(item))selected.push(item);}
-  return {articles:selected,total:articles.filter(i=>i.publishedAt).length,mediaCount:new Set(articles.filter(i=>i.publishedAt).map(i=>i.source)).size,series,trajectories,hotTopics:groups.size};
+  const expanded=allowRecentFallback&&days===7&&selected.length<10?topicPulse(items,history,{query,days:30,platform,now}):null;
+  const useExpanded=expanded&&expanded.articles.length>selected.length;
+  return {articles:useExpanded?expanded.articles:selected,reportDays:useExpanded?30:days,total:articles.filter(i=>i.publishedAt).length,mediaCount:new Set(articles.filter(i=>i.publishedAt).map(i=>i.source)).size,series,trajectories,hotTopics:groups.size};
 }

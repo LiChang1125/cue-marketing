@@ -34,4 +34,7 @@ test('关键词返回最近十篇真实报道，同义词扩展，不将搜索�
  const result=topicPulse([...items,{...items[0],id:'future',title:'香水未来新闻',publishedAt:'2026-12-01'}],[],{query:'香水',now});
  assert.equal(result.articles.length,10);assert.equal(result.articles[0].id,'0');assert.equal(result.total,14);assert.equal(result.series.reduce((n,p)=>n+p.count,0),14);assert.equal(result.hotTopics,0);
  assert.equal(topicPulse(items,[],{query:'亚文化',now}).articles.length,0);
+ const older=items.slice(0,5).map((i,n)=>({...i,id:'old'+n,title:'香水行业深度报道 '+n,url:i.url+'older',publishedAt:new Date(now-(n+8)*86400000).toISOString()}));
+ const expanded=topicPulse([...items.slice(0,5),...older],[],{query:'香水',now,allowRecentFallback:true});
+ assert.equal(expanded.articles.length,10);assert.equal(expanded.reportDays,30);assert.equal(expanded.total,5);
 });
