@@ -42,13 +42,15 @@ export function parseMediaHtml(html,source,now=new Date().toISOString()){
  });return uniqueCases(out);
 }
 export async function fetchPublicText(url,fetcher=fetch){const response=await fetcher(url,{headers:{'User-Agent':'CUE-MediaReader/1.0 (+https://github.com/LiChang1125/cue-marketing)','Accept':'application/rss+xml, application/atom+xml, text/html, application/xml;q=0.9,*/*;q=0.5'},signal:AbortSignal.timeout(18000)});if(!response.ok)throw Error('HTTP '+response.status);const body=await response.text();if(body.length>8e6)throw Error('Response too large');return {body,url:response.url};}
-export async function collectMediaSource(source,{fetcher=fetch,now=new Date().toISOString(),details=36}={}){
+export async function collectMediaSource(source,{fetcher=fetch,now=new Date().toISOString(),details=36,previous=[]}={}){
  let items=[],method='html',lastError,successful=0;const attempts=[];
  const urls=[...new Set([source.feed,source.url,...(source.entries||[])].filter(Boolean))];
  for(const entry of urls){try{const {body,url}=await fetchPublicText(entry,fetcher);if(!sameSite(url,source))throw Error('来源已跳转，需核实新站点');successful++;let found=/^\s*<\?xml|<rss[ >]|<feed[ >]/i.test(body)?parseMediaFeed(body,source,now):parseMediaHtml(body,source,now);if(/<rss[ >]|<feed[ >]/i.test(body))method='rss+html';items.push(...found);attempts.push({url:entry,state:'ok',found:found.length});
  if(entry===source.url&&!source.feed){const $=load(body);const feed=$('link[type="application/rss+xml"],link[type="application/atom+xml"]').first().attr('href');const resolved=safeUrl(feed,source.url);if(resolved&&sameSite(resolved,source)&&!urls.includes(resolved))urls.push(resolved);}
  }catch(e){lastError=e;attempts.push({url:entry,state:'unavailable',message:e.message});}}
  const candidates=uniqueCases(items).filter(i=>articlePath(i.url,source)||['socialbeta','brandstar'].includes(source.id)).filter(i=>!noise.test(i.title)).slice(0,180);
+ const verified=new Map(previous.filter(i=>i.source===source.id&&i.publishedAt).map(i=>[i.id,i]));
+ for(const item of candidates){const prior=verified.get(item.id);if(prior){item.publishedAt||=prior.publishedAt;item.excerpt||=prior.originalExcerpt||prior.excerpt||'';item.image||=prior.image;}}
  const undated=candidates.filter(i=>!i.publishedAt||source.id==='media-adquan').slice(0,details);
  for(let k=0;k<undated.length;k+=4)await Promise.all(undated.slice(k,k+4).map(async item=>{try{const {body}=await fetchPublicText(item.url,fetcher),metadata=readArticleMetadata(body,source,Date.parse(now));
  if(metadata.publishedAt&&Date.parse(metadata.publishedAt)<=Date.parse(now)+300000)item.publishedAt=metadata.publishedAt;

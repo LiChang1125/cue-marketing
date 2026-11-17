@@ -5,7 +5,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {uniqueCases} from '../shared/insights.js';
 import {readArticleMetadata} from '../server/media-metadata.js';
-import {parseMediaHtml} from '../server/media-news.js';
+import {parseMediaHtml,collectMediaSource} from '../server/media-news.js';
 import {mediaSource} from '../shared/media-sources.js';
 import {chinaStory,curatedSelection} from '../shared/geography.js';
 import {searchResearch} from '../shared/research.js';
@@ -23,6 +23,11 @@ test('source-specific article paths and publication dates retain distinct query-
  assert.equal(readArticleMetadata('<meta property="article:modified_time" content="2026-11-17"><img src="/2026-11-17/photo.jpg">').publishedAt,null);
  assert.equal(readArticleMetadata('<div class="report_2_2">3小时前</div>',{key:'topmarketing'},Date.parse('2026-11-17T06:00:00Z')).publishedAt,'2026-11-17T03:00:00.000Z');
  assert.equal(parseMediaHtml('<a href="/info12345">消费者趋势与品牌营销洞察报告</a>',mediaSource('media-topmarketing')).length,1);
+});
+test('recurring collection reuses verified publication metadata without re-dating articles',async()=>{
+ const source={...mediaSource('media-topys'),entries:[]},now='2026-11-17T06:00:00Z',html='<a href="/article/12345">消费者品牌营销案例研究</a>',prior=parseMediaHtml(html,source,now).map(i=>({...i,publishedAt:'2026-11-10T03:00:00.000Z'}));let requests=0;
+ const result=await collectMediaSource(source,{now,previous:prior,fetcher:async url=>{requests++;assert.equal(url,source.url);return {ok:true,url,text:async()=>html};}});
+ assert.equal(requests,1);assert.equal(result.items[0].publishedAt,prior[0].publishedAt);
 });
 test('cloud arbitrary-topic requests share native report generation and preserve source links',async()=>{
  const dir=await mkdtemp(join(tmpdir(),'cue-research-'));let calls=0;

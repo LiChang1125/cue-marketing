@@ -17,7 +17,7 @@ if(process.env.PUBLIC_DATA_PREVIOUS){previous=JSON.parse(await readFile(process.
 else for(const path of ['content-data.json','preview-data.json']){try{const r=await fetch(site+path,{signal:AbortSignal.timeout(20000)});if(r.ok){previous=await r.json();break;}}catch{}}
 if(!previous?.curated||!previous?.reports)throw Error('Previous published content is required to preserve curated articles and report archives');
 const collected=[],sources=[];let cursor=0;
-await Promise.all(Array.from({length:5},async()=>{while(cursor<mediaSources.length){const source=mediaSources[cursor++];try{const result=await collectMediaSource(source,{details:48});collected.push(...result.items);sources.push(result.status);console.log(source.name+': '+result.items.length);}catch(e){sources.push({id:source.id,name:source.name,state:'unavailable',count:0,message:e.message,checkedAt:now.toISOString()});console.log(source.name+': unavailable');}}}));
+await Promise.all(Array.from({length:5},async()=>{while(cursor<mediaSources.length){const source=mediaSources[cursor++];try{const result=await collectMediaSource(source,{details:48,previous:previous.feed?.items||[]});collected.push(...result.items);sources.push(result.status);console.log(source.name+': '+result.items.length);}catch(e){sources.push({id:source.id,name:source.name,state:'unavailable',count:0,message:e.message,checkedAt:now.toISOString()});console.log(source.name+': unavailable');}}}));
 // Walk public editorial archives to broaden keyword coverage, never platform accounts.
 const archives=[];
 for(let page=2;page<=6;page++){archives.push(['socialbeta',`https://socialbeta.com/campaign?page=${page}`]);archives.push(['brandstar',`https://radar.brandstar.com.cn/?pno=${page}`]);}
