@@ -9,10 +9,12 @@ export function createUrls({apiOrigin='',base='/'}={}) {
 }
 const urls=createUrls({apiOrigin:import.meta.env?.VITE_API_ORIGIN||'',base:import.meta.env?.BASE_URL||'/'});
 export const previewMode=import.meta.env?.VITE_PREVIEW==='true';
+export const publicMode=import.meta.env?.VITE_PUBLIC_DATA==='true';
 export const contentNow=()=>previewMode?Number(import.meta.env.VITE_PREVIEW_AT):Date.now();
 export const assetUrl=urls.asset;
-export const mediaUrl=path=>previewMode&&path?.startsWith('/media/')?assetUrl(path):urls.media(path);
+export const mediaUrl=path=>(previewMode||publicMode)&&path?.startsWith('/media/')?assetUrl(path):urls.media(path);
 export async function apiFetch(path,options){
+  if(publicMode){const {publicFetch}=await import('./public-data.js');return publicFetch(path,options,assetUrl);}
   if(previewMode){const {previewFetch}=await import('./preview.js');return previewFetch(path,options,assetUrl);}
   return fetch(urls.api(path),{...options,credentials:'omit'});
 }

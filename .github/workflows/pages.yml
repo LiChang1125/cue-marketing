@@ -1,0 +1,57 @@
+name: Update CUE website
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: '17,47 * * * *'
+    - cron: '0 0 * * *'
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: cue-pages
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: npm ci
+      - run: npm test
+      - name: Install pinned TrendRadar public collector
+        run: |
+          python -m pip install requests==2.34.2
+          node scripts/setup-trendradar.mjs
+      - name: Collect public hotlists without platform accounts
+        run: python scripts/trendradar_bridge.py
+        env:
+          PYTHONIOENCODING: utf-8
+      - name: Collect marketing media and preserve history
+        run: node scripts/refresh-public-data.mjs
+      - name: Build public website
+        run: |
+          npm run build -- --base=/cue-marketing/
+          cp .artifacts/public-data/content-data.json dist/content-data.json
+          cp -r .artifacts/public-articles/media dist/media
+        env:
+          VITE_PUBLIC_DATA: 'true'
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

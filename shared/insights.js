@@ -20,7 +20,7 @@ export const contentText=item=>[item.title,item.excerpt].filter(Boolean).join(' 
 export function isMarketingCase(item){
   if(!meaningfulContent(item))return false;
   if(/现货补货|私信下单|代购接单|求购|出闲置|有路人|偶遇|代拍/.test(item.title))return false;
-  return ['socialbeta','brandstar'].includes(item.source)||/品牌|营销|联名|广告|代言|新品|发售|快闪|发布|推出|市场|研究报告|消费趋势|消费经济|展览|展会|开业|IP授权|商业化/.test(item.title);
+  return item.mediaEditorial===true||['socialbeta','brandstar'].includes(item.source)||/品牌|营销|联名|广告|代言|新品|发售|快闪|发布|推出|市场|研究报告|消费趋势|消费经济|展览|展会|开业|IP授权|商业化/.test(item.title);
 }
 export function topicMatches(item,query){
   const word=String(query||'').trim().toLowerCase();if(!word)return false;
