@@ -26,7 +26,7 @@ export async function installAccess(app,{file=process.env.CUE_ACCOUNTS_FILE,requ
  });
  app.post('/api/logout',(req,res)=>{sessions.delete(token(req));writeCookie(res,'',0);res.json({ok:true});});
  app.use((req,res,next)=>{
-  const protectedPath=/^\/(api\/|content-data\.json|preview-data\.json|research(?:\/|$)|trendradar(?:\/|$)|media(?:\/|$))/.test(req.path);
+  const protectedPath=/^\/(api\/|content-data\.json|preview-data\.json|research(?:\/|$)|trendradar(?:\/|$)|media(?:\/|$))/i.test(req.path);
   if(required&&protectedPath&&!user(req))return res.status(401).json({error:'请先登录'});
   if(protectedPath)res.set('Cache-Control','private, no-store');next();
  });

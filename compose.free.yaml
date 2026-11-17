@@ -15,6 +15,12 @@ services:
       - ${CUE_ACCOUNTS_FILE:?Set the private accounts JSON path}:/run/secrets/cue-accounts.json:ro
       - cue-public-data:/var/data/cue
       - cue-translation:/app/.tools/translation
+      - cue-collector-cache:/app/.artifacts
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4173/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
@@ -24,3 +30,4 @@ services:
 volumes:
   cue-public-data:
   cue-translation:
+  cue-collector-cache:

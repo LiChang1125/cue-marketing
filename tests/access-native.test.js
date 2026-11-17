@@ -23,7 +23,7 @@ test('cloud requires server session for feeds, data, native reports and media; l
  await writeFile(join(dir,'content-data.json'),JSON.stringify({generatedAt:'2026-11-17',feed:{items:[{id:'test'}],topics:[]},curated:{all:[]},reports:{reports:[]}}));
  const runtime=await startPublicServer({dataDir:dir,port:0,collect:false,accountsFile:accounts});
  try{const base='http://127.0.0.1:'+runtime.server.address().port;
- for(const path of ['/api/feed','/content-data.json','/trendradar/index.html','/research/test.html','/media/test.jpg'])assert.equal((await fetch(base+path)).status,401,path);
+ for(const path of ['/api/feed','/content-data.json','/trendradar/index.html','/research/test.html','/media/test.jpg','/API/feed','/CONTENT-DATA.JSON','/MEDIA/test.jpg'])assert.equal((await fetch(base+path)).status,401,path);
  const login=(username,password,origin)=>fetch(base+'/api/login',{method:'POST',headers:{'Content-Type':'application/json',...(origin?{Origin:origin}:{})},body:JSON.stringify({username,password})});
  assert.equal((await login('tester','wrong')).status,401);assert.equal((await login('tester','sample-pass','https://evil.example')).status,403);
  const r=await login('tester','sample-pass');assert.equal(r.status,200);const header=r.headers.get('set-cookie');assert.match(header,/HttpOnly/);assert.match(header,/SameSite=Strict/);const cookie=header.split(';')[0];

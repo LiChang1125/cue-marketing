@@ -3,7 +3,7 @@ import {readFile,writeFile,mkdir,rename,cp} from 'node:fs/promises';
 import {join} from 'node:path';
 
 export function command(bin,args,env=process.env){return new Promise((resolve,reject)=>{const p=spawn(bin,args,{env,stdio:'inherit',windowsHide:true});const timer=setTimeout(()=>p.kill('SIGTERM'),22*60000);p.once('error',e=>{clearTimeout(timer);reject(e);});p.once('exit',code=>{clearTimeout(timer);code===0?resolve():reject(Error(bin+' exited '+code));});});}
-export function createPublicWorker({dataDir,intervalMs=10*60000,run=command,onPublish=()=>{}}){
+export function createPublicWorker({dataDir,intervalMs=10*60000,run=command,onPublish=()=>{},publish}){
  let running=false,stopped=false,timer;const state={running:false,lastSuccess:null,lastAttempt:null,lastError:null};
  const active=join(dataDir,'content-data.json'),working=join(dataDir,'next-content-data.json');
  async function refresh(){if(running||stopped)return false;running=true;state.running=true;state.lastAttempt=new Date().toISOString();
@@ -14,7 +14,7 @@ export function createPublicWorker({dataDir,intervalMs=10*60000,run=command,onPu
    const data=JSON.parse(await readFile(working,'utf8'));if(!data.feed?.items?.length||!data.generatedAt)throw Error('Empty refresh rejected');
    await cp('.artifacts/public-articles/media',join(dataDir,'media'),{recursive:true,force:true});
    await cp('.artifacts/public-data/trendradar',join(dataDir,'trendradar'),{recursive:true,force:true});
-   await rename(working,active);state.lastSuccess=data.generatedAt;state.lastError=null;await onPublish(data);return true;
+   if(publish)await publish(data);else{await rename(working,active);await onPublish(data);}state.lastSuccess=data.generatedAt;state.lastError=null;return true;
   }catch(e){state.lastError=e.message;console.error('Public collector:',e.message);return false;}
   finally{running=false;state.running=false;if(!stopped){timer=setTimeout(refresh,intervalMs);timer.unref?.();}}
  }

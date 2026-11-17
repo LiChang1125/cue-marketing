@@ -2,12 +2,17 @@ FROM python:3.12-slim-bookworm AS python-runtime
 FROM node:24-bookworm-slim
 COPY --from=python-runtime /usr/local /usr/local
 WORKDIR /app
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && rm -rf /var/lib/apt/lists/*
+ARG DEBIAN_MIRROR=deb.debian.org
+ARG PYPI_INDEX_URL=https://pypi.org/simple
+ARG NPM_REGISTRY=https://registry.npmjs.org
+RUN sed -i "s|deb.debian.org|${DEBIAN_MIRROR}|g" /etc/apt/sources.list.d/debian.sources && apt-get update && apt-get install -y --no-install-recommends ca-certificates libsqlite3-0 && rm -rf /var/lib/apt/lists/*
 COPY package*.json requirements-public.txt ./
-RUN npm ci --include=dev && python3 -m venv /opt/cue-python && /opt/cue-python/bin/pip install --no-cache-dir -r requirements-public.txt
+RUN npm ci --include=dev --registry=${NPM_REGISTRY} && python3 -m venv /opt/cue-python && /opt/cue-python/bin/pip install --no-cache-dir --index-url ${PYPI_INDEX_URL} -r requirements-public.txt
 ENV PATH="/opt/cue-python/bin:${PATH}" PYTHON=/opt/cue-python/bin/python PYTHONIOENCODING=utf-8
 COPY . .
-RUN node scripts/setup-trendradar-native.mjs && npm run build && mkdir -p /var/data/cue /app/.tools/translation /app/.artifacts && chown -R node:node /var/data/cue /app/.tools /app/.artifacts
+ARG TRENDRADAR_ARCHIVE
+RUN node scripts/setup-trendradar-native.mjs && npm run build && rm -f dist/access-preview.json && mkdir -p /var/data/cue /app/.tools/translation /app/.artifacts && chown -R node:node /var/data/cue /app/.tools /app/.artifacts
+RUN python -c "import sys,sqlite3,ctranslate2; sys.path.insert(0,'.tools/trendradar-native'); from trendradar.core import load_config; from trendradar.storage import get_storage_manager; print('Native collector runtime dependencies verified')"
 USER node
 ENV HOST=0.0.0.0 PORT=4173 DATA_DIR=/var/data/cue COLLECT_INTERVAL_MS=600000 NODE_ENV=production
 EXPOSE 4173
