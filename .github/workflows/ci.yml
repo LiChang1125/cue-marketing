@@ -23,7 +23,7 @@ jobs:
       - uses: actions/checkout@v4
       - run: docker build -f Dockerfile.public -t cue-smoke .
       - name: Start autonomous public cloud service
-        run: docker run -d --name cue-smoke -p 127.0.0.1:4173:4173 cue-smoke
+        run: docker run -d --name cue-smoke -p 127.0.0.1:4173:4173 -e CUE_ACCOUNTS_FILE=/var/data/cue/smoke-accounts.json cue-smoke sh -c 'node scripts/smoke-private-cloud.mjs --prepare && node server/public-server.js'
       - name: Verify shared public data and automatic collector
         shell: bash
         run: |
@@ -32,8 +32,7 @@ jobs:
             sleep 2
           done
           curl --fail http://127.0.0.1:4173/api/health
-          docker exec cue-smoke node --input-type=module -e "const r=await fetch('http://127.0.0.1:4173/api/health');const d=await r.json();if(!d.collector.lastAttempt)process.exit(1);console.log('Cloud collector started without visitor action');"
-          curl --fail 'http://127.0.0.1:4173/api/curated?region=china'
+          docker exec cue-smoke node scripts/smoke-private-cloud.mjs
 
       - name: Container diagnostics
         if: always()

@@ -10,7 +10,9 @@ services:
     environment:
       COLLECT_INTERVAL_MS: ${COLLECT_INTERVAL_MS:-600000}
       TZ: Asia/Shanghai
+      CUE_ACCOUNTS_FILE: /run/secrets/cue-accounts.json
     volumes:
+      - ${CUE_ACCOUNTS_FILE:?Set the private accounts JSON path}:/run/secrets/cue-accounts.json:ro
       - cue-public-data:/var/data/cue
       - cue-translation:/app/.tools/translation
     healthcheck:

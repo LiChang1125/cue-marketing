@@ -11,6 +11,8 @@ import Curated from './Curated.jsx';
 import MarketingBoard from './MarketingBoard.jsx';
 import TopicExplorer,{SearchBox} from './TopicExplorer.jsx';
 import PublicPulse from './PublicPulse.jsx';
+import AccessGate from './AccessGate.jsx';
+import {featuredNews} from '../shared/featured.js';
 import CaseCard from './CaseCard.jsx';
 import Cover from './Cover.jsx';
 import Hotlist from './Hotlist.jsx';
@@ -18,7 +20,7 @@ import {freshness} from './freshness.js';
 import {sectors,sectorId,marketingLogic,isMarketingCase,uniqueCases} from '../shared/insights.js';
 
 const date=t=>t?new Date(t).toLocaleDateString('zh-CN',{timeZone:'Asia/Shanghai',year:'numeric',month:'2-digit',day:'2-digit'}):'日期未标注';
-const pages=[['discover','视野','营销、品牌与文化动态','发现潮流'],['curated','选刊','品牌与消费文化','精选'],['stats','脉动','市场研究 · 消费洞察 · 品牌策略','报告搜索'],['board','灵感档案','热点分布与案例思路','营销看板'],['reports','晨报','品牌动态 · 联名 IP · 新消费','营销日报']];
+const pages=[['discover','视野','营销、品牌与文化动态','发现潮流'],['curated','选刊','品牌与消费文化','精选'],['stats','脉动','多平台热点与关键词洞察','热点雷达'],['board','灵感档案','热点分布与案例思路','营销看板'],['reports','晨报','品牌动态 · 联名 IP · 新消费','营销日报']];
 
 function App(){
   const [feed,setFeed]=useState({items:[],sources:[],topics:[],hotlist:[],editorial:[]});
@@ -49,16 +51,17 @@ function App(){
   const sourceMap=Object.fromEntries(feed.sources.map(s=>[s.id,s]));
   const fresh=item=>!error&&freshness(item.fetchedAt,sourceMap[item.source],now)==='fresh';
   const filtered=uniqueCases((source==='all'?feed.editorial||[]:feed.editorialCandidates||[]).filter(i=>(tab==='all'||sectorId(i)===tab)&&(source==='all'||i.source===source)&&(period==='all'||Date.parse(i.publishedAt||i.fetchedAt)<=now&&now-Date.parse(i.publishedAt||i.fetchedAt)<=Number(period)*86400000)));
-  const featured=(feed.editorial||[]).filter(i=>Date.parse(i.publishedAt)>=now-7*86400000).slice(0,3);
+  const [failedFeatured,setFailedFeatured]=useState([]);
+  const featured=featuredNews(feed.editorial||[],now,failedFeatured);
+  const coverFailed=id=>setFailedFeatured(ids=>ids.includes(id)?ids:[...ids,id]);
   const page=pages.find(p=>p[0]===view),logic=selected?marketingLogic(selected):null;
   return <>
     <header className="header"><div className="header-inner"><a className="logo" href={assetUrl('/')} aria-label="CUE 首页"><img className="brand-wordmark" src={assetUrl('/cue-logo.svg')} alt="CUE"/><span className="brand-descriptor">MARKETING<br/>& CULTURE</span></a><nav className="top-nav" aria-label="主导航">{pages.map(([id,name,,meaning])=><button key={id} className={view===id?'active':''} onClick={()=>navigate(id)}>{name}<span className="nav-meaning"> · {meaning}</span></button>)}</nav><div className="internal-use"><img src={assetUrl('/baidu.ico')} alt="百度" width="20" height="20"/><span><span>泛科技通用拓展二组</span><span>内部使用</span></span></div></div></header>
     <main className="shell">{previewMode&&<p className="preview-notice" role="status">内容预览 · 截至 {new Date(contentNow()).toLocaleString('zh-CN',{timeZone:'Asia/Shanghai',hour12:false})}（北京时间） · 搜索限当前内容，暂不自动更新</p>}<div className="edition-line"><span>Where brands meet culture.</span><span>{new Date(now).toLocaleDateString('zh-CN',{timeZone:'Asia/Shanghai',month:'long',day:'numeric',weekday:'long'})}</span></div><div className="page-intro"><div><h1>{page[1]}</h1><p>{page[2]}</p></div></div>
       {error&&<div className="error-box" role="alert">{error}<button onClick={load}>重试</button></div>}{searchError&&<div className="error-box" role="alert">{searchError}</div>}
       {view==='curated'?<Curated onOpen={setSelected}/>:view==='reports'?<Reports/>:view==='board'?<MarketingBoard items={feed.items} sources={feed.sources} onOpen={setSelected}/>:view==='stats'?<PublicPulse feed={feed} activeTopic={activeTopic} query={query} onQuery={setQuery} onSearch={searchTopic} onSelect={selectTopic} onOpen={setSelected} onReset={()=>{setTopicId(null);setQuery('');}} busy={topicBusy}/>:<>
-        <SearchBox value={query} onChange={setQuery} onSearch={searchTopic} busy={topicBusy}/>
         {!loaded&&!error&&<div className="quiet-empty">正在读取新闻…</div>}
-        {featured.length>0&&<section className="feature-layout" aria-label="焦点新闻"><article className="feature-main"><button className="feature-cover" onClick={()=>setSelected(featured[0])} aria-label={'查看：'+featured[0].title}><Cover item={featured[0]} eager/></button><div className="feature-copy"><span className="editorial-label">{sourceMap[featured[0].source]?.name}</span><button onClick={()=>setSelected(featured[0])}><h2>{featured[0].title}</h2></button><p>{date(featured[0].publishedAt)}</p><OriginalLink item={featured[0]}>阅读原文 <ArrowUpRight size={16}/></OriginalLink></div></article><div className="feature-side">{featured.slice(1).map(item=><article key={item.id}><button className="feature-thumb" onClick={()=>setSelected(item)} aria-label={'查看：'+item.title}><Cover item={item}/></button><div><span className="editorial-label">{sourceMap[item.source]?.name}</span><button onClick={()=>setSelected(item)}><h3>{item.title}</h3></button></div></article>)}</div></section>}
+        {featured.length>0&&<section className="feature-layout" aria-label="焦点新闻"><article className="feature-main"><button className="feature-cover" onClick={()=>setSelected(featured[0])} aria-label={'查看：'+featured[0].title}><Cover item={featured[0]} eager originalOnly onOriginalFailure={()=>coverFailed(featured[0].id)}/></button><div className="feature-copy"><span className="editorial-label">{sourceMap[featured[0].source]?.name}</span><button onClick={()=>setSelected(featured[0])}><h2>{featured[0].title}</h2></button><p>{date(featured[0].publishedAt)}</p><OriginalLink item={featured[0]}>阅读原文 <ArrowUpRight size={16}/></OriginalLink></div></article><div className="feature-side">{featured.slice(1).map(item=><article key={item.id}><button className="feature-thumb" onClick={()=>setSelected(item)} aria-label={'查看：'+item.title}><Cover item={item} originalOnly onOriginalFailure={()=>coverFailed(item.id)}/></button><div><span className="editorial-label">{sourceMap[item.source]?.name}</span><button onClick={()=>setSelected(item)}><h3>{item.title}</h3></button></div></article>)}</div></section>}
         <div className="content-layout"><section className="discovery"><div className="section-heading"><h2>潮流与品牌精选</h2><span className="editorial-label">{filtered.length} 条</span></div><div className="tabs" role="tablist" aria-label="内容分类">{[{id:'all',name:'全部内容'},...sectors].map(s=><button role="tab" aria-selected={tab===s.id} className={tab===s.id?'active':''} key={s.id} onClick={()=>setTab(s.id)}>{s.name}</button>)}</div><div className="filters"><select aria-label="筛选来源" value={source} onChange={e=>setSource(e.target.value)}><option value="all">所有来源</option>{feed.sources.map(s=><option value={s.id} key={s.id}>{s.name}</option>)}</select><select aria-label="发布时间" value={period} onChange={e=>setPeriod(e.target.value)}><option value="7">近 7 天</option><option value="1">近 24 小时</option><option value="30">近 30 天</option><option value="all">全部内容</option></select></div><div className="card-grid">{filtered.slice(0,limit).map(item=><CaseCard key={item.id} item={item} sources={feed.sources} onOpen={setSelected}/>)}</div>{loaded&&!filtered.length&&<div className="quiet-empty">暂无符合条件的新闻</div>}{filtered.length>limit&&<button className="load-more" onClick={()=>setLimit(limit+18)}>更多新闻 ↓</button>}</section><aside className="sidebar"><Hotlist items={feed.hotlist} onOpen={setSelected} onBoard={()=>navigate('board')}/></aside></div>
       </>}
       <footer className="site-footer"><span>CUE · MARKETING & CULTURE</span><span>© {new Date(now).getFullYear()} CUE</span></footer>
@@ -72,4 +75,4 @@ function TrendChart({points}){
   const xy=valid.map(p=>`${15+(Date.parse(p.at)-start)/Math.max(1,end-start)*570},${110-(p[metric]-min)/Math.max(1,max-min)*85}`).join(' ');
   return <div className="trend-chart"><p>{{views:'视频播放量',topicViews:'话题累计播放',likes:'点赞数'}[metric]}：{valid[0][metric].toLocaleString()} → {valid.at(-1)[metric].toLocaleString()}</p><svg viewBox="0 0 600 135" role="img" aria-label="互动数据曲线"><polyline points={xy} fill="none" stroke="#738879" strokeWidth="3"/></svg></div>;
 }
-createRoot(document.getElementById('root')).render(<App/>);
+createRoot(document.getElementById('root')).render(<AccessGate><App/></AccessGate>);

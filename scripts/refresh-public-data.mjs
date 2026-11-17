@@ -31,7 +31,7 @@ for(const [kind] of curatedTabs){try{const page=await curatedPage(kind);if(page.
 for(let page=2;page<=5;page++){try{const more=await curatedPage('all',page);curated.all=uniqueCases([...(curated.all||[]),...more.items]);if(!more.items.length)break;}catch{break;}}
 const resolveItems=uniqueCases([...items.filter(i=>i.source==='brandstar'),...Object.values(curated).flat()]);
 const resolved=new Map();for(let i=0;i<resolveItems.length;i+=6)await Promise.all(resolveItems.slice(i,i+6).map(async item=>{try{resolved.set(item.id,await service.resolveLink(item));}catch{}}));
-const imageCache=new Map();const priority=selectMediaNews(items,now.getTime(),24);
+const imageCache=new Map();const priority=selectMediaNews(items,now.getTime(),48);
 for(let i=0;i<priority.length;i+=5)await Promise.all(priority.slice(i,i+5).map(async item=>{try{const input={...item};if(/default_img|placeholder|favicon|site-logo/i.test(input.image||''))input.image=null;imageCache.set(item.id,await service.enrich(input));}catch{}}));
 const decorate=i=>{const item={...i,...resolved.get(i.id)};delete item.imageLocal;return {...item,...imageCache.get(i.id)};};
 const cleanItems=items.map(decorate);for(const kind of Object.keys(curated))curated[kind]=curated[kind].map(decorate);

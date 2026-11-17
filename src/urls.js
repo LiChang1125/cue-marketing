@@ -16,5 +16,5 @@ export const mediaUrl=path=>(previewMode||publicMode)&&path?.startsWith('/media/
 export async function apiFetch(path,options){
   if(publicMode){const {publicFetch}=await import('./public-data.js');return publicFetch(path,options,assetUrl);}
   if(previewMode){const {previewFetch}=await import('./preview.js');return previewFetch(path,options,assetUrl);}
-  return fetch(urls.api(path),{...options,credentials:'omit'});
+  const response=await fetch(urls.api(path),{...options,credentials:'same-origin'});if(response.status===401&&typeof window!=='undefined')window.dispatchEvent(new Event('cue-session-expired'));return response;
 }

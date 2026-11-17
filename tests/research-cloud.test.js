@@ -65,5 +65,5 @@ test('cloud collector runs without visitors, avoids overlap, retries failure and
 });
 test('cloud serves persisted shared data and China filter without platform login',async()=>{
  const dir=await mkdtemp(join(tmpdir(),'cue-public-'));await writeFile(join(dir,'content-data.json'),JSON.stringify({generatedAt:'2026-11-17',feed:{items:[{id:'test'}],topics:[],publicPulse:{researchItems:[]}},reports:{reports:[]},curated:{all:[{id:'cn',title:'品牌在上海开店',publishedAt:'2026-11-16'}]}}));
- const r=await startPublicServer({dataDir:dir,port:0,collect:false});try{const base='http://127.0.0.1:'+r.server.address().port;assert.equal((await(await fetch(base+'/api/health')).json()).ok,true);assert.equal((await(await fetch(base+'/api/curated?region=china')).json()).items.length,1);assert.equal((await fetch(base+'/api/refresh',{method:'POST'})).status,405);}finally{await r.close();}
+ const r=await startPublicServer({dataDir:dir,port:0,collect:false,authRequired:false});try{const base='http://127.0.0.1:'+r.server.address().port;assert.equal((await(await fetch(base+'/api/health')).json()).ok,true);assert.equal((await(await fetch(base+'/api/curated?region=china')).json()).items.length,1);assert.equal((await fetch(base+'/api/refresh',{method:'POST'})).status,405);}finally{await r.close();}
 });
