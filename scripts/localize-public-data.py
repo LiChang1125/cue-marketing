@@ -10,7 +10,7 @@ from pathlib import Path
 MODEL_URL = 'https://argos-net.com/v1/translate-en_zh-1_9.argosmodel'
 MODEL_MIRROR = 'https://github.com/LiChang1125/cue-marketing/releases/download/translation-model-en-zh-1.9/translate-en_zh-1_9.argosmodel'
 MODEL_SHA = '433e7c4f034d87fbe2353161e05f18646d7999452f801a4e1f0378522b9850ab'
-MODEL_VERSION = 'argos-en-zh-1.9'
+MODEL_VERSION = 'argos-en-zh-1.9-v2'
 
 def needs_translation(text):
     if not isinstance(text, str):
@@ -62,7 +62,8 @@ def localize(data, translate):
                 walk(child)
         elif isinstance(value, dict):
             for field in ('title', 'excerpt', 'subtitle'):
-                text = value.get(field)
+                original_field = 'original' + field.title()
+                text = value.get(original_field, value.get(field)) if value.get('translation', {}).get('method') != MODEL_VERSION else value.get(field)
                 if needs_translation(text):
                     key = text_key(text)
                     records.append((value, field, text, key))
@@ -103,9 +104,11 @@ def main():
         results = []
         for offset in range(0, len(texts), 12):
             batch = texts[offset:offset+12]
-            tokens = [tokenizer.encode(text, out_type=str) for text in batch]
-            translated = engine.translate_batch(tokens, beam_size=4, max_decoding_length=384, repetition_penalty=1.1, no_repeat_ngram_size=4)
-            results.extend(tokenizer.decode(row.hypotheses[0]).strip() for row in translated)
+            tokens = [tokenizer.encode(text.translate(str.maketrans({'’':"'",'‘':"'",'“':'"','”':'"'})), out_type=str) for text in batch]
+            # Match Argos' upstream decoding. SentencePiece.decode drops copied
+            # unknown tokens (often brand names); Argos joins pieces instead.
+            translated = engine.translate_batch(tokens, beam_size=4, max_decoding_length=384, replace_unknowns=True, length_penalty=0.2)
+            results.extend(''.join(row.hypotheses[0]).replace('▁', ' ').strip() for row in translated)
             print(f'Translated {min(offset+12,len(texts))}/{len(texts)} display strings', flush=True)
         return results
     new_count, total = localize(data, translate)
