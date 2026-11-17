@@ -192,5 +192,83 @@
     "group": "glossy",
     "name": "Glossy",
     "url": "https://www.glossy.co/feed/?paged=10"
+  },
+  {
+    "id": "daoinsights5",
+    "group": "daoinsights",
+    "name": "Dao Insights",
+    "url": "https://daoinsights.com/feed/?paged=5"
+  },
+  {
+    "id": "daoinsights6",
+    "group": "daoinsights",
+    "name": "Dao Insights",
+    "url": "https://daoinsights.com/feed/?paged=6"
+  },
+  {
+    "id": "daoinsights7",
+    "group": "daoinsights",
+    "name": "Dao Insights",
+    "url": "https://daoinsights.com/feed/?paged=7"
+  },
+  {
+    "id": "daoinsights8",
+    "group": "daoinsights",
+    "name": "Dao Insights",
+    "url": "https://daoinsights.com/feed/?paged=8"
+  },
+  {
+    "id": "daxue5",
+    "group": "daxue",
+    "name": "Daxue Consulting",
+    "url": "https://daxueconsulting.com/feed/?paged=5"
+  },
+  {
+    "id": "daxue6",
+    "group": "daxue",
+    "name": "Daxue Consulting",
+    "url": "https://daxueconsulting.com/feed/?paged=6"
+  },
+  {
+    "id": "daxue7",
+    "group": "daxue",
+    "name": "Daxue Consulting",
+    "url": "https://daxueconsulting.com/feed/?paged=7"
+  },
+  {
+    "id": "daxue8",
+    "group": "daxue",
+    "name": "Daxue Consulting",
+    "url": "https://daxueconsulting.com/feed/?paged=8"
+  },
+  {
+    "id": "glossy-beauty-page4",
+    "group": "glossy",
+    "name": "Glossy",
+    "url": "https://www.glossy.co/beauty/feed/?paged=4"
+  },
+  {
+    "id": "glossy-beauty-page5",
+    "group": "glossy",
+    "name": "Glossy",
+    "url": "https://www.glossy.co/beauty/feed/?paged=5"
+  },
+  {
+    "id": "glossy-beauty-page6",
+    "group": "glossy",
+    "name": "Glossy",
+    "url": "https://www.glossy.co/beauty/feed/?paged=6"
+  },
+  {
+    "id": "glossy-beauty-page7",
+    "group": "glossy",
+    "name": "Glossy",
+    "url": "https://www.glossy.co/beauty/feed/?paged=7"
+  },
+  {
+    "id": "glossy-beauty-page8",
+    "group": "glossy",
+    "name": "Glossy",
+    "url": "https://www.glossy.co/beauty/feed/?paged=8"
   }
 ]

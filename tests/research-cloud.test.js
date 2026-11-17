@@ -12,6 +12,7 @@ import {searchResearch} from '../shared/research.js';
 import {createPreviewFetch} from '../src/preview.js';
 import {createPublicWorker} from '../server/public-worker.js';
 import {startPublicServer} from '../server/public-server.js';
+import {createResearchService} from '../server/research-service.js';
 
 test('source-specific article paths and publication dates retain distinct query-ID cases',()=>{
  const s=mediaSource('media-adguider'),html='<a href="/case?id=aaa">品牌案例一：新品短片发布</a><a href="/case?id=bbb">品牌案例二：线下消费者体验</a>';
@@ -20,7 +21,14 @@ test('source-specific article paths and publication dates retain distinct query-
  assert.equal(readArticleMetadata('<meta property="og:release_date" content="2026年11月4日">',{key:'topys'}).publishedAt,'2026-11-03T16:00:00.000Z');
  assert.ok(readArticleMetadata('<script>{"caCreateTime":"Nov 16, 2026 12:00:00 AM"}</script>',{key:'adguider'}).publishedAt);
  assert.equal(readArticleMetadata('<meta property="article:modified_time" content="2026-11-17"><img src="/2026-11-17/photo.jpg">').publishedAt,null);
+ assert.equal(readArticleMetadata('<div class="report_2_2">3小时前</div>',{key:'topmarketing'},Date.parse('2026-11-17T06:00:00Z')).publishedAt,'2026-11-17T03:00:00.000Z');
  assert.equal(parseMediaHtml('<a href="/info12345">消费者趋势与品牌营销洞察报告</a>',mediaSource('media-topmarketing')).length,1);
+});
+test('cloud arbitrary-topic requests share native report generation and preserve source links',async()=>{
+ const dir=await mkdtemp(join(tmpdir(),'cue-research-'));let calls=0;
+ const data={generatedAt:new Date().toISOString(),feed:{publicPulse:{researchItems:[{id:'one',source:'independent',publisher:'研究机构',title:'小众香水品牌消费洞察报告',url:'https://a.test/report',publishedAt:new Date().toISOString(),contentType:'research-report'}]}}};
+ const search=createResearchService({dataDir:dir,getData:()=>data,run:async(_bin,args)=>{calls++;const input=JSON.parse(await readFile(args[args.indexOf('--input')+1],'utf8'));assert.equal(input[0].articles[0].url,'https://a.test/report');await new Promise(r=>setTimeout(r,10));}});
+ const [a,b]=await Promise.all([search('小众香水'),search('小众香水')]);assert.equal(calls,1);assert.equal(a.reportUrl,b.reportUrl);await search('小众香水');assert.equal(calls,1);await assert.rejects(search(' '));
 });
 test('China-only uses story geography across the complete curated collection before pagination',async()=>{
  assert.equal(chinaStory({title:'Nike在上海推出限时体验空间'}),true);

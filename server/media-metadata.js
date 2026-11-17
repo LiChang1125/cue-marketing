@@ -10,10 +10,11 @@ export function publicationDate(raw){
  const n=Date.parse(s);return Number.isFinite(n)?new Date(n).toISOString():null;
 }
 const dateSelectors={topys:'meta[property="og:release_date"]',meihua:'.article-info .info-item, .article-header .info-item, .article-info, .info-item',media360:'.article_info, .article-info, .detail_time, .info_box .time, .news_info',topmarketing:'.info_time, .info-time, .article-time, .time',niaogebiji:'.writeTime3',opp2:'article time, .entry-header time',brain:'.article-date, .post-date, .news-date'};
-export function readArticleMetadata(html,source={}){
+export function readArticleMetadata(html,source={},now=Date.now()){
  const $=load(html);let date;
  if(source.key==='adguider')date=publicationDate(html.match(/"caCreateTime"\s*:\s*"([^"]+)"/)?.[1]);
  if(source.key==='media360'){const m=$('.time').first().text().match(/(\d{2})\.(\d{2})\.(\d{2})/);if(m)date=publicationDate(`20${m[3]}-${m[1]}-${m[2]}`);}
+ if(source.key==='topmarketing'){const raw=$('.report_2_2').first().text().trim(),relative=raw.match(/^(\d+)\s*(分钟|小时|天)前$/);date=relative?new Date(now-Number(relative[1])*({'分钟':60000,'小时':3600000,'天':86400000}[relative[2]])).toISOString():publicationDate(raw);}
  for(const selector of ['meta[property="article:published_time"]','meta[name="pubdate"]','meta[name="publishdate"]','meta[name="PublishDate"]','meta[name="publication_date"]','meta[itemprop="datePublished"]','time[datetime]',dateSelectors[source.key]]){
   if(date)break;
   if(!selector)continue;const el=$(selector).first();const raw=el.attr('content')||el.attr('datetime')||el.text().trim();date=publicationDate(raw)||publicationDate(raw.match(/20\d{2}[-/.年]\d{1,2}[-/.月]\d{1,2}日?(?:\s+\d{1,2}:\d{2}(?::\d{2})?)?/)?.[0]);if(date)break;
@@ -22,7 +23,7 @@ export function readArticleMetadata(html,source={}){
  // Public article headers from older CMSes use a named date span, not schema.org.
  if(!date){const h=$('h1').first();for(const el of [h.parent(),h.parent().parent()]){const candidate=el.find('[class*="time"],[class*="date"],[class*="Time"],[class*="Date"]').first().text().trim();date=publicationDate(candidate.match(/20\d{2}[-/.年]\d{1,2}[-/.月]\d{1,2}日?(?:\s+\d{1,2}:\d{2}(?::\d{2})?)?/)?.[0]);if(date)break;}}
  if(!date&&['meihua','warc'].includes(source.key)){const h=$('h1').first(),header=h.parent().parent().clone();header.find('p,script,style,img').remove();const headerText=header.text().replace(h.text(),'').trim().slice(0,140);date=publicationDate(headerText.match(/20\d{2}-\d{2}-\d{2}|\d{1,2} (?:January|February|March|April|May|June|July|August|September|October|November|December) 20\d{2}/)?.[0]);}
- const title=$('meta[property="og:title"]').attr('content')||$('h1').first().text();
+ const title=$('meta[property="og:title"]').attr('content')||$('h1').first().text()||(source.key==='topmarketing'?$('.xiang_tit').first().text():'');
  const excerpt=$('meta[name="description"]').attr('content')||$('meta[property="og:description"]').attr('content')||$('article p,.article-content p,.article_content p').filter((_,e)=>$(e).text().trim().length>50).first().text();
  return {publishedAt:date,title:title?.replace(/\s*[-_|]\s*(广告门|数英|TOPYS).*$/,'').trim(),excerpt:excerpt?.trim().slice(0,280),image:$('meta[property="og:image"]').attr('content')};
 }

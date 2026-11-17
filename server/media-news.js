@@ -50,7 +50,7 @@ export async function collectMediaSource(source,{fetcher=fetch,now=new Date().to
  }catch(e){lastError=e;attempts.push({url:entry,state:'unavailable',message:e.message});}}
  const candidates=uniqueCases(items).filter(i=>articlePath(i.url,source)||['socialbeta','brandstar'].includes(source.id)).filter(i=>!noise.test(i.title)).slice(0,180);
  const undated=candidates.filter(i=>!i.publishedAt||source.id==='media-adquan').slice(0,details);
- for(let k=0;k<undated.length;k+=4)await Promise.all(undated.slice(k,k+4).map(async item=>{try{const {body}=await fetchPublicText(item.url,fetcher),metadata=readArticleMetadata(body,source);
+ for(let k=0;k<undated.length;k+=4)await Promise.all(undated.slice(k,k+4).map(async item=>{try{const {body}=await fetchPublicText(item.url,fetcher),metadata=readArticleMetadata(body,source,Date.parse(now));
  if(metadata.publishedAt&&Date.parse(metadata.publishedAt)<=Date.parse(now)+300000)item.publishedAt=metadata.publishedAt;
  if(metadata.title&&metadata.title.length>=8&&metadata.title.length<=180)item.title=metadata.title;
  item.image||=safeUrl(metadata.image,item.url);item.excerpt||=metadata.excerpt||'';
