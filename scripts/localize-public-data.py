@@ -10,14 +10,14 @@ from pathlib import Path
 MODEL_URL = 'https://argos-net.com/v1/translate-en_zh-1_9.argosmodel'
 MODEL_MIRROR = 'https://github.com/LiChang1125/cue-marketing/releases/download/translation-model-en-zh-1.9/translate-en_zh-1_9.argosmodel'
 MODEL_SHA = '433e7c4f034d87fbe2353161e05f18646d7999452f801a4e1f0378522b9850ab'
-MODEL_VERSION = 'argos-en-zh-1.9-v2'
+MODEL_VERSION = 'argos-en-zh-1.9-v3'
 
 def needs_translation(text):
     if not isinstance(text, str):
         return False
     latin = len(re.findall(r'[A-Za-z]', text))
     han = len(re.findall(r'[\u3400-\u9fff]', text))
-    return latin >= 12 and han < max(3, latin * 0.12)
+    return latin >= 12 and han < 3
 
 def text_key(text):
     return hashlib.sha256((MODEL_VERSION + '\n' + text).encode()).hexdigest()
@@ -53,7 +53,8 @@ def install_model(root):
             package.extractall(root)
     return target
 
-def localize(data, translate):
+def localize(data, translate, reviewed=None):
+    reviewed = reviewed or {}
     cache = data.get('translationCache', {})
     pending, records = {}, []
     def walk(value):
@@ -64,9 +65,11 @@ def localize(data, translate):
             for field in ('title', 'excerpt', 'subtitle'):
                 original_field = 'original' + field.title()
                 text = value.get(original_field, value.get(field)) if value.get('translation', {}).get('method') != MODEL_VERSION else value.get(field)
-                if needs_translation(text):
+                if needs_translation(text) or text in reviewed:
                     key = text_key(text)
                     records.append((value, field, text, key))
+                    if text in reviewed:
+                        cache[key] = reviewed[text]
                     if key not in cache:
                         pending[key] = text
             for key, child in list(value.items()):
@@ -111,7 +114,9 @@ def main():
             results.extend(''.join(row.hypotheses[0]).replace('▁', ' ').strip() for row in translated)
             print(f'Translated {min(offset+12,len(texts))}/{len(texts)} display strings', flush=True)
         return results
-    new_count, total = localize(data, translate)
+    reviewed_path = Path('config/translations.zh-CN.json')
+    reviewed = json.loads(reviewed_path.read_text(encoding='utf-8-sig')) if reviewed_path.exists() else {}
+    new_count, total = localize(data, translate, reviewed)
     # Commit only a complete localized payload. Failed translation keeps the existing site.
     temp = path.with_suffix('.localized.tmp')
     temp.write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')

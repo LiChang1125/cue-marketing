@@ -7,7 +7,10 @@ import {parseSocialBeta,parseBrandstar} from './sources.js';
 const editorial=/品牌|营销|行銷|廣告|广告|联名|聯名|消费|零售|新品|快闪|香水|香氛|潮玩|campaign|brand|marketing|advertis|retail|fragrance|perfume|collaborat|pop.up|consumer|e.commerce|packaging|rebrand|logo|loyalty|sponsor/i;
 const noise=/招聘|招募|培训报名|征稿|课程报名|早安|晚安|中奖|抽奖|获奖名单|职位|净利润|季度业绩|财务业绩|领导讲话|高质量发展|Logo.*Skill|annual results|quarterly earnings|job vacancy|senior hires|hall of good|appoints? |promot(?:es|ed) |joins? .* as |chief .* officer|(?:award|awards) (?:entries|deadline)|nominations? open|affiliate deals|best .* deals|coupon/i;
 const text=value=>load('<body>'+String(value||'')+'</body>')('body').text().replace(/\s+/g,' ').trim();
-export function marketingArticle(item,source){return mediaIds.has(item.source)&&meaningfulContent(item)&&!noise.test(item.title)&&!/restock|where to buy|购物清单|招标|代理公司需要|升任|任命|临床|医疗器械|供应商招募/i.test(item.title)&&! /\/(company|people|user|tags|jobs)\//.test(item.url||'')&&item.title.length>=8&&item.title.length<=180&&(source?.specialized?editorial.test(item.title+' '+(item.excerpt||''))||/case|strategy|creative|design|创意|策略|案例|設計|设计|洞察/i.test(item.title):editorial.test(item.title));}
+export function marketingArticle(item,source){
+ const title=item.originalTitle||item.title||'',excerpt=item.originalExcerpt||item.excerpt||'';
+ return mediaIds.has(item.source)&&meaningfulContent(item)&&!noise.test(title)&&!/restock|where to buy|购物清单|招标|代理公司需要|升任|任命|临床|医疗器械|供应商招募|get \d+% off|free entry|entries open|jury chairs|on the hunt for.*role|local authorities/i.test(title)&&! /\/(company|people|user|tags|jobs)\//.test(item.url||'')&&title.length>=8&&title.length<=180&&(source?.specialized?editorial.test(title+' '+excerpt)||/case|strategy|creative|design|创意|策略|案例|設計|设计|洞察/i.test(title):editorial.test(title));
+}
 function safeUrl(value,base){if(typeof value!=='string'||!value.trim())return null;try{const u=new URL(value,base);return /^https?:$/.test(u.protocol)?u.href:null;}catch{return null;}}
 function sameSite(url,source){try{return new URL(url).hostname.replace(/^www\./,'')===new URL(source.url).hostname.replace(/^www\./,'');}catch{return false;}}
 function normalize(source,item,now){

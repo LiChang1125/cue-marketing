@@ -28,6 +28,12 @@ class LocalizationTests(unittest.TestCase):
     def test_failed_translation_is_not_marked_complete(self):
         with self.assertRaises(ValueError):
             module.localize({'title': 'A new brand marketing campaign'}, lambda _: [''])
+    def test_reviewed_headlines_replace_old_machine_copy(self):
+        original = 'A new brand marketing campaign'
+        data = {'title':'旧的机器译文','originalTitle':original,'translation':{'method':'older-model'}}
+        module.localize(data, lambda _: self.fail('Reviewed title must not call translator'), {original:'品牌推出全新营销活动'})
+        self.assertEqual(data['title'],'品牌推出全新营销活动')
+        self.assertEqual(data['originalTitle'],original)
 
 if __name__ == '__main__':
     unittest.main()
