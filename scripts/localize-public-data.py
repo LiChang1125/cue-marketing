@@ -15,6 +15,7 @@ MODEL_VERSION = 'argos-en-zh-1.9-v3'
 def needs_translation(text):
     if not isinstance(text, str):
         return False
+    text = re.sub(r'https?://\S+', '', text)
     latin = len(re.findall(r'[A-Za-z]', text))
     han = len(re.findall(r'[\u3400-\u9fff]', text))
     return latin >= 12 and (han < 3 or (latin >= 50 and latin > han * 4))
@@ -83,7 +84,7 @@ def localize(data, translate, reviewed=None):
             raise ValueError('Translation batch length mismatch')
         for key, output in zip(pending, outputs):
             if not output or not re.search(r'[\u3400-\u9fff]', output):
-                raise ValueError('Translator did not produce Chinese')
+                raise ValueError('Translator did not produce Chinese: ' + pending[key][:160])
             cache[key] = output
     for record, field, original, key in records:
         if field in ('title', 'excerpt'):

@@ -26,6 +26,7 @@ class LocalizationTests(unittest.TestCase):
         self.assertFalse(module.needs_translation('Nike 与迪士尼推出全新联名系列'))
         self.assertTrue(module.needs_translation('Retail brands rethink the customer experience'))
         self.assertTrue(module.needs_translation('To Summer (观夏) introduces a new fragrance campaign and a book about the local culture of Yunnan 云南.'))
+        self.assertFalse(module.needs_translation('文章链接：https://github.com/example/project 评论链接：https://news.ycombinator.com/item?id=123 内容中文'))
     def test_failed_translation_is_not_marked_complete(self):
         with self.assertRaises(ValueError):
             module.localize({'title': 'A new brand marketing campaign'}, lambda _: [''])
