@@ -1,3 +1,11 @@
+# 当前 Pages 发布方式
+
+当前使用 `.github/workflows/pages.yml` 的 GitHub Actions 发布，不再由 gh-pages 快照分支构建。网站自动更新配置、数据范围及运维说明见 [PUBLIC-DATA.md](PUBLIC-DATA.md)。公开访问地址为 https://lichang1125.github.io/cue-marketing/ 。
+
+以下保留旧版预览与腾讯云 API 连接步骤，仅用于历史参考。
+
+---
+
 # GitHub Pages 发布
 
 用户于 2026-11-16 明确批准公开 `LiChang1125/cue-marketing`，并批准先发布现有内容预览版。当前仓库已改为公开；Pages 使用 `gh-pages` 分支的纯静态构建文件，源码仍在 `main`。不上传密钥、数据库、Cookie 或浏览器配置。
