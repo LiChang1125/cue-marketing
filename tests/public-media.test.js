@@ -18,6 +18,7 @@ test('TrendRadar 缓存的同一时间点不能制造增长，未知和未来时
  assert.equal(mergeRankHistory([base],[{...base,observedAt:'2026-11-17T04:00:00Z'},{...base,at:null},{...base,at:'2026-11-18T04:00:00Z'}],now).length,1);
  const next={...base,at:'2026-11-17T03:30:00Z',rank:5};const merged=mergeRankHistory([base],[next],now);assert.equal(merged.length,2);assert.deepEqual(topicPulse([],merged,{query:'香水',now}).trajectories[0].points.map(p=>p.rank),[9,5]);
  assert.equal(topicPulse([],merged,{query:'香水',platform:'weibo',now}).trajectories.length,0);
+ assert.equal(topicPulse([], [{...base,title:'美国发布AI芯片远程访问新规'}],{now}).trajectories.length,0);
 });
 test('关键词返回最近十篇真实报道，同义词扩展，不将搜索词或热榜排名算成讨论人数',()=>{
  const items=Array.from({length:14},(_,i)=>({id:String(i),title:'香氛品牌案例 '+i,url:'https://socialbeta.com/article/'+i,source:'socialbeta',publishedAt:new Date(now-(i+1)*3600000).toISOString()}));
