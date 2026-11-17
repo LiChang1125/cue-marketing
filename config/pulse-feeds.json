@@ -1,6 +1,10 @@
 [
  {"id":"glossy","name":"Glossy","url":"https://www.glossy.co/feed/"},
- {"id":"glossy-beauty","name":"Glossy Beauty","url":"https://www.glossy.co/beauty/feed/"},
+ {"id":"glossy-beauty","group":"glossy","name":"Glossy","url":"https://www.glossy.co/beauty/feed/"},
+ {"id":"glossy-page2","group":"glossy","name":"Glossy","url":"https://www.glossy.co/feed/?paged=2"},
+ {"id":"glossy-page3","group":"glossy","name":"Glossy","url":"https://www.glossy.co/feed/?paged=3"},
+ {"id":"glossy-beauty-page2","group":"glossy","name":"Glossy","url":"https://www.glossy.co/beauty/feed/?paged=2"},
+ {"id":"glossy-beauty-page3","group":"glossy","name":"Glossy","url":"https://www.glossy.co/beauty/feed/?paged=3"},
  {"id":"retaildive","name":"Retail Dive","url":"https://www.retaildive.com/feeds/news/"},
  {"id":"marketingdive","name":"Marketing Dive","url":"https://www.marketingdive.com/feeds/news/"},
  {"id":"hypebeast","name":"Hypebeast","url":"https://hypebeast.com/feed"},
@@ -9,5 +13,5 @@
  {"id":"pingwest","name":"品玩","url":"https://www.pingwest.com/feed"},
  {"id":"fashionnetwork","name":"FashionNetwork","url":"https://ww.fashionnetwork.com/rss/news.xml"},
  {"id":"jingdaily","name":"Jing Daily","url":"https://jingdaily.com/feed"},
- {"id":"cosmeticsdesign","name":"CosmeticsDesign","url":"https://www.cosmeticsdesign.com/Info/Latest-News/"}
+ {"id":"hypebae","name":"Hypebae","url":"https://hypebae.com/feed"}
 ]

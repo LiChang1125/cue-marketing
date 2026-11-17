@@ -15,7 +15,7 @@ export const directions = [
   {id:'story',name:'内容与叙事',pattern:/短片|广告|叙事|纪录片|品牌故事|创意|企划|怀旧|复古/i},
   {id:'commerce',name:'电商与转化',pattern:/电商|带货|直播|种草|双11|双十一|小红书|抖音营销/i}
 ];
-const aliases=[['香水','香氛','香薰','perfume','fragrance'],['亚文化','哥特','朋克','洛丽塔','lolita','二次元','街头文化'],['潮玩','盲盒','手办','公仔','labubu','泡泡玛特','泡泡马特'],['IP联名','品牌联名','跨界联名','联名','IP授权']];
+const aliases=[['香水','香氛','香薰','perfume','fragrance'],['亚文化','哥特','朋克','洛丽塔','lolita','二次元','街头文化','subculture','goth','punk','streetwear','anime','cosplay'],['潮玩','盲盒','手办','公仔','labubu','泡泡玛特','泡泡马特','designer toys','art toys','blind box','collectible toy'],['IP联名','品牌联名','跨界联名','联名','IP授权','品牌合作','collaboration','collab','crossover'],['快闪','快闪店','pop-up','pop up']];
 export const contentText=item=>[item.title,item.excerpt].filter(Boolean).join(' ');
 export function isMarketingCase(item){
   if(!meaningfulContent(item))return false;

@@ -73,7 +73,7 @@ def collect_feed(feed):
         for item in parsed[:120]:
             if fetcher._check_domain_safety([{'url': item.url}], domain):
                 continue
-            articles.append({'id': 'pulse-' + hashlib.sha256(item.url.encode()).hexdigest()[:18], 'title': item.title, 'url': item.url, 'publishedAt': item.published_at, 'excerpt': item.summary or '', 'source': 'pulse-' + feed['id'], 'sourceName': feed['name'], 'publisher': feed['name'], 'engine': 'TrendRadar', 'origin': 'trendradar-rss', 'contentType': 'article'})
+            articles.append({'id': 'pulse-' + hashlib.sha256(item.url.encode()).hexdigest()[:18], 'title': item.title, 'url': item.url, 'publishedAt': item.published_at, 'excerpt': item.summary or '', 'source': 'pulse-' + feed.get('group', feed['id']), 'sourceName': feed['name'], 'publisher': feed['name'], 'engine': 'TrendRadar', 'origin': 'trendradar-rss', 'contentType': 'article'})
         return articles, {'id': feed['id'], 'name': feed['name'], 'state': 'ok' if articles else 'empty', 'count': len(articles)}
     except Exception as error:
         return [], {'id': feed['id'], 'name': feed['name'], 'state': 'unavailable', 'message': type(error).__name__}

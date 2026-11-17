@@ -8,6 +8,7 @@ import zipfile
 from pathlib import Path
 
 MODEL_URL = 'https://argos-net.com/v1/translate-en_zh-1_9.argosmodel'
+MODEL_MIRROR = 'https://github.com/LiChang1125/cue-marketing/releases/download/translation-model-en-zh-1.9/translate-en_zh-1_9.argosmodel'
 MODEL_SHA = '433e7c4f034d87fbe2353161e05f18646d7999452f801a4e1f0378522b9850ab'
 MODEL_VERSION = 'argos-en-zh-1.9'
 
@@ -25,7 +26,21 @@ def install_model(root):
     root.mkdir(parents=True, exist_ok=True)
     archive = root / 'en-zh.argosmodel'
     if not archive.exists() or hashlib.sha256(archive.read_bytes()).hexdigest() != MODEL_SHA:
-        urllib.request.urlretrieve(MODEL_URL, archive)
+        error = None
+        for url in (MODEL_MIRROR, MODEL_URL):
+            try:
+                request = urllib.request.Request(url, headers={'User-Agent': 'CUE offline translation model installer'})
+                with urllib.request.urlopen(request, timeout=60) as response:
+                    content = response.read(120 * 1024 * 1024)
+                if hashlib.sha256(content).hexdigest() != MODEL_SHA:
+                    raise ValueError('Translation model checksum mismatch')
+                archive.write_bytes(content)
+                error = None
+                break
+            except Exception as failure:
+                error = failure
+        if error:
+            raise RuntimeError('Cannot download verified translation model') from error
     if hashlib.sha256(archive.read_bytes()).hexdigest() != MODEL_SHA:
         raise ValueError('Translation model checksum mismatch')
     target = root / 'translate-en_zh-1_9'

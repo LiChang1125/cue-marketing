@@ -16,6 +16,6 @@
 
 每次从已发布数据继承最近 30 天文章及原始排名历史；相同平台/URL/上游时间戳去重，缓存内容不会重复制造趋势。原始来源失败时保留先前数据的原始日期。无可用文章或无法读取上一版时停止部署，已有网站继续服务。数据健康状态在公开 JSON 的 sourceHealth 中，访问密钥、数据库和账号状态不发布。
 
-本地：`node scripts/setup-trendradar.mjs`，`python -m pip install requests==2.34.2`，`python scripts/trendradar_bridge.py`，`node scripts/refresh-public-data.mjs`。设置 `VITE_PUBLIC_DATA=true` 后构建，把 `.artifacts/public-data/content-data.json` 放入 dist。
+本地：`node scripts/setup-trendradar.mjs`，`python -m pip install -r requirements-public.txt`，`python scripts/trendradar_bridge.py`，`node scripts/refresh-public-data.mjs`，`python scripts/localize-public-data.py`。设置 `VITE_PUBLIC_DATA=true` 后构建，把 `.artifacts/public-data/content-data.json` 放入 dist。
 
 修改设计或逻辑后推送 main 即重新构建；在 Actions 查看 Update CUE website 是否成功。仓库长期无活动时 GitHub 可能暂停定时任务，应检查并重新启用。精选版块保持原分类与原文跳转，晨报保留原栏目及归档。
