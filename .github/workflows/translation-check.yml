@@ -1,0 +1,26 @@
+name: Check free translation availability
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify public translation with marketing headlines
+        run: |
+          python - <<'PY'
+          import json, urllib.request, urllib.parse
+          texts = ["QuickSnap takes Australians back to the '80s with new 'Time Machine' campaign via Hello", "Mitsubishi Electric encourages Aussies to elevate everyday moments in its latest brand campaign", "CommBank brings a side of joy to banking in new Yello rewards campaign"]
+          url = 'https://translate.googleapis.com/translate_a/single?' + urllib.parse.urlencode({'client':'gtx','sl':'en','tl':'zh-CN','dt':'t','q':'\n\n'.join(texts)})
+          request = urllib.request.Request(url, headers={'User-Agent':'Mozilla/5.0'})
+          with urllib.request.urlopen(request, timeout=20) as response:
+              data = json.load(response)
+          translated = ''.join(row[0] for row in data[0] if row[0])
+          print(json.dumps({'input':texts,'output':translated}, ensure_ascii=False))
+          assert len(translated.split('\n\n')) == len(texts)
+          PY
