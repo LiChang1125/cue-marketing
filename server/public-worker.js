@@ -11,11 +11,8 @@ export function createPublicWorker({dataDir,intervalMs=10*60000,run=command,onPu
    await run(process.env.PYTHON||'python',['scripts/run-trendradar-native.py'],env);
    await run(process.execPath,['scripts/refresh-public-data.mjs'],env);
    await run(process.env.PYTHON||'python',['scripts/localize-public-data.py','--input',working],env);
-   await run(process.execPath,['scripts/prepare-research.mjs'],env);
-   await run(process.env.PYTHON||'python',['scripts/render-research.py'],env);
    const data=JSON.parse(await readFile(working,'utf8'));if(!data.feed?.items?.length||!data.generatedAt)throw Error('Empty refresh rejected');
    await cp('.artifacts/public-articles/media',join(dataDir,'media'),{recursive:true,force:true});
-   await cp('.artifacts/public-data/research',join(dataDir,'research'),{recursive:true,force:true});
    await cp('.artifacts/public-data/trendradar',join(dataDir,'trendradar'),{recursive:true,force:true});
    await rename(working,active);state.lastSuccess=data.generatedAt;state.lastError=null;await onPublish(data);return true;
   }catch(e){state.lastError=e.message;console.error('Public collector:',e.message);return false;}

@@ -39,7 +39,6 @@ jobs:
       - name: Install pinned TrendRadar public collector
         run: |
           python -m pip install -r requirements-public.txt
-          node scripts/setup-trendradar.mjs
           node scripts/setup-trendradar-native.mjs
       - uses: actions/cache@v4
         with:
@@ -54,17 +53,13 @@ jobs:
         run: node scripts/refresh-public-data.mjs
       - name: Translate English headlines and summaries locally
         run: python scripts/localize-public-data.py
-      - name: Generate native TrendRadar topic reports
-        run: |
-          node scripts/prepare-research.mjs
-          python scripts/render-research.py
       - name: Build public website
         run: |
           npm run build -- --base=/cue-marketing/
           cp .artifacts/public-data/content-data.json dist/content-data.json
           cp -r .artifacts/public-articles/media dist/media
-          cp -r .artifacts/public-data/research dist/research
-          cp -r .artifacts/public-data/trendradar dist/trendradar
+          mkdir -p dist/licenses
+          cp .artifacts/public-data/trendradar/LICENSE.txt dist/licenses/TrendRadar.txt
         env:
           VITE_PUBLIC_DATA: 'true'
       - uses: actions/configure-pages@v5

@@ -12,13 +12,6 @@ export async function startPublicServer({dataDir=process.env.DATA_DIR||'.artifac
  try{data=JSON.parse(await readFile(path,'utf8'));}catch{
   const r=await fetch('https://lichang1125.github.io/cue-marketing/content-data.json',{signal:AbortSignal.timeout(30000)});if(!r.ok)throw Error('Initial content unavailable');data=await r.json();if(!data.feed?.items?.length)throw Error('Invalid initial content');await writeFile(path,JSON.stringify(data));
  }
- // Seed native reports on a new cloud instance while its first collection runs.
- if(collect)try{await readFile(join(dataDir,'trendradar','index.html'));}catch{
-  try{const base='https://lichang1125.github.io/cue-marketing/trendradar/';const [html,manifest]=await Promise.all(['index.html','manifest.json'].map(async file=>{const r=await fetch(base+file,{signal:AbortSignal.timeout(12000)});if(!r.ok)throw Error('Native seed unavailable');return r.text();}));
-   if(!html.includes('class="news-link"')||JSON.parse(manifest).engine!=='TrendRadar')throw Error('Invalid native seed');
-   await mkdir(join(dataDir,'trendradar'),{recursive:true});await writeFile(join(dataDir,'trendradar','index.html'),html);await writeFile(join(dataDir,'trendradar','manifest.json'),manifest);
-  }catch{/* The autonomous worker generates a fresh report; no synthetic fallback. */}
- }
  let handle=createPreviewFetch(data);const worker=createPublicWorker({dataDir,intervalMs:Math.max(60000,Number(process.env.COLLECT_INTERVAL_MS)||600000),onPublish:next=>{data=next;handle=createPreviewFetch(next);}});
  const app=express();app.disable('x-powered-by');app.use(express.json({limit:'8kb'}));
  const research=createResearchService({dataDir,getData:()=>data});

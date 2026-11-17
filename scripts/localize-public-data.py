@@ -17,7 +17,7 @@ def needs_translation(text):
         return False
     latin = len(re.findall(r'[A-Za-z]', text))
     han = len(re.findall(r'[\u3400-\u9fff]', text))
-    return latin >= 12 and han < 3
+    return latin >= 12 and (han < 3 or (latin >= 50 and latin > han * 4))
 
 def text_key(text):
     return hashlib.sha256((MODEL_VERSION + '\n' + text).encode()).hexdigest()
@@ -64,7 +64,8 @@ def localize(data, translate, reviewed=None):
         elif isinstance(value, dict):
             for field in ('title', 'excerpt', 'subtitle'):
                 original_field = 'original' + field.title()
-                text = value.get(original_field, value.get(field)) if value.get('translation', {}).get('method') != MODEL_VERSION else value.get(field)
+                original = value.get(original_field)
+                text = value.get(original_field, value.get(field)) if original in reviewed or value.get('translation', {}).get('method') != MODEL_VERSION else value.get(field)
                 if needs_translation(text) or text in reviewed:
                     key = text_key(text)
                     records.append((value, field, text, key))

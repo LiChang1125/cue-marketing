@@ -7,6 +7,7 @@ import os
 import sys
 import json
 import shutil
+import hashlib
 from datetime import datetime, timezone
 from pathlib import Path
 import yaml
@@ -55,12 +56,31 @@ from trendradar.__main__ import NewsAnalyzer
 config = load_config()
 config['DEBUG'] = True
 analyzer = NewsAnalyzer(config=config)
-analyzer.run()
+if '--export-only' not in sys.argv:
+    analyzer.run()
 report = runtime / 'output/index.html'
 if not report.exists() or report.stat().st_size < 10000 or 'class="news-link"' not in report.read_text(encoding='utf-8'):
     raise RuntimeError('Native TrendRadar report was not generated')
 output.mkdir(parents=True, exist_ok=True)
 shutil.copy2(report, output / 'index.html')
 shutil.copy2(upstream / 'LICENSE', output / 'LICENSE.txt')
+from trendradar.core.analyzer import calculate_news_weight
+news = analyzer.storage_manager.get_today_all_data()
+rss = analyzer.storage_manager.get_rss_data()
+rows = []
+for source, entries in (news.items if news else {}).items():
+    for item in entries:
+        raw = item.to_dict()
+        rows.append({'id':'radar-'+hashlib.sha256((source+item.url).encode()).hexdigest()[:20], 'title':item.title, 'url':item.url, 'source':'radar-'+source, 'sourceName':news.id_to_name.get(source,source), 'contentType':'hot-topic', 'rank':item.rank, 'rankTimeline':item.rank_timeline, 'appearances':item.count, 'nativeWeight':calculate_news_weight(raw,5,{'RANK_WEIGHT':0.6,'FREQUENCY_WEIGHT':0.3,'HOTNESS_WEIGHT':0.1}), 'observedAt':news.date+'T'+(item.last_time or item.crawl_time).replace('-',':')+':00+08:00', 'engine':'TrendRadar'})
+for source, entries in (rss.items if rss else {}).items():
+    for item in entries:
+        published = item.published_at
+        if published:
+            parsed = datetime.fromisoformat(published.replace('Z','+00:00'))
+            if parsed.tzinfo is None:
+                published = parsed.replace(tzinfo=timezone.utc).isoformat()
+        rows.append({'id':'radar-'+hashlib.sha256(item.url.encode()).hexdigest()[:20], 'title':item.title, 'excerpt':item.summary, 'url':item.url, 'source':'radar-'+source, 'sourceName':rss.id_to_name.get(source,source), 'contentType':'article', 'publishedAt':published, 'engine':'TrendRadar'})
+(root / '.artifacts/trendradar-native-current.json').write_text(json.dumps({'engine':'TrendRadar','items':rows,'platforms':cfg['platforms']['sources'],'generatedAt':datetime.fromtimestamp(report.stat().st_mtime,timezone.utc).isoformat()},ensure_ascii=False),encoding='utf-8')
+analyzer.ctx.cleanup()
 (output / 'manifest.json').write_text(json.dumps({'engine':'TrendRadar','generatedAt':datetime.now(timezone.utc).isoformat(),'version':'6.11.0','revision':'86584f5544c66d4e22132f9b87c44a7ea3a32fea','platforms':cfg['platforms']['sources'],'rss':[f for f in cfg['rss']['feeds'] if f.get('enabled',True)],'report':'trendradar/index.html'},ensure_ascii=False),encoding='utf-8')
 print('Native TrendRadar application report published')

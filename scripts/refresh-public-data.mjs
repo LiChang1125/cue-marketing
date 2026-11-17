@@ -1,10 +1,8 @@
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {mediaSources,mediaSource} from '../shared/media-sources.js';
 import {collectMediaSource,selectMediaNews,marketingArticle,fetchPublicText,parseMediaHtml} from '../server/media-news.js';
-import {mergeRankHistory} from '../shared/pulse.js';
-import {buildPulseItems} from '../shared/pulse-content.js';
-import {researchValue,normalizeResearchItem} from '../shared/research.js';
 import {uniqueCases} from '../shared/insights.js';
+import {featuredNews} from '../shared/featured.js';
 import {curatedPage} from '../server/curated.js';
 import {curatedTabs} from '../shared/curated.js';
 import {createArticleService} from '../server/articles.js';
@@ -34,13 +32,13 @@ const resolved=new Map();for(let i=0;i<resolveItems.length;i+=6)await Promise.al
 const imageCache=new Map();const priority=selectMediaNews(items,now.getTime(),48);
 for(let i=0;i<priority.length;i+=5)await Promise.all(priority.slice(i,i+5).map(async item=>{try{const input={...item};if(/default_img|placeholder|favicon|site-logo/i.test(input.image||''))input.image=null;imageCache.set(item.id,await service.enrich(input));}catch{}}));
 const decorate=i=>{const item={...i,...resolved.get(i.id)};delete item.imageLocal;return {...item,...imageCache.get(i.id)};};
+let native={items:[],platforms:[]};try{native=JSON.parse(await readFile('.artifacts/trendradar-native-current.json','utf8'));}catch{}
+const nativeItems=uniqueCases([...(native.items||[]),...(previous.feed?.radar?.items||[])]).filter(i=>{const at=Date.parse(i.publishedAt||i.observedAt);return at<=now.getTime()&&at>=now.getTime()-30*86400000;}).slice(0,3000);
+const nativePictures=nativeItems.filter(i=>i.contentType==='article').slice(0,24);
+for(let i=0;i<nativePictures.length;i+=5)await Promise.all(nativePictures.slice(i,i+5).map(async item=>{try{const enriched=await service.enrich(item);Object.assign(item,enriched);}catch{}}));
 const cleanItems=items.map(decorate);for(const kind of Object.keys(curated))curated[kind]=curated[kind].map(decorate);
-let radar={sources:[],items:[]};try{radar=JSON.parse(await readFile('.artifacts/trendradar-current.json','utf8'));}catch{}
-let research={items:[],health:[]};try{research=JSON.parse(await readFile('.artifacts/research-current.json','utf8'));}catch{}
-const researchItems=uniqueCases([...research.items,...(radar.articles||[]),...(previous.feed?.publicPulse?.researchItems||[])].map(normalizeResearchItem)).filter(i=>researchValue(i)&&Date.parse(i.publishedAt)>=now.getTime()-180*86400000&&Date.parse(i.publishedAt)<=now.getTime());
-const history=mergeRankHistory(previous.feed?.publicPulse?.history,radar.items,now.getTime());
-const pulseItems=buildPulseItems(radar,previous.feed?.publicPulse?.items,cleanItems,now.getTime());
 const editorial=selectMediaNews(cleanItems,now.getTime(),90);
+if(featuredNews(editorial,now.getTime()).length<3)throw Error('Three verified original hero images are required; keeping the last release');
 const activeSources=mediaSources.filter(s=>cleanItems.some(i=>i.source===s.id)).map(s=>({...s,...sources.find(x=>x.id===s.id)}));
 const reports={...previous.reports,reports:previous.reports.reports.map(r=>({...r,entries:r.entries.map(decorate)}))};
 const schedule=reportSchedule(now),window=yesterdayWindow(now);
@@ -49,6 +47,6 @@ if(schedule.ready&&!reports.reports.some(r=>r.date===schedule.day&&r.entries.len
  if(entries.length)reports.reports.unshift({date:schedule.day,newsDate:window.newsDate,title:'CUE 早报',subtitle:entries.slice(0,3).map(i=>i.title).join('；'),scheduledAt:schedule.due,generatedAt:now.toISOString(),status:'ready',entries});
 }
 reports.reports=reports.reports.slice(0,90);
-const data={schemaVersion:3,generatedAt:now.toISOString(),translationCache:previous.translationCache||{},feed:{items:cleanItems,editorial,editorialCandidates:cleanItems,sources:activeSources,topics:[],hotlist:editorial.slice(0,8),publicPulse:{engine:'TrendRadar',revision:radar.revision,sources:radar.sources,history,items:pulseItems,feedHealth:radar.feedHealth||[],researchItems,researchHealth:research.health}},curated,reports,histories:{},sourceHealth:sources};
+const data={schemaVersion:3,generatedAt:now.toISOString(),translationCache:previous.translationCache||{},feed:{radar:{engine:'TrendRadar',items:nativeItems,platforms:native.platforms,generatedAt:native.generatedAt},items:cleanItems,editorial,editorialCandidates:cleanItems,sources:activeSources,topics:[],hotlist:editorial.slice(0,8)},curated,reports,histories:{},sourceHealth:sources};
 await mkdir(output.replace(/[\\/][^\\/]+$/,''),{recursive:true});await writeFile(output,JSON.stringify(data));
-console.log(JSON.stringify({articles:cleanItems.length,activeMedia:activeSources.length,hotlistPoints:history.length,platforms:radar.sources,reports:reports.reports.length,output}));
+console.log(JSON.stringify({articles:cleanItems.length,activeMedia:activeSources.length,nativeItems:nativeItems.length,platforms:native.platforms,reports:reports.reports.length,output}));

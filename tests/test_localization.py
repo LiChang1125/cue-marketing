@@ -25,6 +25,7 @@ class LocalizationTests(unittest.TestCase):
     def test_chinese_brand_names_are_not_retranslated(self):
         self.assertFalse(module.needs_translation('Nike 与迪士尼推出全新联名系列'))
         self.assertTrue(module.needs_translation('Retail brands rethink the customer experience'))
+        self.assertTrue(module.needs_translation('To Summer (观夏) introduces a new fragrance campaign and a book about the local culture of Yunnan 云南.'))
     def test_failed_translation_is_not_marked_complete(self):
         with self.assertRaises(ValueError):
             module.localize({'title': 'A new brand marketing campaign'}, lambda _: [''])
@@ -34,6 +35,13 @@ class LocalizationTests(unittest.TestCase):
         module.localize(data, lambda _: self.fail('Reviewed title must not call translator'), {original:'品牌推出全新营销活动'})
         self.assertEqual(data['title'],'品牌推出全新营销活动')
         self.assertEqual(data['originalTitle'],original)
+
+    def test_review_overrides_current_model_translation(self):
+        original = 'Brand launches a new fragrance campaign'
+        data = {'title': '当前机器译文', 'originalTitle': original, 'translation': {'method': module.MODEL_VERSION}}
+        module.localize(data, lambda _: self.fail('Reviewed title must not call translator'), {original: '品牌推出香水营销活动'})
+        self.assertEqual(data['title'], '品牌推出香水营销活动')
+        self.assertEqual(data['originalTitle'], original)
 
 if __name__ == '__main__':
     unittest.main()

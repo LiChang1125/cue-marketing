@@ -1,20 +1,17 @@
-import React,{useEffect,useRef,useState} from 'react';
-import {assetUrl} from './urls.js';
-import './pulse.css';
+import React,{useEffect,useMemo,useState} from 'react';
+import {apiFetch} from './urls.js';
+import {SearchBox} from './TopicExplorer.jsx';
+import Cover from './Cover.jsx';
+import OriginalLink from './OriginalLink.jsx';
 import NextActions from './NextActions.jsx';
-export default function PublicPulse({query=''}){
- const frame=useRef(null),[loaded,setLoaded]=useState(false),[version,setVersion]=useState(Date.now);
- const [currentQuery,setCurrentQuery]=useState(query),[rows,setRows]=useState([]);
- const latest=useRef(null),search=useRef(query),cleanup=useRef(()=>{});
- useEffect(()=>()=>cleanup.current(),[]);
- useEffect(()=>{const tick=async()=>{if(document.hidden)return;try{const r=await fetch(assetUrl('trendradar/manifest.json'),{cache:'no-store'});if(!r.ok)return;const d=await r.json();if(latest.current&&latest.current!==d.generatedAt){search.current=frame.current?.contentDocument?.querySelector('.search-input')?.value||'';setVersion(v=>v+1);}latest.current=d.generatedAt;}catch{}};tick();const timer=setInterval(tick,60000);return()=>clearInterval(timer);},[]);
- function ready(){setLoaded(true);cleanup.current();const doc=frame.current?.contentDocument,input=doc?.querySelector('.search-input');if(!input)return;
-  const entries=[...doc.querySelectorAll('.news-item,.rss-item')].map(el=>{const a=el.querySelector('.news-title a,.rss-title a');return a?{title:a.textContent.trim(),url:a.href,source:el.querySelector('.source-name')?.textContent?.trim()||el.closest('.word-group,.rss-feed-group')?.querySelector('.word-name,.feed-name')?.textContent?.trim()||el.querySelector('.rss-author')?.textContent?.trim()||new URL(a.href).hostname}:null;}).filter(Boolean);setRows(entries);
-  let timer;const update=()=>{clearTimeout(timer);timer=setTimeout(()=>{search.current=input.value.trim();setCurrentQuery(search.current);},240);};input.addEventListener('input',update);cleanup.current=()=>{clearTimeout(timer);input.removeEventListener('input',update);};if(search.current){input.value=search.current;input.dispatchEvent(new Event('input',{bubbles:true}));}else setCurrentQuery('');}
-
- return <section className="native-radar" aria-label="TrendRadar 热点雷达">
-  <div className="native-radar-toolbar"><span>TrendRadar <small>热点 · RSS · 关键词</small></span><div><button onClick={()=>{search.current=frame.current?.contentDocument?.querySelector('.search-input')?.value||'';setLoaded(false);setVersion(v=>v+1);}}>刷新</button><a href={assetUrl('trendradar/index.html')} target="_blank" rel="noreferrer">展开报告 ↗</a></div></div>
-  {!loaded&&<p role="status">正在打开热点雷达…</p>}
-  <div className="radar-workspace"><iframe ref={frame} key={version} className="native-radar-frame" src={assetUrl('trendradar/index.html')+'?v='+version+'#all'} title="TrendRadar 原生热点报告" onLoad={ready}/><NextActions query={currentQuery} rows={rows}/></div>
- </section>;
+import {searchRadar} from '../shared/radar.js';
+import './pulse.css';
+export default function PublicPulse({feed,query='',onQuery,onOpen}){
+ const [draft,setDraft]=useState(query),[submitted,setSubmitted]=useState(query),[kind,setKind]=useState('all'),[source,setSource]=useState('all'),[days,setDays]=useState(30),[limit,setLimit]=useState(10);
+ const items=feed?.radar?.items||[];
+ const result=useMemo(()=>searchRadar(items,{query:submitted,kind,source,days}),[items,submitted,kind,source,days]);
+ function search(word){setDraft(word);setSubmitted(word.trim());onQuery?.(word.trim());setSource('all');setLimit(10);}
+ useEffect(()=>setLimit(10),[kind,source,days]);
+ return <section className="cue-pulse"><SearchBox value={draft} onChange={setDraft} onSearch={search}/><div className="cue-pulse-workspace"><div className="cue-pulse-content"><div className="cue-pulse-heading"><div><h2>{submitted||'值得关注'}</h2><p>{result.total} 条相关内容 · {result.sourceCount} 个来源</p></div><select aria-label="热点时间范围" value={days} onChange={e=>setDays(Number(e.target.value))}><option value={7}>近 7 天</option><option value={30}>近 30 天</option></select></div><div className="cue-pulse-filters"><div role="tablist" aria-label="内容类型">{[['all','全部'],['hot','热榜'],['article','报道']].map(([id,label])=><button key={id} role="tab" aria-selected={kind===id} onClick={()=>setKind(id)}>{label}</button>)}</div><select aria-label="脉动来源" value={source} onChange={e=>setSource(e.target.value)}><option value="all">所有来源</option>{result.sources.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></div><div className="cue-pulse-grid">{result.items.slice(0,limit).map(item=><article className="cue-pulse-card" key={item.id}><button className="cue-pulse-cover" onClick={()=>onOpen({...item,excerpt:item.originalExcerpt?undefined:item.excerpt})} aria-label={'查看：'+item.title}><Cover item={item}/>{item.contentType==='hot-topic'&&item.rank>0&&<span className="cue-rank">热榜 #{item.rank}</span>}</button><div className="cue-pulse-copy"><div className="cue-pulse-meta"><span>{item.sourceName}</span>{item.publishedAt&&<time dateTime={item.publishedAt}>{new Date(item.publishedAt).toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'})}</time>}</div><button className="cue-pulse-title" onClick={()=>onOpen({...item,excerpt:item.originalExcerpt?undefined:item.excerpt})}>{item.title}</button>{item.excerpt&&!item.originalExcerpt&&<p>{item.excerpt}</p>}<div className="cue-pulse-card-bottom"><OriginalLink item={item}>阅读原文 ↗</OriginalLink>{item.rankTimeline?.filter(p=>Number.isFinite(p.rank)).length>1&&<RankLine item={item}/>}</div></div></article>)}</div>{!result.total&&<div className="cue-pulse-empty"><h3>暂无匹配内容</h3><p>右侧已为「{submitted||'品牌营销'}」整理探索方向。</p></div>}{result.total>limit&&<button className="load-more" onClick={()=>setLimit(n=>n+10)}>更多内容 ↓</button>}</div><NextActions query={submitted||'品牌营销'} rows={result.items}/></div></section>;
 }
+function RankLine({item}){const points=item.rankTimeline.filter(p=>Number.isFinite(p.rank)),lo=Math.min(...points.map(p=>p.rank)),hi=Math.max(...points.map(p=>p.rank));return <svg className="cue-rank-line" viewBox="0 0 94 28" role="img" aria-label="热榜排名变化"><title>{points.map(p=>p.time+' 第'+p.rank+'名').join('；')}</title><polyline fill="none" stroke="#7e9470" strokeWidth="1.6" points={points.map((p,i)=>`${4+i*86/Math.max(1,points.length-1)},${4+(p.rank-lo)/Math.max(1,hi-lo)*20}`).join(' ')}/></svg>;}
