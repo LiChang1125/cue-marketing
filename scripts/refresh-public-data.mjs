@@ -3,7 +3,7 @@ import {mediaSources,mediaSource} from '../shared/media-sources.js';
 import {collectMediaSource,selectMediaNews,marketingArticle,fetchPublicText,parseMediaHtml} from '../server/media-news.js';
 import {mergeRankHistory} from '../shared/pulse.js';
 import {buildPulseItems} from '../shared/pulse-content.js';
-import {researchValue} from '../shared/research.js';
+import {researchValue,normalizeResearchItem} from '../shared/research.js';
 import {uniqueCases} from '../shared/insights.js';
 import {curatedPage} from '../server/curated.js';
 import {curatedTabs} from '../shared/curated.js';
@@ -37,7 +37,7 @@ const decorate=i=>{const item={...i,...resolved.get(i.id)};delete item.imageLoca
 const cleanItems=items.map(decorate);for(const kind of Object.keys(curated))curated[kind]=curated[kind].map(decorate);
 let radar={sources:[],items:[]};try{radar=JSON.parse(await readFile('.artifacts/trendradar-current.json','utf8'));}catch{}
 let research={items:[],health:[]};try{research=JSON.parse(await readFile('.artifacts/research-current.json','utf8'));}catch{}
-const researchItems=uniqueCases([...research.items,...(radar.articles||[]),...(previous.feed?.publicPulse?.researchItems||[])]).filter(i=>researchValue(i)&&Date.parse(i.publishedAt)>=now.getTime()-180*86400000&&Date.parse(i.publishedAt)<=now.getTime());
+const researchItems=uniqueCases([...research.items,...(radar.articles||[]),...(previous.feed?.publicPulse?.researchItems||[])].map(normalizeResearchItem)).filter(i=>researchValue(i)&&Date.parse(i.publishedAt)>=now.getTime()-180*86400000&&Date.parse(i.publishedAt)<=now.getTime());
 const history=mergeRankHistory(previous.feed?.publicPulse?.history,radar.items,now.getTime());
 const pulseItems=buildPulseItems(radar,previous.feed?.publicPulse?.items,cleanItems,now.getTime());
 const editorial=selectMediaNews(cleanItems,now.getTime(),90);

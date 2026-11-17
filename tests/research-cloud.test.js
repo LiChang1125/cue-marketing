@@ -8,7 +8,7 @@ import {readArticleMetadata} from '../server/media-metadata.js';
 import {parseMediaHtml,collectMediaSource} from '../server/media-news.js';
 import {mediaSource} from '../shared/media-sources.js';
 import {chinaStory,curatedSelection} from '../shared/geography.js';
-import {searchResearch} from '../shared/research.js';
+import {searchResearch,normalizeResearchItem} from '../shared/research.js';
 import {createPreviewFetch} from '../src/preview.js';
 import {createPublicWorker} from '../server/public-worker.js';
 import {startPublicServer} from '../server/public-server.js';
@@ -54,6 +54,8 @@ test('research search returns ten dated market reports, excludes hotlist pointer
  assert.equal(searchResearch([business],{query:'亚文化',now}).articles.length,1);
  const incidental={...business,id:'beauty',title:'Beauty Briefing: skin undertone analysis',excerpt:'This week also includes fragrance news.'};
  assert.equal(searchResearch([incidental],{query:'香水',now}).articles.length,0);
+ assert.equal(normalizeResearchItem({origin:'trendradar-rss',publishedAt:'2026-11-16T05:00:00'}).publishedAt,'2026-11-16T05:00:00Z');
+ assert.equal(normalizeResearchItem({origin:'publisher-report',publishedAt:'2026-11-16T05:00:00+08:00'}).publishedAt,'2026-11-16T05:00:00+08:00');
 });
 test('cloud collector runs without visitors, avoids overlap, retries failure and retains last successful data',async()=>{
  const dir=await mkdtemp(join(tmpdir(),'cue-worker-'));await writeFile(join(dir,'content-data.json'),'previous');let calls=0,release;
