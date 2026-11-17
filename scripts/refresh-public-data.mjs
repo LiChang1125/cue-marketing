@@ -2,6 +2,7 @@ import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {mediaSources,mediaSource} from '../shared/media-sources.js';
 import {collectMediaSource,selectMediaNews,marketingArticle,fetchPublicText,parseMediaHtml} from '../server/media-news.js';
 import {mergeRankHistory} from '../shared/pulse.js';
+import {buildPulseItems} from '../shared/pulse-content.js';
 import {uniqueCases} from '../shared/insights.js';
 import {curatedPage} from '../server/curated.js';
 import {curatedTabs} from '../shared/curated.js';
@@ -34,6 +35,7 @@ const decorate=i=>{const item={...i,...resolved.get(i.id)};delete item.imageLoca
 const cleanItems=items.map(decorate);for(const kind of Object.keys(curated))curated[kind]=curated[kind].map(decorate);
 let radar={sources:[],items:[]};try{radar=JSON.parse(await readFile('.artifacts/trendradar-current.json','utf8'));}catch{}
 const history=mergeRankHistory(previous.feed?.publicPulse?.history,radar.items,now.getTime());
+const pulseItems=buildPulseItems(radar,previous.feed?.publicPulse?.items,cleanItems,now.getTime());
 const editorial=selectMediaNews(cleanItems,now.getTime(),90);
 const activeSources=mediaSources.filter(s=>cleanItems.some(i=>i.source===s.id)).map(s=>({...s,...sources.find(x=>x.id===s.id)}));
 const reports={...previous.reports,reports:previous.reports.reports.map(r=>({...r,entries:r.entries.map(decorate)}))};
@@ -43,6 +45,6 @@ if(schedule.ready&&!reports.reports.some(r=>r.date===schedule.day&&r.entries.len
  if(entries.length)reports.reports.unshift({date:schedule.day,newsDate:window.newsDate,title:'CUE 早报',subtitle:entries.slice(0,3).map(i=>i.title).join('；'),scheduledAt:schedule.due,generatedAt:now.toISOString(),status:'ready',entries});
 }
 reports.reports=reports.reports.slice(0,90);
-const data={schemaVersion:2,generatedAt:now.toISOString(),feed:{items:cleanItems,editorial,editorialCandidates:cleanItems,sources:activeSources,topics:[],hotlist:editorial.slice(0,8),publicPulse:{engine:'TrendRadar',revision:radar.revision,sources:radar.sources,history}},curated,reports,histories:{},sourceHealth:sources};
+const data={schemaVersion:3,generatedAt:now.toISOString(),translationCache:previous.translationCache||{},feed:{items:cleanItems,editorial,editorialCandidates:cleanItems,sources:activeSources,topics:[],hotlist:editorial.slice(0,8),publicPulse:{engine:'TrendRadar',revision:radar.revision,sources:radar.sources,history,items:pulseItems,feedHealth:radar.feedHealth||[]}},curated,reports,histories:{},sourceHealth:sources};
 await mkdir(output.replace(/[\\/][^\\/]+$/,''),{recursive:true});await writeFile(output,JSON.stringify(data));
 console.log(JSON.stringify({articles:cleanItems.length,activeMedia:activeSources.length,hotlistPoints:history.length,platforms:radar.sources,reports:reports.reports.length,output}));

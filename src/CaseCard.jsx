@@ -3,7 +3,7 @@ import React from 'react';
 import {ArrowUpRight} from 'lucide-react';
 import Cover from './Cover.jsx';
 import {marketingLogic,sectorId,sectors} from '../shared/insights.js';
-export const publishedDate=item=>item.publishedAt?new Date(item.publishedAt).toLocaleDateString('zh-CN',{timeZone:'Asia/Shanghai',month:'2-digit',day:'2-digit'}):'日期未标注';
+export const publishedDate=item=>item.publishedAt?new Date(item.publishedAt).toLocaleDateString('zh-CN',{timeZone:'Asia/Shanghai',month:'2-digit',day:'2-digit'}):item.contentType==='hot-topic'?'热榜话题':'日期未标注';
 export default function CaseCard({item,sources=[],onOpen,analysis=false}){
   const logic=marketingLogic(item);
   return <article className={'case-card'+(analysis?' analysis-card':'')}>

@@ -5,7 +5,7 @@ import CaseCard from './CaseCard.jsx';
 import './pulse.css';
 export default function PublicPulse({feed,query,onQuery,onSearch,onOpen,busy}){
  const [days,setDays]=useState(7),[mode,setMode]=useState('coverage'),[platform,setPlatform]=useState('all'),[hover,setHover]=useState(null),[selected,setSelected]=useState(0);
- const result=useMemo(()=>topicPulse(feed.items,feed.publicPulse?.history||[],{query,days,platform}),[feed,query,days,platform]);
+ const result=useMemo(()=>topicPulse(feed.publicPulse?.items||[],feed.publicPulse?.history||[],{query,days,platform}),[feed,query,days,platform]);
  const series=result.series,max=Math.max(1,...series.map(p=>p.count)),focus=series[hover??series.length-1];
  const track=result.trajectories[Math.min(selected,result.trajectories.length-1)],points=track?.points||[];
  const start=points.length?Date.parse(points[0].at):0,end=points.length?Date.parse(points.at(-1).at):0;

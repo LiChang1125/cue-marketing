@@ -3,6 +3,8 @@ dist/
 data/
 *.log
 .tools/
+__pycache__/
+*.pyc
 .artifacts/
 .env
 .env.*
