@@ -3,7 +3,7 @@ import {discovery} from '../shared/social-discovery.js';
 import {originalHref} from '../shared/original.js';
 import './market-pulse.css';
 
-const tabs=[['overview','概览'],['brands','热门品牌'],['ips','热门 IP'],['methods','流行玩法'],['partnerships','新合作']];
+const tabs=[['overview','概览'],['brands','热门品牌'],['ips','热门 IP'],['products','热门好物'],['methods','流行玩法'],['partnerships','新合作']];
 const formatValue=v=>typeof v==='number'?v.toLocaleString('zh-CN'):v;
 function Link({href,children}){return <a href={href} target="_blank" rel="noreferrer">{children} ↗</a>;}
 function Track({track}){
@@ -26,7 +26,8 @@ function Signal({entry}){
  return <article className="market-card"><header><h3>{entry.name}</h3><small>{entry.platforms} 个平台 · {entry.timestamps} 天上榜</small></header>
  {entry.tracks.slice(0,2).map(t=><Track key={t.series} track={t}/>)}
  <SalesEvidence track={entry.tracks.find(t=>t.series==='蝉妈妈品牌销售榜')}/>
- <p><b>热度依据　</b>{entry.timestamps} 天内有 {entry.subjects.length} 个不同榜单条目涉及{entry.name}。{!ig&&entry.subjects.length>1?'其中包括「'+entry.subjects[1]+'」。':''}</p>
+ <p><b>热度依据　</b>近七天有 {entry.subjects.length} 个不同标题涉及{entry.name}。{!ig&&entry.subjects.length>1?'其中包括「'+entry.subjects[1]+'」。':''}</p>
+ {entry.controversy&&<p><b>争议讨论　</b><Link href={entry.controversy.url}>{entry.controversy.title}</Link></p>}
  {(!ig||story)&&<p>{story?<><b>同期动作　</b><Link href={originalHref(story)}>{story.title}</Link></>:trigger?<><b>话题起因线索　</b><Link href={trigger.url}>{trigger.title}</Link></>:<><b>关注线索　</b>{last.series.includes('销售')?'该品牌进入抖音日销售榜。具体活动对成交的贡献待核实。':<>榜上讨论集中在「{last.title}」。具体带动因素待核实。</>}</>}</p>}
  {ig&&<p><b>社区反应　</b>{ig.author} 提及品牌的{ig.format}在来源的七天样本中排第 {ig.rank}，新增 {ig.value} 次赞评，累计 {ig.total}。<Link href={ig.url}>查看帖子</Link></p>}
  <footer><Link href={last.url}>原始话题或品牌</Link> · <Link href={last.source}>榜单依据</Link></footer></article>;
@@ -38,10 +39,10 @@ export default function MarketPulse({feed}){
  const leads=d.brands.filter(e=>salesTrack(e)).sort((a,b)=>salesTrack(b).last.day.localeCompare(salesTrack(a).last.day)||salesTrack(b).change-salesTrack(a).change||salesTrack(a).last.rank-salesTrack(b).last.rank);
  const overseas=d.brands.filter(e=>e.tracks.some(t=>t.last.platform==='Instagram')).sort((a,b)=>a.tracks.find(t=>t.last.platform==='Instagram').last.rank-b.tracks.find(t=>t.last.platform==='Instagram').last.rank);
  const cultural=d.brands.filter(e=>!salesTrack(e)&&!overseas.includes(e));
- const spotlight=[...new Set([leads[0],overseas[0],cultural[0],leads[1],cultural[1],...d.brands].filter(Boolean))];
- const ipNames=/^(?:BLG|EDG|GTA 6|英雄联盟|王者荣耀|宝可梦|原神|两京十五日|恋与深空|名侦探柯南|三丽鸥)$/;
+ const ipNames=/^(?:BLG|EDG|GTA 6|英雄联盟|王者荣耀|宝可梦|原神|两京十五日|恋与深空|名侦探柯南|三丽鸥|LABUBU)$/;
  const isIP=e=>ipNames.test(e.name)||e.subjects.some(t=>t.includes('《'+e.name+'》'));
- const content=tab==='overview'?spotlight:tab==='ips'?d.brands.filter(isIP):tab==='brands'?spotlight.filter(e=>!isIP(e)):d[tab]||[],take=more?content.length:4;
+ const spotlight=[...new Set([leads[0],overseas[0],cultural.find(isIP),d.products.find(e=>e.subjects.length>1&&!e.controversy),...d.brands].filter(Boolean))];
+ const content=tab==='overview'?spotlight:tab==='ips'?d.brands.filter(isIP):tab==='brands'?d.brands.filter(e=>!isIP(e)):d[tab]||[],take=more?content.length:4;
  return <section className="market-pulse"><header><h2>本周市场动向</h2><small>{d.days[0].slice(5)} — {d.today.slice(5)}</small></header>
  <div className="market-tabs" aria-label="市场动向分类">{tabs.map(([id,label])=><button key={id} aria-pressed={tab===id} onClick={()=>{setTab(id);setMore(false);}}>{label}</button>)}</div>
  {tab==='partnerships'?<div className="market-stories">{content.slice(0,take).map(i=><article key={originalHref(i)}><small>{i.publisher||i.sourceName} · {i.publishedAt.slice(0,10)}</small><h3><Link href={originalHref(i)}>{i.title}</Link></h3>{i.excerpt&&<p>{i.excerpt.slice(0,125)}</p>}</article>)}</div>:<div className="market-grid">{content.slice(0,take).map(e=><Signal key={e.name} entry={e}/>)}</div>}
