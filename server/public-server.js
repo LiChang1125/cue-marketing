@@ -1,3 +1,4 @@
+import {installTopicSearch} from './topic-search.js';
 import express from 'express';
 import {installAccess} from './access.js';
 import {mkdir,readFile,writeFile} from 'node:fs/promises';
@@ -23,6 +24,7 @@ export async function startPublicServer({dataDir=process.env.DATA_DIR||'.artifac
  const research=createResearchService({dataDir,getData:()=>data});
  app.get('/api/health',(_,res)=>res.json({ok:true}));
  await installAccess(app,{required:authRequired,file:accountsFile});
+ installTopicSearch(app);
  app.get('/api/collector-status',(_,res)=>res.json({ok:true,generatedAt:data.generatedAt,collector:worker.state,daily:{next:reportSchedule().next,latest:data.reports?.reports?.[0]?.date||null}}));
  app.get('/api/research',async(req,res)=>{try{res.json(await research(req.query.query,Number(req.query.days)||90));}catch(e){res.status(503).json({error:e.message});}});
  app.use('/api',async(req,res)=>{try{const r=await handle(req.originalUrl,{method:req.method,body:req.method==='GET'?undefined:JSON.stringify(req.body)});res.status(r.status).type('json').send(await r.text());}catch{res.status(503).json({error:'内容暂不可用，请稍后重试'});}});

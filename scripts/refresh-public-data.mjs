@@ -51,7 +51,7 @@ if(schedule.ready&&!reports.reports.some(r=>r.date===schedule.day&&r.entries.len
 reports.reports=reports.reports.slice(0,90);
 const market=await socialTrends;
 market.editorialCases=uniqueCases(Object.values(curated).flat())
- .filter(i=>Date.parse(i.publishedAt)>=now.getTime()-7*86400000)
+ .filter(i=>Date.parse(i.publishedAt)>=now.getTime()-14*86400000)
  .map(({title,originalTitle,url,originalUrl,publishedAt,publisher,excerpt})=>({title,originalTitle,url,originalUrl,publishedAt,publisher,excerpt}));
 const data={schemaVersion:3,generatedAt:now.toISOString(),translationCache:previous.translationCache||{},feed:{socialTrends:market,radar:{engine:'TrendRadar',items:nativeItems,platforms:native.platforms,generatedAt:native.generatedAt},items:cleanItems,editorial,editorialCandidates:cleanItems,sources:activeSources,topics:[],hotlist:editorial.slice(0,8)},curated,reports,histories:{},sourceHealth:sources};
 await mkdir(output.replace(/[\\/][^\\/]+$/,''),{recursive:true});await writeFile(output,JSON.stringify(data));

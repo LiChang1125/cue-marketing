@@ -1,4 +1,5 @@
 import {originalHref} from './original.js';
+import {uniqueCases,topicMatches} from './insights.js';
 
 const dictionary=[
  ['GTA 6',/GTA\s*(?:VI|6)|侠盗猎车手6/i],['英雄联盟',/英雄联盟|LPL|英雄联盟世界赛/i],
@@ -40,7 +41,25 @@ function names(row,sales){
  for(const m of text.matchAll(/《([^《》]{2,20})》/g))names.push(m[1]);
  return [...new Set(names)];
 }
-export function discovery(data={},articles=[],now=Date.now(),native=[]){
+const campaigns=[
+ ['联名与授权',/联名|联乘|授权系列|聯名|聯乘|capsule collection|collaboration/i],
+ ['线下体验',/快闪|限时店|体验展|沉浸展|快閃|期間限定店|pop-up/i],
+ ['创作者共创',/共创|征集作品|创作者合作|用戶投稿|creator partnership/i],
+ ['体育赞助',/赛事赞助|冠名|官方合作伙伴|體育贊助|title sponsor/i]
+];
+export function outlook(entry){
+ const track=entry.tracks.find(t=>t.days>=4);
+ if(track){
+   const samples=track.points.filter(Boolean).slice(-4);
+   const reference=(samples[0].rank+samples[1].rank)/2,recent=(samples[2].rank+samples[3].rank)/2;
+   const trend=recent<reference?'热度有望延续':recent>reference?'关注可能回落':'关注可能保持平稳';
+   return {trend,basis:track.series+'最近四个观测日，前两日平均第 '+reference+' 名，后两日平均第 '+recent+' 名。',source:track.last.source};
+ }
+ const ig=entry.tracks.find(t=>t.last.platform==='Instagram')?.last;
+ if(ig)return {trend:'短期关注可能延续',basis:'该品牌帖七天新增 '+ig.value+' 次赞评；下一周能否扩散，还要看其他帖子能否接续。',source:ig.source};
+ return {trend:'走势待观察',basis:'尚缺连续四天的同榜记录，单次上榜难以判断持续性。',source:entry.last.source};
+}
+export function discovery(data={},articles=[],now=Date.now(),native=[],query=''){
  const today=new Date(now+28800000).toISOString().slice(0,10);
  const days=Array.from({length:7},(_,i)=>new Date(now+28800000-(6-i)*86400000).toISOString().slice(0,10));
  const rows=(data.rows||[]).filter(r=>days.includes(r.day)&&safe(r.url)&&safe(r.source));
@@ -51,7 +70,10 @@ export function discovery(data={},articles=[],now=Date.now(),native=[]){
    const bili=item.source.includes('bilibili');
    rows.push({platform:bili?'B站':'知乎',series:bili?'B站热搜':'知乎热榜',title:item.title,day,rank,url:item.url,source:item.url});
  }
- const cases=[...articles,...(data.editorialCases||[])].filter(i=>Date.parse(i.publishedAt)<=now&&Date.parse(i.publishedAt)>=now-7*86400000&&originalHref(i));
+ const fortnight=uniqueCases([...articles,...(data.editorialCases||[])].filter(i=>Date.parse(i.publishedAt)<=now&&Date.parse(i.publishedAt)>=now-14*86400000&&originalHref(i)));
+ const weekStart=now-7*86400000;
+ const cases=fortnight.filter(i=>Date.parse(i.publishedAt)>=weekStart);
+ const relevant=i=>!query||i.matchedQuery===query||topicMatches({...i,title:[i.title,i.originalTitle].filter(Boolean).join(' ')},query);
  const candidates=new Map();
  const sales=new Set(rows.filter(r=>r.series==='蝉妈妈品牌销售榜').map(r=>r.entity).filter(Boolean));
  function add(map,key,row){if(!map.has(key))map.set(key,[]);map.get(key).push(row);}
@@ -61,7 +83,7 @@ export function discovery(data={},articles=[],now=Date.now(),native=[]){
  }
  function build([name,matches]){
    const match=editorialMatcher(name);
-   const related=cases.filter(i=>[i.title,i.originalTitle].some(t=>t&&match.test(t)));
+   const related=cases.filter(i=>[i.title,i.originalTitle].some(t=>t&&match.test(t))&&(relevant(i)||relevant({title:name})||matches.some(relevant)));
    if(!related.length)return null;
    const isIP=ipNames.has(name)||matches.some(r=>r.title.includes('《'+name+'》'))&&related.some(i=>/游戏|电影|剧集|小说|角色|动画|漫画|纪录片|IP\b/i.test(i.title+' '+(i.excerpt||'')));
    if(!isIP&&!dictionary.some(([key])=>key===name)&&!matches.some(r=>r.entity))return null;
@@ -83,6 +105,12 @@ export function discovery(data={},articles=[],now=Date.now(),native=[]){
  }
  const brands=[...candidates].map(build).filter(Boolean).sort((a,b)=>b.last.day.localeCompare(a.last.day)||b.platforms-a.platforms||b.timestamps-a.timestamps||a.last.rank-b.last.rank||a.name.localeCompare(b.name));
  const unique=new Set();
- const partnerships=cases.filter(i=>collab.test(i.title+' '+(i.originalTitle||''))).sort((a,b)=>Date.parse(b.publishedAt)-Date.parse(a.publishedAt)).filter(i=>{const key=originalHref(i);if(unique.has(key))return false;unique.add(key);return true;});
- return {brands,partnerships,days,today};
+ const stories=cases.filter(relevant).sort((a,b)=>Date.parse(b.publishedAt)-Date.parse(a.publishedAt));
+ const partnerships=stories.filter(i=>collab.test(i.title+' '+(i.originalTitle||''))).filter(i=>{const key=originalHref(i);if(unique.has(key))return false;unique.add(key);return true;});
+ const prior=fortnight.filter(i=>Date.parse(i.publishedAt)<weekStart&&relevant(i));
+ const methods=campaigns.map(([name,pattern])=>{
+   const matches=i=>pattern.test(i.title+' '+(i.originalTitle||''));
+   return {name,stories:stories.filter(matches),previous:prior.some(matches)?prior.filter(matches).length:null};
+ }).filter(m=>m.stories.length>=2).sort((a,b)=>b.stories.length-a.stories.length);
+ return {brands,partnerships,methods,days,today};
 }

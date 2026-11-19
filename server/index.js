@@ -1,3 +1,4 @@
+import {installTopicSearch} from './topic-search.js';
 import express from 'express';
 import {publicCors} from './cors.js';
 import { fileURLToPath } from 'node:url';
@@ -174,6 +175,7 @@ app.patch('/api/topics/:id',(req,res)=>{
   if(!req.body.paused&&topic.paused&&store.topics().filter(t=>!t.paused).length>=8)return res.status(400).json({error:'同时最多跟进 8 个主题'});
   store.saveTopic({...topic,paused:req.body.paused,...(!req.body.paused?{state:'queued',nextCheck:new Date().toISOString()}:{})});if(!req.body.paused)queueTopic(topic.id);res.json({ok:true});
 });
+installTopicSearch(app);
 app.get('/api/topics/:id/history',(req,res)=>res.json({runs:store.topicHistory(req.params.id)}));
 
 app.get('/api/feed',(req,res)=>{
