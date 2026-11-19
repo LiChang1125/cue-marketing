@@ -10,11 +10,11 @@ const dictionary=[
  ['两京十五日',/两京十五日/],['恋与深空',/恋与深空/],['名侦探柯南',/名侦探柯南|剧场版柯南/]
 ];
 const formats=[
- ['手作改造',/拼豆|手作|手工改造|自制周边|DIY/i,'适合文创、玩具品牌测试材料包或用户共创征集。'],
- ['妆造仿拍',/仿妆|妆容|美甲|淡颜|妆教|出片|拍照姿势/,'可跟进美妆、影像品牌，用同一款产品演示一种可复刻的妆造或拍法。'],
- ['线下打卡',/快闪|打卡|市集|主题街区/,'可跟进零售与餐饮品牌，研究现场设置怎样转化为可分享的照片。'],
- ['联名周边',/联名|限定周边|痛包|谷子/,'可跟进消费品牌，研究 IP 角色如何落到具体商品与购买场景。'],
- ['参与式挑战',/舞蹈大赛|挑战赛|接力挑战|翻跳|跟跳/,'可研究品牌能否把参与动作缩短到一段可模仿的视频。']
+ ['手作改造',/拼豆|手作|手工改造|自制周边|DIY/i],
+ ['妆造仿拍',/仿妆|妆容|美甲|淡颜|妆教|出片|拍照姿势/],
+ ['线下打卡',/快闪|打卡|市集|主题街区/],
+ ['联名周边',/联名|限定周边|痛包|谷子/],
+ ['参与式挑战',/舞蹈大赛|挑战赛|接力挑战|翻跳|跟跳/]
 ];
 const event=/发布|推出|上市|上线|首发|发售|上新|官宣|合作|联名|开幕|夺冠|夺得|世界赛|快闪|上市|launch|collab|partner|release/i;
 const collab=/联名|跨界合作|携手|联合推出|collaborat|partners? with|teams? up with|joins? forces/i;
@@ -65,7 +65,7 @@ export function discovery(data={},articles=[],now=Date.now(),native=[]){
    const stories=cases.filter(i=>[i.title,i.originalTitle].some(t=>t&&(match?match.test(t):t.includes(name)))&&event.test(i.title+' '+(i.originalTitle||''))).sort((a,b)=>Date.parse(b.publishedAt)-Date.parse(a.publishedAt));
    const trigger=matches.filter(r=>event.test(r.title)).sort((a,b)=>b.day.localeCompare(a.day)||a.rank-b.rank)[0];
    const subjects=[...new Set(matches.slice().sort((a,b)=>b.day.localeCompare(a.day)||a.rank-b.rank).map(r=>r.title))];
-   return {name,tracks,platforms,timestamps,subjects,last,story:stories[0],trigger,idea:formats.find(([key])=>key===name)?.[2]};
+   return {name,tracks,platforms,timestamps,subjects,last,story:stories[0],trigger};
  }
  const sorted=map=>[...map].map(build).sort((a,b)=>b.last.day.localeCompare(a.last.day)||b.platforms-a.platforms||b.timestamps-a.timestamps||a.last.rank-b.last.rank||a.name.localeCompare(b.name));
  const mentions=rows.filter(r=>r.platform==='Instagram');

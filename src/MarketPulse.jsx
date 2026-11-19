@@ -3,7 +3,7 @@ import {discovery} from '../shared/social-discovery.js';
 import {originalHref} from '../shared/original.js';
 import './market-pulse.css';
 
-const tabs=[['brands','品牌与 IP'],['methods','营销玩法'],['partnerships','新合作']];
+const tabs=[['overview','概览'],['brands','热门品牌'],['ips','热门 IP'],['methods','流行玩法'],['partnerships','新合作']];
 const formatValue=v=>typeof v==='number'?v.toLocaleString('zh-CN'):v;
 function Link({href,children}){return <a href={href} target="_blank" rel="noreferrer">{children} ↗</a>;}
 function Track({track}){
@@ -27,21 +27,21 @@ function Signal({entry}){
  {entry.tracks.slice(0,2).map(t=><Track key={t.series} track={t}/>)}
  <SalesEvidence track={entry.tracks.find(t=>t.series==='蝉妈妈品牌销售榜')}/>
  <p><b>热度依据　</b>{entry.timestamps} 天内有 {entry.subjects.length} 个不同榜单条目涉及{entry.name}。{!ig&&entry.subjects.length>1?'其中包括「'+entry.subjects[1]+'」。':''}</p>
- {(!ig||story)&&<p>{story?<><b>同期动作　</b><Link href={originalHref(story)}>{story.title}</Link></>:trigger?<><b>话题起因线索　</b><Link href={trigger.url}>{trigger.title}</Link></>:<><b>关注线索　</b>{last.series.includes('销售')?'该品牌进入抖音日销售榜，成交表现值得关注。暂缺能解释销量的活动报道。':<>榜上讨论集中在「{last.title}」。具体带动因素待核实。</>}</>}</p>}
+ {(!ig||story)&&<p>{story?<><b>同期动作　</b><Link href={originalHref(story)}>{story.title}</Link></>:trigger?<><b>话题起因线索　</b><Link href={trigger.url}>{trigger.title}</Link></>:<><b>关注线索　</b>{last.series.includes('销售')?'该品牌进入抖音日销售榜。具体活动对成交的贡献待核实。':<>榜上讨论集中在「{last.title}」。具体带动因素待核实。</>}</>}</p>}
  {ig&&<p><b>社区反应　</b>{ig.author} 提及品牌的{ig.format}在来源的七天样本中排第 {ig.rank}，新增 {ig.value} 次赞评，累计 {ig.total}。<Link href={ig.url}>查看帖子</Link></p>}
- {entry.idea&&<p><b>营销观察　</b>{entry.idea}</p>}
- {!entry.idea&&<p><b>客户调研切口　</b>{ig?'可向品牌数字营销团队了解多地区内容的制作、管理和效果归因流程。':entry.tracks.some(t=>t.series.includes('销售'))?'可向品牌数字业务团队了解大促流量峰值、直播分发容量与全渠道数据分析需求。':/上线|发布|发售|游戏|赛事|夺冠|电竞/.test([last.title,trigger?.title,story?.title].join(' '))?'可向 IP 运营方了解上线或赛事期间的峰值访问、直播分发和内容审核安排。':'可从近期活动入手，核实主办方、活动规模及线上服务承载需求。'}</p>}
  <footer><Link href={last.url}>原始话题或品牌</Link> · <Link href={last.source}>榜单依据</Link></footer></article>;
 }
 export default function MarketPulse({feed}){
- const [tab,setTab]=useState('brands'),[more,setMore]=useState(false);
+ const [tab,setTab]=useState('overview'),[more,setMore]=useState(false);
  const d=useMemo(()=>discovery(feed?.socialTrends,feed?.items,Date.now(),feed?.radar?.items),[feed]);
  const salesTrack=e=>e.tracks.find(t=>t.series==='蝉妈妈品牌销售榜');
  const leads=d.brands.filter(e=>salesTrack(e)).sort((a,b)=>salesTrack(b).last.day.localeCompare(salesTrack(a).last.day)||salesTrack(b).change-salesTrack(a).change||salesTrack(a).last.rank-salesTrack(b).last.rank);
  const overseas=d.brands.filter(e=>e.tracks.some(t=>t.last.platform==='Instagram')).sort((a,b)=>a.tracks.find(t=>t.last.platform==='Instagram').last.rank-b.tracks.find(t=>t.last.platform==='Instagram').last.rank);
  const cultural=d.brands.filter(e=>!salesTrack(e)&&!overseas.includes(e));
  const spotlight=[...new Set([leads[0],overseas[0],cultural[0],leads[1],cultural[1],...d.brands].filter(Boolean))];
- const content=tab==='brands'?spotlight:d[tab]||[],take=more?12:4;
+ const ipNames=/^(?:BLG|EDG|GTA 6|英雄联盟|王者荣耀|宝可梦|原神|两京十五日|恋与深空|名侦探柯南|三丽鸥)$/;
+ const isIP=e=>ipNames.test(e.name)||e.subjects.some(t=>t.includes('《'+e.name+'》'));
+ const content=tab==='overview'?spotlight:tab==='ips'?d.brands.filter(isIP):tab==='brands'?spotlight.filter(e=>!isIP(e)):d[tab]||[],take=more?content.length:4;
  return <section className="market-pulse"><header><h2>本周市场动向</h2><small>{d.days[0].slice(5)} — {d.today.slice(5)}</small></header>
  <div className="market-tabs" aria-label="市场动向分类">{tabs.map(([id,label])=><button key={id} aria-pressed={tab===id} onClick={()=>{setTab(id);setMore(false);}}>{label}</button>)}</div>
  {tab==='partnerships'?<div className="market-stories">{content.slice(0,take).map(i=><article key={originalHref(i)}><small>{i.publisher||i.sourceName} · {i.publishedAt.slice(0,10)}</small><h3><Link href={originalHref(i)}>{i.title}</Link></h3>{i.excerpt&&<p>{i.excerpt.slice(0,125)}</p>}</article>)}</div>:<div className="market-grid">{content.slice(0,take).map(e=><Signal key={e.name} entry={e}/>)}</div>}
