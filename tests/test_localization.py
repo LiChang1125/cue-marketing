@@ -8,6 +8,12 @@ module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
 
 class LocalizationTests(unittest.TestCase):
+    def test_brand_post_keeps_chinese_title_and_verbatim_caption(self):
+        post = {'kind':'brand-post', 'platform':'Instagram', 'title':'跑鞋新配色',
+                'originalTitle':'17 colorways. One new GEL-NIMBUS.'}
+        module.localize(post, lambda _: self.fail('Caption must stay separate from the title'))
+        self.assertEqual(post['title'], '跑鞋新配色')
+
     def test_translate_display_only_and_reuse_cache(self):
         item = {'title': 'Brand launches a new fragrance campaign', 'excerpt': 'The retailer introduces a new experience.', 'url': 'https://example.com/english-original', 'publishedAt': '2026-11-16T00:00:00Z'}
         data = {'feed': {'items': [item], 'editorial': [copy.deepcopy(item)]}, 'reports': {'reports': [{'entries': [copy.deepcopy(item)]}]}}

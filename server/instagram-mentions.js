@@ -61,7 +61,10 @@ export async function refreshInstagram(previous = {}, topics, now = Date.now()) 
   const out = Object.create(null);
   for (const slug of [...new Set(topics.map(brandSlug).filter(Boolean))].slice(0,10)) {
     const old = Object.hasOwn(previous,slug) ? previous[slug] : undefined;
-    if (old && Date.parse(old.checkedAt) > now-86400000) { out[slug]=old; continue; }
+    if (old && Date.parse(old.checkedAt) > now-86400000) {
+      out[slug]={...old,items:old.items.map(p=>({...p,title:postTitle(p.entity,p.author,p.originalTitle||'')}))};
+      continue;
+    }
     try {
       const posts = await instagramPosts(slug, now);
       out[slug] = {checkedAt:new Date(now).toISOString(),items:comparePosts(posts,old)};
