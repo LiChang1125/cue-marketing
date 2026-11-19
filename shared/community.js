@@ -2,7 +2,8 @@ import {topicMatches} from './insights.js';
 const synonyms=[
  ['耐克','Nike'],['阿迪达斯','adidas'],['拉夫劳伦','Ralph Lauren'],['丝芙兰','Sephora'],
  ['宝可梦','Pokémon','Pokemon'],['泡泡玛特','POP MART'],['乐高','LEGO'],['F1','Formula 1','一级方程式'],
- ['鲸鱼','鯨魚','鲸鱼娘','鲸鲸','whale'],['吉祥物','mascot'],['深度求索','DeepSeek']
+ ['鲸鱼','鯨魚','鲸鱼娘','鲸鲸','whale'],['吉祥物','mascot'],['深度求索','DeepSeek'],
+ ['高达','高達','鋼彈','Gundam'],['跑鞋','跑步鞋','running shoes','running shoe']
 ];
 export function topicKey(q){
   const plain=String(q||'').normalize('NFKC').trim();
@@ -12,7 +13,7 @@ export function topicKey(q){
     .replace(/\s+/g,' ').trim()||plain).toLowerCase();
 }
 export function evidenceMatches(title,query){
-  const text=String(title||'').normalize('NFKC').toLowerCase();
+  const text=String(title||'').normalize('NFKC').toLowerCase().replace(/高[达達](?=\s*(?:约|近|逾|数|超|[\d一二三四五六七八九十百千万億亿]))/g,'达到');
   const key=topicKey(query);
   if(!key)return false;
   const terms=key.split(/\s+|[＋+×、,，]/).map(t=>t.replace(/^[的与和及]+|[的与和及]+$/g,'')).filter(Boolean);

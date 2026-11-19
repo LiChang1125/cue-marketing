@@ -53,3 +53,7 @@ test('unlisted combination queries match both names in either title order',()=>{
   assert.equal(evidenceMatches('曙光工坊发布沙丘手办','青槐 曙光工坊'),false);
   assert.equal(evidenceMatches('乐高2027年F1赛车曝光','请帮我看看乐高 F1的市场趋势'),true);
 });
+test('a numeric comparison cannot stand in for a franchise name',()=>{
+  assert.equal(evidenceMatches('销售额高达 3 亿元','高达'),false);
+  assert.equal(evidenceMatches('機動戰士鋼彈推出聯名企劃','高达'),true);
+});

@@ -10,7 +10,7 @@ const publishers=[
 ];
 const equivalents={
   '亚文化':['次文化','subculture'],'香水':['香水','fragrance'],'香氛':['香氛','fragrance'],
-  '潮玩':['潮玩','designer toys'],'品牌联名':['聯名','collaboration'],'快闪':['快閃','pop-up'],
+  '高达':['鋼彈','Gundam'],'跑鞋':['跑鞋','running shoes'],'潮玩':['潮玩','designer toys'],'品牌联名':['聯名','collaboration'],'快闪':['快閃','pop-up'],
   '美妆':['美妝','beauty'],'运动品牌':['運動品牌','sportswear'],'球鞋':['球鞋','sneakers']
 };
 function plain(value){
