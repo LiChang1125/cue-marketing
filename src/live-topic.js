@@ -38,9 +38,9 @@ async function translate(text,pair,signal){
   if(translations.size>=512)translations.delete(translations.keys().next().value);
   translations.set(key,value);return value;
 }
-async function fromPublisher(provider,term,query,after,signal){
+async function fromPublisher(provider,term,query,after,signal,historical=false){
   const u=new URL(provider.base+'/wp-json/wp/v2/posts');
-  u.search=new URLSearchParams({search:term,per_page:'5',after:after.slice(0,19),orderby:'date',order:'desc',_fields:'link,title,date_gmt'});
+  u.search=new URLSearchParams({search:term,per_page:'5',[historical?'before':'after']:after.slice(0,19),orderby:'date',order:'desc',_fields:'link,title,date_gmt'});
   const rows=await getJson(u,signal);
   if(!Array.isArray(rows))throw Error('invalid response');
   const items=await Promise.all(rows.filter(r=>webLink(r.link)&&r.date_gmt).map(async r=>{
@@ -51,7 +51,8 @@ async function fromPublisher(provider,term,query,after,signal){
       try{title=await translate(title,'en|zh-CN',signal);}catch{return null;}
       if(!/[\u3400-\u9fff]/.test(title))return null;
     }
-    return {id:r.link,url:r.link,title,originalTitle,publishedAt,source:provider.id,sourceName:provider.name,contentType:'article',matchedQuery:query};
+    if(historical&&!evidenceMatches(originalTitle+' '+title,query))return null;
+    return {id:r.link,url:r.link,title,originalTitle,publishedAt,source:provider.id,sourceName:provider.name,contentType:'article',matchedQuery:query,historical};
   }));
   return items.filter(Boolean);
 }
@@ -71,7 +72,12 @@ export async function searchLiveTopic(query,days,signal,onSource){
   const term=topicKey(query);
   const pair=equivalents[term];
   const english=pair?Promise.resolve(pair[1]):/[\u3400-\u9fff]/.test(query)?translate(term,'zh-CN|en',signal).catch(()=>term):Promise.resolve(term);
-  const jobs=publishers.map(p=>[p.name,async()=>fromPublisher(p,p.language==='en'?await english:(pair?.[0]||term),query,after,signal)]);
+  const jobs=publishers.map(p=>[p.name,async()=>{
+    const word=p.language==='en'?await english:(pair?.[0]||term);
+    const recent=await fromPublisher(p,word,query,after,signal);
+    if(recent.length||p.language!=='zh'||signal.aborted)return recent;
+    return fromPublisher(p,word,query,after,signal,true);
+  }]);
   jobs.push(['GDELT',()=>fromNewsIndex(term,days,signal)]);
   const boards=async()=>{
     try{
