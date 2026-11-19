@@ -22,14 +22,15 @@ function SalesEvidence({track}){
 }
 function Signal({entry}){
  const {story,trigger,last}=entry;
+ const ig=entry.tracks.find(t=>t.last.platform==='Instagram')?.last;
  return <article className="market-card"><header><h3>{entry.name}</h3><small>{entry.platforms} 个平台 · {entry.timestamps} 天上榜</small></header>
  {entry.tracks.slice(0,2).map(t=><Track key={t.series} track={t}/>)}
  <SalesEvidence track={entry.tracks.find(t=>t.series==='蝉妈妈品牌销售榜')}/>
- <p><b>热度依据　</b>{entry.timestamps} 天内有 {entry.subjects.length} 个不同榜单条目涉及{entry.name}。{entry.subjects.length>1?'其中包括「'+entry.subjects[1]+'」。':''}</p>
- <p>{story?<><b>同期动作　</b><Link href={originalHref(story)}>{story.title}</Link></>:trigger?<><b>话题起因线索　</b><Link href={trigger.url}>{trigger.title}</Link></>:<><b>关注线索　</b>{last.series.includes('销售')?'该品牌进入抖音日销售榜，成交表现值得关注。暂缺能解释销量的活动报道。':<>榜上讨论集中在「{last.title}」。具体带动因素待核实。</>}</>}</p>
- {entry.idea&&<p><b>可借鉴　</b>{entry.idea}</p>}
- {!entry.idea&&!story&&<p><b>销售跟进　</b>{entry.tracks.some(t=>t.series.includes('销售'))?'优先核对热销品类和当期活动，联系品牌电商团队了解下一档推广计划。':trigger?'以「'+trigger.title+'」为切口，向相关品牌确认活动档期、合作权益和目标受众。':'先确认上榜话题与品牌的关联及舆情方向，再决定是否联系市场团队。'}</p>}
- {!entry.idea&&story&&<p><b>跟进切口　</b>{/联名|联动|携手|合作/.test(story.title)?'从这次合作的联名产品、合作方和发行渠道入手，寻找下一轮推广需求。':/发布|上市|发售|上线/.test(story.title)?'围绕本次发布，核对在售产品与传播档期，再联系品牌市场团队。':'先结合这条报道核对品牌近期项目，再判断与团队客户的关联。'}</p>}
+ <p><b>热度依据　</b>{entry.timestamps} 天内有 {entry.subjects.length} 个不同榜单条目涉及{entry.name}。{!ig&&entry.subjects.length>1?'其中包括「'+entry.subjects[1]+'」。':''}</p>
+ {(!ig||story)&&<p>{story?<><b>同期动作　</b><Link href={originalHref(story)}>{story.title}</Link></>:trigger?<><b>话题起因线索　</b><Link href={trigger.url}>{trigger.title}</Link></>:<><b>关注线索　</b>{last.series.includes('销售')?'该品牌进入抖音日销售榜，成交表现值得关注。暂缺能解释销量的活动报道。':<>榜上讨论集中在「{last.title}」。具体带动因素待核实。</>}</>}</p>}
+ {ig&&<p><b>社区反应　</b>{ig.author} 提及品牌的{ig.format}在来源的七天样本中排第 {ig.rank}，新增 {ig.value} 次赞评，累计 {ig.total}。<Link href={ig.url}>查看帖子</Link></p>}
+ {entry.idea&&<p><b>营销观察　</b>{entry.idea}</p>}
+ {!entry.idea&&<p><b>客户调研切口　</b>{ig?'可向品牌数字营销团队了解多地区内容的制作、管理和效果归因流程。':entry.tracks.some(t=>t.series.includes('销售'))?'可向品牌数字业务团队了解大促流量峰值、直播分发容量与全渠道数据分析需求。':/上线|发布|发售|游戏|赛事|夺冠|电竞/.test([last.title,trigger?.title,story?.title].join(' '))?'可向 IP 运营方了解上线或赛事期间的峰值访问、直播分发和内容审核安排。':'可从近期活动入手，核实主办方、活动规模及线上服务承载需求。'}</p>}
  <footer><Link href={last.url}>原始话题或品牌</Link> · <Link href={last.source}>榜单依据</Link></footer></article>;
 }
 export default function MarketPulse({feed}){
@@ -37,15 +38,16 @@ export default function MarketPulse({feed}){
  const d=useMemo(()=>discovery(feed?.socialTrends,feed?.items,Date.now(),feed?.radar?.items),[feed]);
  const salesTrack=e=>e.tracks.find(t=>t.series==='蝉妈妈品牌销售榜');
  const leads=d.brands.filter(e=>salesTrack(e)).sort((a,b)=>salesTrack(b).last.day.localeCompare(salesTrack(a).last.day)||salesTrack(b).change-salesTrack(a).change||salesTrack(a).last.rank-salesTrack(b).last.rank);
- const cultural=d.brands.filter(e=>!salesTrack(e));
- const spotlight=[...new Set([leads[0],cultural[0],leads[1],cultural[1],...d.brands].filter(Boolean))];
+ const overseas=d.brands.filter(e=>e.tracks.some(t=>t.last.platform==='Instagram')).sort((a,b)=>a.tracks.find(t=>t.last.platform==='Instagram').last.rank-b.tracks.find(t=>t.last.platform==='Instagram').last.rank);
+ const cultural=d.brands.filter(e=>!salesTrack(e)&&!overseas.includes(e));
+ const spotlight=[...new Set([leads[0],overseas[0],cultural[0],leads[1],cultural[1],...d.brands].filter(Boolean))];
  const content=tab==='brands'?spotlight:d[tab]||[],take=more?12:4;
  return <section className="market-pulse"><header><h2>本周市场动向</h2><small>{d.days[0].slice(5)} — {d.today.slice(5)}</small></header>
  <div className="market-tabs" aria-label="市场动向分类">{tabs.map(([id,label])=><button key={id} aria-pressed={tab===id} onClick={()=>{setTab(id);setMore(false);}}>{label}</button>)}</div>
  {tab==='partnerships'?<div className="market-stories">{content.slice(0,take).map(i=><article key={originalHref(i)}><small>{i.publisher||i.sourceName} · {i.publishedAt.slice(0,10)}</small><h3><Link href={originalHref(i)}>{i.title}</Link></h3>{i.excerpt&&<p>{i.excerpt.slice(0,125)}</p>}</article>)}</div>:<div className="market-grid">{content.slice(0,take).map(e=><Signal key={e.name} entry={e}/>)}</div>}
  {content.length===0&&<p>近七天暂无可核实的{tabs.find(t=>t[0]===tab)[1]}线索。</p>}
  {content.length>4&&<button className="market-more" onClick={()=>setMore(!more)}>{more?'收起':'展开更多'}</button>}
- {tab!=='partnerships'&&d.audios.length>0&&<section className="market-side"><h3>海外短视频 · 正在增长的配乐</h3>{d.audios.slice(0,tab==='methods'?3:1).map(r=><p key={r.url}><Link href={r.url}>{r.entity}</Link>　24 小时使用增量 {r.value} · 累计 {r.total} 条</p>)}<small>{d.audios[0].day} · <Link href={d.audios[0].source}>Kabo 跟踪的配乐样本</Link></small></section>}
+ {tab==='methods'&&d.instagram.length>0&&<section className="market-side"><h3>Instagram · 品牌内容形式</h3><p>{d.instagram[0].day} 的近七天品牌帖互动增量样本中，{d.instagram.length} 条上榜帖子有 {d.instagram.filter(r=>r.format==='短视频').length} 条短视频、{d.instagram.filter(r=>r.format==='照片').length} 条照片。</p>{d.instagram.slice(0,3).map(r=><p key={r.url}><Link href={r.url}>{r.entity} · {r.author} 的{r.format}</Link>　七天新增赞评 {r.value}</p>)}<small><Link href={d.instagram[0].source}>Monitor Mentions 样本与统计口径</Link></small></section>}
  {tab!=='partnerships'&&d.cases.length>0&&<section className="market-side"><h3>海外品牌创意</h3>{d.cases.slice(0,2).map(c=><p key={c.url}><Link href={c.url}>{c.title}</Link> <small> DIELINE</small></p>)}</section>}
  </section>;
 }

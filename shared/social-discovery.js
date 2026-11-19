@@ -21,7 +21,7 @@ const collab=/联名|跨界合作|携手|联合推出|collaborat|partners? with|
 const safe=url=>/^https?:\/\//i.test(url||'');
 function names(row,sales){
  const text=row.originalTitle||row.title;
- if(row.series==='蝉妈妈品牌销售榜')return [row.entity];
+ if(row.entity)return [row.entity];
  const names=dictionary.filter(([,match])=>match.test(text)).map(([name])=>name);
  for(const name of sales){
    if(dictionary.some(([key])=>key===name))continue;
@@ -68,10 +68,10 @@ export function discovery(data={},articles=[],now=Date.now(),native=[]){
    return {name,tracks,platforms,timestamps,subjects,last,story:stories[0],trigger,idea:formats.find(([key])=>key===name)?.[2]};
  }
  const sorted=map=>[...map].map(build).sort((a,b)=>b.last.day.localeCompare(a.last.day)||b.platforms-a.platforms||b.timestamps-a.timestamps||a.last.rank-b.last.rank||a.name.localeCompare(b.name));
- const sounds=rows.filter(r=>r.platform==='Instagram');
- const audioDay=sounds.reduce((d,r)=>d>r.day?d:r.day,'');
- const audios=sounds.filter(r=>r.day===audioDay).sort((a,b)=>a.rank-b.rank);
+ const mentions=rows.filter(r=>r.platform==='Instagram');
+ const latestDay=mentions.reduce((d,r)=>d>r.day?d:r.day,'');
+ const instagram=mentions.filter(r=>r.day===latestDay).sort((a,b)=>a.rank-b.rank);
  const unique=new Set();
  const partnerships=cases.filter(i=>collab.test(i.title+' '+(i.originalTitle||''))).sort((a,b)=>Date.parse(b.publishedAt)-Date.parse(a.publishedAt)).filter(i=>{const key=originalHref(i);if(unique.has(key))return false;unique.add(key);return true;});
- return {brands:sorted(candidates),methods:sorted(methods),partnerships,audios,days,today,cases:data.cases?.filter(c=>cases.includes(c))||[]};
+ return {brands:sorted(candidates),methods:sorted(methods),partnerships,instagram,days,today,cases:data.cases?.filter(c=>cases.includes(c))||[]};
 }

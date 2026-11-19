@@ -2,7 +2,7 @@ import {load} from 'cheerio';
 
 const archive='https://raw.githubusercontent.com/solarhell/hot-search-crawler/main/data/';
 const latest='https://solarhell.github.io/hot-search-crawler/latest.json';
-const ig='https://kabo.sh/tools/trending-instagram-audio';
+const ig='https://www.monitormentions.com/trending-brand-mentions-on-instagram';
 const commerce='https://www.chanmama.com/open/';
 export const dayKey=time=>new Date(Number(time)+8*3600000).toISOString().slice(0,10);
 const dayMs=86400000;
@@ -54,16 +54,18 @@ async function salesDay(day){
   }).get();
 }
 
-async function reels(){
+async function instagramMentions(){
   const $=load(await read(ig,false));
-  const stamp=Date.parse($('time[datetime]').first().attr('datetime'));
+  const end=$('main').text().match(/Instagram\s*·\s*\d{1,2} \w+ \d{4}\s*[–—-]\s*(\d{1,2} \w+ \d{4})/i)?.[1];
+  const stamp=Date.parse(end+' 00:00:00 GMT');
   if(!Number.isFinite(stamp))return [];
-  return $('tr').map((_,e)=>{
-    const row=$(e),sound=row.find('.audio-board__title').text().trim();
-    if(!sound)return null;
-    return {platform:'Instagram',series:'Kabo 配乐日增榜',title:sound,entity:sound,artist:row.find('.audio-board__artist').text().trim(),
-      day:dayKey(stamp),rank:Number(row.find('.audio-board__rank').text()),value:row.find('.audio-board__growth').text().trim(),
-      total:row.find('.audio-board__count').text().trim(),unit:'24小时使用增量',source:ig,url:row.find('.audio-board__link a').attr('href')};
+  return $('tr.tb-row').map((_,e)=>{
+    const row=$(e),entity=row.find('.tb-brand-name').text().trim(),url=row.find('.tb-post a').attr('href');
+    if(!entity||!url)return null;
+    const author=row.find('.tb-author').text().split('·')[0].trim();
+    return {platform:'Instagram',series:'Instagram 品牌帖互动增量榜',title:row.find('.tb-caption').text().trim()||entity,entity,author,
+      format:row.find('.tb-author').text().includes('Reel')?'短视频':'照片',day:dayKey(stamp),rank:Number(row.find('.tb-rank').text()),
+      value:row.find('.tb-gain').text().trim(),total:row.find('.tb-total').text().trim(),unit:'该帖近7天新增赞评',source:ig,url};
   }).get();
 }
 
@@ -71,13 +73,13 @@ export async function collectSocialTrends(previous={}, now=Date.now()){
   const cutoff=dayKey(now-6*dayMs),today=dayKey(now);
   const rows=new Map(),archives=new Set((previous.archives||[]).filter(d=>d>=cutoff));
   function merge(row){
-    if(!row.title||!row.rank||!(row.day>=cutoff&&row.day<=today)||!/^https?:\/\//.test(row.url))return;
-    const key=[row.series,row.day,row.title].join('|');
+    if(row.series==='Kabo 配乐日增榜'||!row.title||!row.rank||!(row.day>=cutoff&&row.day<=today)||!/^https?:\/\//.test(row.url))return;
+    const key=[row.series,row.day,row.platform==='Instagram'?row.url:row.title].join('|');
     const old=rows.get(key);
     if(!old||row.rank<old.rank||(row.rank===old.rank&&(old.volume==null||row.volume!=null)))rows.set(key,row);
   }
   for(const row of previous.rows||[])merge(row);
-  const jobs=[async()=>boardRows(await read(latest),latest),sales,reels];
+  const jobs=[async()=>boardRows(await read(latest),latest),sales,instagramMentions];
   for(let i=0;i<7;i++){
     const day=dayKey(now-i*dayMs);
     if(i>0&&!previous.rows?.some(r=>r.day===day&&r.volume&&r.rank===10))jobs.push(()=>salesDay(day));

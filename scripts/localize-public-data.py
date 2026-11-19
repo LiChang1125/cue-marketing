@@ -54,7 +54,7 @@ def install_model(root):
             package.extractall(root)
     return target
 
-def localize(data, translate, reviewed=None):
+def localize(data, translate, reviewed=None, *, omit_failed_articles=False):
     reviewed = reviewed or {}
     cache = data.get('translationCache', {})
     pending, records = {}, []
@@ -87,13 +87,35 @@ def localize(data, translate, reviewed=None):
             raise ValueError('Translation batch length mismatch')
         for key, output in zip(pending, outputs):
             if not output or not re.search(r'[\u3400-\u9fff]', output):
+                if omit_failed_articles:
+                    continue
                 raise ValueError('Translator did not produce Chinese: ' + pending[key][:160])
             cache[key] = output
+    omitted = set()
     for record, field, original, key in records:
+        if key not in cache:
+            if field == 'title' and record.get('url'):
+                omitted.add(id(record))
+            elif field in ('excerpt', 'subtitle'):
+                record.pop(field, None)
+            else:
+                raise ValueError('Incomplete required translation')
+            continue
         if field in ('title', 'excerpt'):
             record.setdefault('original' + field.title(), original)
         record[field] = cache[key]
         record['translation'] = {'language': 'zh-CN', 'method': MODEL_VERSION}
+    if omitted:
+        def prune(node):
+            if isinstance(node, list):
+                node[:] = [item for item in node if id(item) not in omitted]
+                for item in node:
+                    prune(item)
+            elif isinstance(node, dict):
+                for item in node.values():
+                    prune(item)
+        prune(data)
+        print(f'Omitted {len(omitted)} article records with unavailable Chinese titles', flush=True)
     data['translationCache'] = cache
     return len(pending), len(records)
 
@@ -121,7 +143,7 @@ def main():
         return results
     reviewed_path = Path('config/translations.zh-CN.json')
     reviewed = json.loads(reviewed_path.read_text(encoding='utf-8-sig')) if reviewed_path.exists() else {}
-    new_count, total = localize(data, translate, reviewed)
+    new_count, total = localize(data, translate, reviewed, omit_failed_articles=True)
     # Commit only a complete localized payload. Failed translation keeps the existing site.
     temp = path.with_suffix('.localized.tmp')
     temp.write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
