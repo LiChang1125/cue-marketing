@@ -58,7 +58,7 @@ export function communityForTopic(data={},query,days,external=[],now=Date.now(),
   };
   const cached=Object.entries(data.communityTopics||{}).find(([subject])=>topicKey(subject)===topicKey(query))?.[1];
   const stored=cached?.items||[];
-  for(const r of [...external,...stored])if(evidenceMatches([r.title,r.originalTitle].filter(Boolean).join(' '),query))add(r);
+  for(const r of [...external,...stored])if(r.matchedQuery===query||evidenceMatches([r.title,r.originalTitle].filter(Boolean).join(' '),query))add(r);
   for(const i of native){
     if(i.contentType!=='hot-topic'||!/bilibili|zhihu/.test(i.source)||!i.observedAt||!evidenceMatches(i.title,query))continue;
     const ranks=[i.rank,...(i.rankTimeline||[]).map(p=>p.rank)].filter(n=>Number.isInteger(n)&&n>0);

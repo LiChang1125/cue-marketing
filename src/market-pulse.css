@@ -4,3 +4,5 @@
 .market-outlook{border-left:2px solid #84978b;padding-left:12px}.market-outlook small{display:block;line-height:1.65;margin-top:3px}
 
 .community-panel{margin-top:24px}.community-cases{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr));gap:14px}.community-cases article{border-top:1px solid #dfe4df;padding:10px 0}.community-cases article>a,.community-cases article>small{display:block;margin:4px 0}.community-dates{display:flex;gap:10px;align-items:end;overflow-x:auto}.community-dates a{display:grid;text-align:center;font-size:12px}.community-dates i{display:block;background:#799982;width:12px;margin:0 auto 4px}.community-panel p{font-size:.9rem;line-height:1.65}
+
+.topic-coverage{font-size:.8rem;color:#56655c;margin:12px 0}.topic-coverage summary{cursor:pointer}.topic-coverage p{line-height:1.9;max-width:75ch}

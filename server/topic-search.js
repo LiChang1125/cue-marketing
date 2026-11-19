@@ -1,4 +1,5 @@
 import {biliTopic} from './community-topics.js';
+import {evidenceMatches,topicKey} from '../shared/community.js';
 import {load} from 'cheerio';
 
 const definitions=[
@@ -20,6 +21,30 @@ async function lookup(def,query,since){
   });
   return rows;
 }
+async function toutiao(query,days){
+  const endpoint=new URL('https://www.toutiao.com/search/');
+  endpoint.searchParams.set('keyword',topicKey(query));
+  const res=await fetch(endpoint,{signal:AbortSignal.timeout(9000)});
+  if(!res.ok)throw Error('HTTP '+res.status);
+  const $=load(await res.text()),items=[],community=[];
+  const scripts=$('script[type="application/json"]');
+  if(!scripts.length)throw Error('搜索结果暂不可读');
+  for(const script of scripts){
+    let row;
+    try{row=JSON.parse($(script).text()).data;}catch{continue;}
+    const title=row?.display?.title?.text,excerpt=row?.display?.summary?.text||'';
+    const at=Number(row?.display?.self_info?.timestamp)*1000;
+    if(!title||!evidenceMatches(title+' '+excerpt,query)||!Number.isFinite(at)||at>Date.now()||at<Date.now()-days*86400000)continue;
+    const url=row.article_url||row.share_url;
+    if(!/^https?:\/\//i.test(url||''))continue;
+    const publishedAt=new Date(at).toISOString();
+    items.push({id:url,url,title,excerpt,publishedAt,source:'toutiao-search',sourceName:'头条搜索',publisher:row.source,contentType:'article',matchedQuery:query});
+    const group=row.display.self_info.group_id;
+    if(/^\d+$/.test(String(group))&&Number.isInteger(row.comment_count)&&evidenceMatches(title,query))
+      community.push({platform:'今日头条',day:publishedAt.slice(0,10),title,url:'https://www.toutiao.com/article/'+group+'/',replies:row.comment_count});
+  }
+  return {name:'头条搜索',ok:true,items,community};
+}
 export function installTopicSearch(app){
   const cache=new Map(),pending=new Map();
   app.get('/api/topic-search',async(req,res)=>{
@@ -34,7 +59,8 @@ export function installTopicSearch(app){
         catch{return {name:def.name,ok:false,items:[]};}
       });
       const community=biliTopic(query).then(d=>({name:'B站',ok:true,items:[],community:d.items})).catch(()=>({name:'B站',ok:false,items:[],community:[]}));
-      const work=Promise.all([...media,community]).then(result=>{
+      const news=toutiao(query,days).catch(()=>({name:'头条搜索',ok:false,items:[],community:[]}));
+      const work=Promise.all([...media,community,news]).then(result=>{
         if(result.every(r=>r.ok)){
           if(cache.size>=96)cache.delete(cache.keys().next().value);
           cache.set(key,{result,expires:Date.now()+5*60000});

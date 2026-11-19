@@ -28,7 +28,7 @@ export default function CommunityEvidence({feed,query,days,extra,busy}){
     <div className="market-tabs" aria-label="讨论平台">{groups.map(g=><button key={g.platform} aria-pressed={g===group} onClick={()=>setSelected(g.platform)}>{g.platform}</button>)}</div>
     {daily.length>0&&<div className="community-history"><p>{daily.length} 天有上榜记录，最高第 {Math.min(...daily.map(r=>r.rank))} 名。</p>
       <div className="community-dates">{daily.map(r=><a href={r.source} target="_blank" rel="noreferrer" key={r.day} title={r.day+' 第 '+r.rank+' 名'}><i style={{height:(8+32/Math.sqrt(r.rank))+'px'}}/><b>#{r.rank}</b><small>{r.day.slice(5)}</small></a>)}</div></div>}
-    {posts.length>0&&<p>{group.platform==='Instagram'?'品牌帖增量榜样本':group.platform==='V2EX'?'期内发布的主题帖':'期内发布的视频样本'} {posts.length} 条{group.platform==='V2EX'?'，合计 '+totalReplies+' 条回复。':'。'}</p>}
+    {posts.length>0&&<p>{group.platform==='Instagram'?'品牌帖增量榜样本':group.platform==='B站'?'期内发布的视频样本':'期内发布的讨论样本'} {posts.length} 条{posts.every(p=>Number.isFinite(p.replies))?'，合计 '+totalReplies+' 条回复。':'。'}</p>}
     {group.discussion&&<p>同一批 {group.discussion.sample} 条视频，自 {new Date(group.discussion.start).toLocaleDateString('zh-CN')} 至 {new Date(group.discussion.end).toLocaleDateString('zh-CN')} 弹幕净变化 {group.discussion.change>0?'+':''}{group.discussion.change} 条。</p>}
     {!daily.length&&!posts.length&&<p>本期暂无匹配样本 · 往期案例</p>}
     {proof&&<p><b>{signal[1]}　</b><a href={proof.url} target="_blank" rel="noreferrer">{proof.title} ↗</a></p>}

@@ -1,4 +1,4 @@
-import {topicKey,v2exItems} from '../shared/community.js';
+import {evidenceMatches,topicKey,v2exItems} from '../shared/community.js';
 import {apiFetch,publicMode,previewMode} from './urls.js';
 import {topicMatches} from '../shared/insights.js';
 const publishers=[
@@ -103,7 +103,25 @@ export async function searchLiveTopic(query,days,signal,onSource){
       if(!signal.aborted)onSource('V2EX',[],true,v2exItems(d,query));
     }catch{if(!signal.aborted)onSource('V2EX',[],false);}
   };
-  const extra=Promise.all([domestic(),boards(),forums()]);
+  const overseasForum=async()=>{
+    try{
+      const term=await english;
+      const u=new URL('https://lemmy.world/api/v3/search');
+      u.search=new URLSearchParams({q:term,type_:'Posts',sort:'New',limit:'30'});
+      const result=await getJson(u,signal);
+      if(!Array.isArray(result.posts))throw Error('invalid community response');
+      const candidates=result.posts.filter(({post,counts})=>post&&!post.nsfw&&!post.deleted&&!post.removed&&webLink(post.ap_id)&&Number.isInteger(counts?.comments)&&Date.parse(post.published)>=Date.parse(after)&&evidenceMatches(post.name,term)).slice(0,8);
+      const matched=await Promise.all(candidates.map(async({post,counts})=>{
+        let title=post.name;
+        if(!/[\u3400-\u9fff]/.test(title)){
+          try{title=await translate(title,'en|zh-CN',signal);}catch{return null;}
+        }
+        return {platform:'Lemmy',title,originalTitle:post.name,matchedQuery:query,url:post.ap_id,day:post.published.slice(0,10),replies:counts.comments};
+      }));
+      if(!signal.aborted)onSource('Lemmy',[],true,matched.filter(Boolean));
+    }catch{if(!signal.aborted)onSource('Lemmy',[],false);}
+  };
+  const extra=Promise.all([domestic(),boards(),forums(),overseasForum()]);
   await Promise.all(jobs.map(async([name,search])=>{
     try{const items=await search();if(!signal.aborted)onSource(name,items,true);}
     catch{if(!signal.aborted)onSource(name,[],false);}
