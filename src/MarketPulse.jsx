@@ -30,7 +30,7 @@ function Signal({entry}){
  <p><b>热度依据　</b>近七天有 {entry.subjects.length} 个不同标题涉及{entry.name}。{!ig&&entry.subjects.length>1?'其中包括「'+entry.subjects[1]+'」。':''}</p>
  {entry.controversy&&<p><b>争议讨论　</b><Link href={entry.controversy.url}>{entry.controversy.title}</Link></p>}
  {(!ig||story)&&<p>{story?<><b>相关报道　</b><Link href={originalHref(story)}>{story.title}</Link></>:trigger?<><b>话题起因线索　</b><Link href={trigger.url}>{trigger.title}</Link></>:<><b>关注线索　</b>{last.series.includes('销售')?'该品牌进入抖音日销售榜。具体活动对成交的贡献待核实。':<>榜上讨论集中在「{last.title}」。具体带动因素待核实。</>}</>}</p>}
- {ig&&<p><b>社区反应　</b>{ig.author} 提及品牌的{ig.format}在 <Link href={ig.source}>Monitor Mentions</Link> 七天互动增量样本中排第 {ig.rank}，新增 {ig.value} 次赞评，累计 {ig.total}。<Link href={ig.url}>查看帖子</Link></p>}
+ {ig&&<p><b>社区反应　</b>{ig.author} 的{ig.format}{entry.campaignTag?'带有活动标签 '+entry.campaignTag:'提及了该品牌'}，在 <Link href={ig.source}>Monitor Mentions</Link> 七天互动增量样本中排第 {ig.rank}，新增 {ig.value} 次赞评，累计 {ig.total}。<Link href={ig.url}>查看帖子</Link></p>}
  <p className="market-outlook"><b>未来七天 · {forecast.trend}</b><small>{forecast.basis}</small></p>
  <footer><Link href={last.url}>原始话题或品牌</Link> · <Link href={last.source}>榜单依据</Link></footer></article>;
 }

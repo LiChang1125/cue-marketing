@@ -97,11 +97,20 @@ export function discovery(data={},articles=[],now=Date.now(),native=[],query='')
    const timestamps=new Set(matches.map(r=>r.day)).size;
    const last=tracks[0].last;
    related.sort((a,b)=>Date.parse(b.publishedAt)-Date.parse(a.publishedAt));
-   const story=related.find(i=>event.test(i.title+' '+(i.originalTitle||'')))||related[0];
+   const instagram=tracks.find(t=>t.last.platform==='Instagram')?.last;
+   const compact=t=>String(t||'').toLowerCase().replace(/[^\p{L}\p{N}]/gu,'');
+   const brandKey=compact(instagram?.entity||name);
+   const tags=(instagram?.title.match(/#[\p{L}\p{N}_]+/gu)||[]).filter(t=>{
+     const key=compact(t);
+     return key.length>=5&&!key.includes(brandKey)&&!['instagram','reels','fashion','trending','viral','sponsored','beauty','explorepage'].includes(key);
+   });
+   const campaignTag=tags.find(tag=>related.some(i=>compact(i.title+' '+(i.originalTitle||'')).includes(compact(tag))));
+   const campaign=campaignTag&&related.find(i=>compact(i.title+' '+(i.originalTitle||'')).includes(compact(campaignTag)));
+   const story=campaign||related.find(i=>event.test(i.title+' '+(i.originalTitle||'')))||related[0];
    const trigger=matches.filter(r=>event.test(r.title)).sort((a,b)=>b.day.localeCompare(a.day)||a.rank-b.rank)[0];
    const subjects=[...new Set(matches.slice().sort((a,b)=>b.day.localeCompare(a.day)||a.rank-b.rank).map(r=>r.title))];
    const controversy=matches.find(r=>disputed.test(r.title));
-   return {name,isIP,tracks,platforms,timestamps,subjects,last,story,trigger,controversy};
+   return {name,isIP,tracks,platforms,timestamps,subjects,last,story,trigger,controversy,campaignTag};
  }
  const brands=[...candidates].map(build).filter(Boolean).sort((a,b)=>b.last.day.localeCompare(a.last.day)||b.platforms-a.platforms||b.timestamps-a.timestamps||a.last.rank-b.last.rank||a.name.localeCompare(b.name));
  const unique=new Set();
