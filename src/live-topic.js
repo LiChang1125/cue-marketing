@@ -1,4 +1,5 @@
 import {evidenceMatches,topicKey,v2exItems} from '../shared/community.js';
+import {searchHackerNews} from '../shared/yupi-monitor.js';
 import {apiFetch,publicMode,previewMode} from './urls.js';
 import {topicMatches} from '../shared/insights.js';
 const publishers=[
@@ -127,7 +128,23 @@ export async function searchLiveTopic(query,days,signal,onSource){
       if(!signal.aborted)onSource('Lemmy',[],true,matched.filter(Boolean));
     }catch{if(!signal.aborted)onSource('Lemmy',[],false);}
   };
-  const extra=Promise.all([domestic(),boards(),forums(),overseasForum()]);
+  const hackerNews=async()=>{
+    const name='Hacker News';
+    try{
+      const keyword=await english;
+      const rows=(await searchHackerNews(keyword,days,signal))
+        .filter(post=>evidenceMatches(post.originalTitle,keyword)).slice(0,5);
+      const posts=await Promise.all(rows.map(async post=>{
+        let title=post.originalTitle;
+        if(!/[\u3400-\u9fff]/.test(title)){
+          try{title=await translate(title,'en|zh-CN',signal);}catch{title=query+' · 社区讨论';}
+        }
+        return {...post,title,matchedQuery:query};
+      }));
+      if(!signal.aborted)onSource(name,[],true,posts);
+    }catch{if(!signal.aborted)onSource(name,[],false);}
+  };
+  const extra=Promise.all([domestic(),boards(),forums(),overseasForum(),hackerNews()]);
   await Promise.all(jobs.map(async([name,search])=>{
     try{const items=await search();if(!signal.aborted)onSource(name,items,true);}
     catch{if(!signal.aborted)onSource(name,[],false);}

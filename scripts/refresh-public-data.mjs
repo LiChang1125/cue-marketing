@@ -1,4 +1,5 @@
 import {refreshCommunityTopics} from '../server/community-topics.js';
+import {refreshInstagram} from '../server/instagram-mentions.js';
 import {discovery} from '../shared/social-discovery.js';
 import {collectSocialTrends} from '../server/social-trends.js';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
@@ -56,6 +57,9 @@ market.editorialCases=uniqueCases(Object.values(curated).flat())
  .filter(i=>Date.parse(i.publishedAt)>=now.getTime()-14*86400000)
  .map(({title,originalTitle,url,originalUrl,publishedAt,publisher,excerpt})=>({title,originalTitle,url,originalUrl,publishedAt,publisher,excerpt}));
 const featuredSubjects=discovery(market,cleanItems,now.getTime(),nativeItems).brands;
+const brandNames=featuredSubjects.filter(b=>b.tracks.some(t=>t.last.platform==='Instagram')).map(b=>b.name);
+market.instagramTopics=await refreshInstagram(previous.feed?.socialTrends?.instagramTopics,
+ [...brandNames.slice(0,6),'ASICS','LEGO',...featuredSubjects.map(b=>b.name)],now.getTime());
 market.communityTopics=await refreshCommunityTopics(previous.feed?.socialTrends?.communityTopics,
  ['DeepSeek 鲸鱼',...featuredSubjects.slice(0,9).map(b=>b.name)],now.getTime());
 const data={schemaVersion:3,generatedAt:now.toISOString(),translationCache:previous.translationCache||{},feed:{socialTrends:market,radar:{engine:'TrendRadar',items:nativeItems,platforms:native.platforms,generatedAt:native.generatedAt},items:cleanItems,editorial,editorialCandidates:cleanItems,sources:activeSources,topics:[],hotlist:editorial.slice(0,8)},curated,reports,histories:{},sourceHealth:sources};

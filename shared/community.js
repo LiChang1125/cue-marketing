@@ -1,6 +1,6 @@
 import {topicMatches} from './insights.js';
 const synonyms=[
- ['耐克','Nike'],['阿迪达斯','adidas'],['拉夫劳伦','Ralph Lauren'],['丝芙兰','Sephora'],
+ ['耐克','Nike'],['阿迪达斯','adidas'],['亚瑟士','ASICS'],['优衣库','Uniqlo'],['迪士尼','Disney'],['苹果','Apple'],['拉夫劳伦','Ralph Lauren'],['丝芙兰','Sephora'],
  ['宝可梦','Pokémon','Pokemon'],['泡泡玛特','POP MART'],['乐高','LEGO'],['F1','Formula 1','一级方程式'],
  ['鲸鱼','鯨魚','鲸鱼娘','鲸鲸','whale'],['吉祥物','mascot'],['深度求索','DeepSeek'],
  ['高达','高達','鋼彈','Gundam'],['跑鞋','跑步鞋','running shoes','running shoe']
@@ -59,6 +59,11 @@ export function communityForTopic(data={},query,days,external=[],now=Date.now(),
   };
   const cached=Object.entries(data.communityTopics||{}).find(([subject])=>topicKey(subject)===topicKey(query))?.[1];
   const stored=cached?.items||[];
+  const instagram=Object.values(data.instagramTopics||{}).flatMap(entry=>entry.items||[]);
+  for(const post of instagram)if(evidenceMatches([post.entity,post.originalTitle].join(' '),query)){
+    const current=external.find(r=>r.url===post.url);
+    if(!current||(current.likes===post.likes&&current.replies===post.replies))add(post);
+  }
   for(const r of [...external,...stored])if(r.matchedQuery===query||evidenceMatches([r.title,r.originalTitle].filter(Boolean).join(' '),query))add(r);
   for(const i of native){
     if(i.contentType!=='hot-topic'||!/bilibili|zhihu/.test(i.source)||!i.observedAt||!evidenceMatches(i.title,query))continue;

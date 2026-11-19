@@ -1,4 +1,5 @@
 import {biliTopic} from './community-topics.js';
+import {instagramPosts} from './instagram-mentions.js';
 import {evidenceMatches,topicKey} from '../shared/community.js';
 import {load} from 'cheerio';
 
@@ -60,7 +61,8 @@ export function installTopicSearch(app){
       });
       const community=biliTopic(query).then(d=>({name:'B站',ok:true,items:[],community:d.items})).catch(()=>({name:'B站',ok:false,items:[],community:[]}));
       const news=toutiao(query,days).catch(()=>({name:'头条搜索',ok:false,items:[],community:[]}));
-      const work=Promise.all([...media,community,news]).then(result=>{
+      const instagram=instagramPosts(query).then(posts=>({name:'Instagram 品牌帖索引',ok:true,items:[],community:posts.map(p=>({...p,matchedQuery:query}))})).catch(()=>({name:'Instagram 品牌帖索引',ok:false,items:[]}));
+      const work=Promise.all([...media,community,news,instagram]).then(result=>{
         if(result.every(r=>r.ok)){
           if(cache.size>=96)cache.delete(cache.keys().next().value);
           cache.set(key,{result,expires:Date.now()+5*60000});
