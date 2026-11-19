@@ -38,6 +38,22 @@ async function sales(){
   }).get();
 }
 
+async function salesDay(day){
+  const source=commerce+'brandRank.html?cat=-1&type=day&day='+day;
+  const $=load(await read(source,false));
+  if(!$('a[href*="type=day"]').toArray().some(e=>$(e).attr('href')?.endsWith('day='+day)))return [];
+  const headings=$('tr').first().text().replace(/\s/g,'');
+  if(!headings.includes('销量销售额商品数关联视频关联直播关联达人'))return [];
+  return $('tr').slice(1).map((index,e)=>{
+    const cells=$(e).find('td'),title=cells.eq(1).text().trim(),link=cells.eq(1).find('a').attr('href');
+    if(!title||!link||cells.length!==8)return null;
+    const count=i=>{const s=cells.eq(i).text().trim().replaceAll(',','');return /^\d+$/.test(s)?Number(s):null;};
+    return {platform:'抖音',series:'蝉妈妈品牌销售榜',title,entity:title.split('/').at(-1),day,rank:index+1,
+      value:cells.eq(3).text().trim(),unit:'预估日销售额',volume:cells.eq(2).text().trim(),videos:count(5),lives:count(6),creators:count(7),
+      url:new URL(link,commerce).href,source};
+  }).get();
+}
+
 async function reels(){
   const $=load(await read(ig,false));
   const stamp=Date.parse($('time[datetime]').first().attr('datetime'));
@@ -58,12 +74,13 @@ export async function collectSocialTrends(previous={}, now=Date.now()){
     if(!row.title||!row.rank||!(row.day>=cutoff&&row.day<=today)||!/^https?:\/\//.test(row.url))return;
     const key=[row.series,row.day,row.title].join('|');
     const old=rows.get(key);
-    if(!old||row.rank<=old.rank)rows.set(key,row);
+    if(!old||row.rank<old.rank||(row.rank===old.rank&&(old.volume==null||row.volume!=null)))rows.set(key,row);
   }
   for(const row of previous.rows||[])merge(row);
   const jobs=[async()=>boardRows(await read(latest),latest),sales,reels];
   for(let i=0;i<7;i++){
     const day=dayKey(now-i*dayMs);
+    if(i>0&&!previous.rows?.some(r=>r.day===day&&r.volume&&r.rank===10))jobs.push(()=>salesDay(day));
     if(archives.has(day)&&i>1)continue;
     jobs.push(async()=>{
       const url=archive+day+'/summary.json';

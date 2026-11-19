@@ -13,10 +13,18 @@ function Track({track}){
  {last.value!=null&&<small>{last.unit} {formatValue(last.value)}</small>}</div>
  <div className="market-bars" aria-label={last.series+'近七天最佳位次'}>{points.map((r,i)=>r?<a key={i} href={r.source} title={r.day+' 第 '+r.rank+' 名'} aria-label={r.day+' 第 '+r.rank+' 名'} target="_blank" rel="noreferrer" style={{height:(7+32/Math.sqrt(r.rank))+'px'}}/>:<i key={i} title="无观测"/>)}</div></div>;
 }
+function SalesEvidence({track}){
+ if(!track)return null;
+ const history=track.points.filter(r=>r?.volume),latest=history.at(-1),prior=history.at(-2);
+ if(!latest)return null;
+ return <p><b>成交与传播　</b>{latest.day.slice(5)} 预估售出 {latest.volume} 件，关联 {latest.videos??'—'} 条视频、{latest.lives??'—'} 场直播。
+ {prior&&Number.isFinite(prior.creators)&&Number.isFinite(latest.creators)?<>关联达人从 {prior.day.slice(5)} 的 {prior.creators} 位变为 {latest.creators} 位。<Link href={prior.source}>前期榜单</Link> · </>:<>关联达人 {latest.creators??'—'} 位。</>}<Link href={latest.source}>当日数据</Link></p>;
+}
 function Signal({entry}){
  const {story,trigger,last}=entry;
  return <article className="market-card"><header><h3>{entry.name}</h3><small>{entry.platforms} 个平台 · {entry.timestamps} 天上榜</small></header>
  {entry.tracks.slice(0,2).map(t=><Track key={t.series} track={t}/>)}
+ <SalesEvidence track={entry.tracks.find(t=>t.series==='蝉妈妈品牌销售榜')}/>
  <p><b>热度依据　</b>{entry.timestamps} 天内有 {entry.subjects.length} 个不同榜单条目涉及{entry.name}。{entry.subjects.length>1?'其中包括「'+entry.subjects[1]+'」。':''}</p>
  <p>{story?<><b>同期动作　</b><Link href={originalHref(story)}>{story.title}</Link></>:trigger?<><b>话题起因线索　</b><Link href={trigger.url}>{trigger.title}</Link></>:<><b>关注线索　</b>{last.series.includes('销售')?'该品牌进入抖音日销售榜，成交表现值得关注。暂缺能解释销量的活动报道。':<>榜上讨论集中在「{last.title}」。具体带动因素待核实。</>}</>}</p>
  {entry.idea&&<p><b>可借鉴　</b>{entry.idea}</p>}
