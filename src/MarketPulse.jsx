@@ -35,8 +35,10 @@ function Signal({entry}){
 export default function MarketPulse({feed}){
  const [tab,setTab]=useState('brands'),[more,setMore]=useState(false);
  const d=useMemo(()=>discovery(feed?.socialTrends,feed?.items,Date.now(),feed?.radar?.items),[feed]);
- const leads=d.brands.filter(e=>e.tracks.some(t=>t.series==='蝉妈妈品牌销售榜'));
- const spotlight=[...new Set([d.brands[0],leads[0],d.brands[1],leads[1],...d.brands].filter(Boolean))];
+ const salesTrack=e=>e.tracks.find(t=>t.series==='蝉妈妈品牌销售榜');
+ const leads=d.brands.filter(e=>salesTrack(e)).sort((a,b)=>salesTrack(b).last.day.localeCompare(salesTrack(a).last.day)||salesTrack(b).change-salesTrack(a).change||salesTrack(a).last.rank-salesTrack(b).last.rank);
+ const cultural=d.brands.filter(e=>!salesTrack(e));
+ const spotlight=[...new Set([leads[0],cultural[0],leads[1],cultural[1],...d.brands].filter(Boolean))];
  const content=tab==='brands'?spotlight:d[tab]||[],take=more?12:4;
  return <section className="market-pulse"><header><h2>本周市场动向</h2><small>{d.days[0].slice(5)} — {d.today.slice(5)}</small></header>
  <div className="market-tabs" aria-label="市场动向分类">{tabs.map(([id,label])=><button key={id} aria-pressed={tab===id} onClick={()=>{setTab(id);setMore(false);}}>{label}</button>)}</div>

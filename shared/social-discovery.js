@@ -23,7 +23,11 @@ function names(row,sales){
  const text=row.originalTitle||row.title;
  if(row.series==='蝉妈妈品牌销售榜')return [row.entity];
  const names=dictionary.filter(([,match])=>match.test(text)).map(([name])=>name);
- for(const name of sales)if(name.length>1&&text.includes(name))names.push(name);
+ for(const name of sales){
+   if(dictionary.some(([key])=>key===name))continue;
+   const ambiguous={美的:/Midea|美的(?:集团|空调|冰箱|家电|电器)/i,骆驼:/Camel品牌|骆驼(?:户外|冲锋衣|鞋|服饰)/i};
+   if(ambiguous[name]?ambiguous[name].test(text):name.length>1&&text.includes(name))names.push(name);
+ }
  for(const m of text.matchAll(/《([^《》]{2,20})》/g))names.push(m[1]);
  return [...new Set(names)];
 }
