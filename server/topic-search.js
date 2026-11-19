@@ -1,3 +1,4 @@
+import {biliTopic} from './community-topics.js';
 import {load} from 'cheerio';
 
 const definitions=[
@@ -28,10 +29,12 @@ export function installTopicSearch(app){
     if(entry&&entry.expires>Date.now())return res.json(entry.result);
     if(!pending.has(key)){
       if(pending.size>=6)return res.status(429).json({error:'搜索繁忙，请稍后重试'});
-      const work=Promise.all(definitions.map(async def=>{
+      const media=definitions.map(async def=>{
         try{return {name:def.name,ok:true,items:await lookup(def,query,Date.now()-days*86400000)};}
         catch{return {name:def.name,ok:false,items:[]};}
-      })).then(result=>{
+      });
+      const community=biliTopic(query).then(d=>({name:'B站',ok:true,items:[],community:d.items})).catch(()=>({name:'B站',ok:false,items:[],community:[]}));
+      const work=Promise.all([...media,community]).then(result=>{
         if(result.every(r=>r.ok)){
           if(cache.size>=96)cache.delete(cache.keys().next().value);
           cache.set(key,{result,expires:Date.now()+5*60000});

@@ -1,5 +1,7 @@
 import {installTopicSearch} from './topic-search.js';
 import express from 'express';
+import {gzip} from 'node:zlib';
+import {promisify} from 'node:util';
 import {installAccess} from './access.js';
 import {mkdir,readFile,writeFile} from 'node:fs/promises';
 import {resolve,join} from 'node:path';
@@ -24,6 +26,17 @@ export async function startPublicServer({dataDir=process.env.DATA_DIR||'.artifac
  const research=createResearchService({dataDir,getData:()=>data});
  app.get('/api/health',(_,res)=>res.json({ok:true}));
  await installAccess(app,{required:authRequired,file:accountsFile});
+ let compressedFeed,compressedBody;
+ app.get('/api/feed',async(req,res,next)=>{
+   if(!req.acceptsEncodings('gzip'))return next();
+   try{
+     if(compressedFeed!==data.feed){
+       compressedFeed=data.feed;
+       compressedBody=promisify(gzip)(JSON.stringify({...data.feed,topics:(data.feed.topics||[]).map(t=>({...t,state:'done'}))}));
+     }
+     res.vary('Accept-Encoding').set({'Content-Encoding':'gzip','Cache-Control':'private, no-cache'}).type('json').send(await compressedBody);
+   }catch(e){compressedFeed=null;next(e);}
+ });
  installTopicSearch(app);
  app.get('/api/collector-status',(_,res)=>res.json({ok:true,generatedAt:data.generatedAt,collector:worker.state,daily:{next:reportSchedule().next,latest:data.reports?.reports?.[0]?.date||null}}));
  app.get('/api/research',async(req,res)=>{try{res.json(await research(req.query.query,Number(req.query.days)||90));}catch(e){res.status(503).json({error:e.message});}});

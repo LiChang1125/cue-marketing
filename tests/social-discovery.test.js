@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {discovery} from '../shared/social-discovery.js';
+import {communityForTopic,comparableDiscussion,evidenceMatches} from '../shared/community.js';
 
 const day='2026-11-18';
 const now=Date.parse(day+'T10:00:00Z');
@@ -26,4 +27,23 @@ test('connects an IP to its editorial story and drops out-of-window evidence',()
   const articles=[article('品牌参与 GTA VI 发售活动'),article('BLG 联名活动')];
   const {brands}=discovery({rows},articles,now);
   assert.deepEqual(brands.map(e=>[e.name,e.isIP]),[['GTA 6',true]]);
+});
+
+test('whale IP evidence excludes model news and separates historical discussions',()=>{
+  assert.equal(evidenceMatches('DeepSeek 发布新模型','DeepSeek鲸鱼'),false);
+  assert.equal(evidenceMatches('鲸鱼娘皮肤上榜 Awesome DeepSeek Harness','DeepSeek 鲸鱼'),true);
+  const older={day:'2026-08-12',title:'DeepSeek logo 是鲸鱼还是海豚',url,platform:'V2EX',replies:1};
+  const [group]=communityForTopic({},'DeepSeek 鲸鱼',7,[older],now);
+  assert.equal(group.posts.length,0);
+  assert.equal(group.older.length,1);
+});
+
+test('only compares discussion counts for the same videos at both observations',()=>{
+  const snapshots=[
+    {at:'2026-11-16T04:00:00Z',counts:[{url:'a',danmaku:7},{url:'b',danmaku:10}]},
+    {at:'2026-11-18T04:00:00Z',counts:[{url:'b',danmaku:14},{url:'c',danmaku:50}]}
+  ];
+  const change=comparableDiscussion(snapshots,7,now);
+  assert.equal(change.sample,1);
+  assert.equal(change.change,4);
 });

@@ -1,3 +1,4 @@
+import {topicKey,v2exItems} from '../shared/community.js';
 import {apiFetch,publicMode,previewMode} from './urls.js';
 import {topicMatches} from '../shared/insights.js';
 const publishers=[
@@ -89,10 +90,19 @@ export async function searchLiveTopic(query,days,signal,onSource){
     try{
       const r=await apiFetch('/api/topic-search?'+new URLSearchParams({q:query,days}),{signal});
       if(!r.ok)throw Error('domestic search unavailable');
-      for(const part of await r.json())if(!signal.aborted)onSource(part.name,part.items,part.ok);
+      for(const part of await r.json())if(!signal.aborted)onSource(part.name,part.items,part.ok,part.community||[]);
     }catch{if(!signal.aborted)onSource('国内媒体',[],false);}
   };
-  const extra=Promise.all([domestic(),boards()]);
+  const forums=async()=>{
+    try{
+      const u=new URL('https://www.sov2ex.com/api/search');
+      u.search=new URLSearchParams({q:topicKey(query),size:'40'});
+      const d=await getJson(u,signal);
+      if(!Array.isArray(d.hits))throw Error('invalid forum results');
+      if(!signal.aborted)onSource('V2EX',[],true,v2exItems(d,query));
+    }catch{if(!signal.aborted)onSource('V2EX',[],false);}
+  };
+  const extra=Promise.all([domestic(),boards(),forums()]);
   await Promise.all(jobs.map(async([name,search])=>{
     try{const items=await search();if(!signal.aborted)onSource(name,items,true);}
     catch{if(!signal.aborted)onSource(name,[],false);}

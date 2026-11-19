@@ -31,7 +31,7 @@ function App(){
   const loading=useRef(false),dialog=useRef(null),searching=useRef(false);
   async function load(){
     if(loading.current)return;loading.current=true;
-    try{const r=await apiFetch('/api/feed',{cache:'no-store',signal:AbortSignal.timeout(8000)});if(!r.ok)throw Error();const data=await r.json();data.sources=data.sources.map(s=>s.id==='brandstar'?{...s,name:'精选资讯'}:s);setFeed(data);setError('');setLoaded(true);setNow(contentNow());}
+    try{const r=await apiFetch('/api/feed',{cache:'no-store',signal:AbortSignal.timeout(45000)});if(!r.ok)throw Error();const data=await r.json();data.sources=data.sources.map(s=>s.id==='brandstar'?{...s,name:'精选资讯'}:s);setFeed(data);setError('');setLoaded(true);setNow(contentNow());}
     catch{setError('连接暂时中断，正在重新连接。');}finally{loading.current=false;}
   }
   useEffect(()=>{load();const tick=()=>{if(!document.hidden)load();};const timer=setInterval(tick,10000);window.addEventListener('online',tick);document.addEventListener('visibilitychange',tick);return()=>{clearInterval(timer);window.removeEventListener('online',tick);document.removeEventListener('visibilitychange',tick);};},[]);

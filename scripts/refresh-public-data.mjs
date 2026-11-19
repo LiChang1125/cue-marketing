@@ -1,3 +1,5 @@
+import {refreshCommunityTopics} from '../server/community-topics.js';
+import {discovery} from '../shared/social-discovery.js';
 import {collectSocialTrends} from '../server/social-trends.js';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {mediaSources,mediaSource} from '../shared/media-sources.js';
@@ -53,6 +55,9 @@ const market=await socialTrends;
 market.editorialCases=uniqueCases(Object.values(curated).flat())
  .filter(i=>Date.parse(i.publishedAt)>=now.getTime()-14*86400000)
  .map(({title,originalTitle,url,originalUrl,publishedAt,publisher,excerpt})=>({title,originalTitle,url,originalUrl,publishedAt,publisher,excerpt}));
+const featuredSubjects=discovery(market,cleanItems,now.getTime(),nativeItems).brands;
+market.communityTopics=await refreshCommunityTopics(previous.feed?.socialTrends?.communityTopics,
+ ['DeepSeek 鲸鱼',...featuredSubjects.slice(0,9).map(b=>b.name)],now.getTime());
 const data={schemaVersion:3,generatedAt:now.toISOString(),translationCache:previous.translationCache||{},feed:{socialTrends:market,radar:{engine:'TrendRadar',items:nativeItems,platforms:native.platforms,generatedAt:native.generatedAt},items:cleanItems,editorial,editorialCandidates:cleanItems,sources:activeSources,topics:[],hotlist:editorial.slice(0,8)},curated,reports,histories:{},sourceHealth:sources};
 await mkdir(output.replace(/[\\/][^\\/]+$/,''),{recursive:true});await writeFile(output,JSON.stringify(data));
 console.log(JSON.stringify({articles:cleanItems.length,activeMedia:activeSources.length,nativeItems:nativeItems.length,platforms:native.platforms,reports:reports.reports.length,output}));
