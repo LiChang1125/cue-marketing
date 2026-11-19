@@ -63,6 +63,9 @@ def localize(data, translate, reviewed=None):
             for child in value:
                 walk(child)
         elif isinstance(value, dict):
+            # Chart labels and sound names are evidence keys from the original chart.
+            if all(k in value for k in ("series", "rank", "day", "platform")):
+                return
             for field in ('title', 'excerpt', 'subtitle'):
                 original_field = 'original' + field.title()
                 original = value.get(original_field)
