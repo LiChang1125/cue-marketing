@@ -47,3 +47,9 @@ test('only compares discussion counts for the same videos at both observations',
   assert.equal(change.sample,1);
   assert.equal(change.change,4);
 });
+
+test('unlisted combination queries match both names in either title order',()=>{
+  assert.equal(evidenceMatches('曙光工坊发布青槐手办','青槐 曙光工坊'),true);
+  assert.equal(evidenceMatches('曙光工坊发布沙丘手办','青槐 曙光工坊'),false);
+  assert.equal(evidenceMatches('乐高2027年F1赛车曝光','请帮我看看乐高 F1的市场趋势'),true);
+});

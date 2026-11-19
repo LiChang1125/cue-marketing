@@ -68,10 +68,11 @@ async function fromNewsIndex(query,days,signal){
 // Each provider publishes independently, so a timeout cannot suppress another source.
 export async function searchLiveTopic(query,days,signal,onSource){
   const after=new Date(Date.now()-days*86400000).toISOString();
-  const pair=equivalents[query];
-  const english=pair?Promise.resolve(pair[1]):/[\u3400-\u9fff]/.test(query)?translate(query,'zh-CN|en',signal).catch(()=>query):Promise.resolve(query);
-  const jobs=publishers.map(p=>[p.name,async()=>fromPublisher(p,p.language==='en'?await english:(pair?.[0]||query),query,after,signal)]);
-  jobs.push(['GDELT',()=>fromNewsIndex(query,days,signal)]);
+  const term=topicKey(query);
+  const pair=equivalents[term];
+  const english=pair?Promise.resolve(pair[1]):/[\u3400-\u9fff]/.test(query)?translate(term,'zh-CN|en',signal).catch(()=>term):Promise.resolve(term);
+  const jobs=publishers.map(p=>[p.name,async()=>fromPublisher(p,p.language==='en'?await english:(pair?.[0]||term),query,after,signal)]);
+  jobs.push(['GDELT',()=>fromNewsIndex(term,days,signal)]);
   const boards=async()=>{
     try{
       const data=await getJson('https://solarhell.github.io/hot-search-crawler/latest.json',signal);
@@ -88,7 +89,7 @@ export async function searchLiveTopic(query,days,signal,onSource){
   const domestic=async()=>{
     if(publicMode||previewMode)return;
     try{
-      const r=await apiFetch('/api/topic-search?'+new URLSearchParams({q:query,days}),{signal});
+      const r=await apiFetch('/api/topic-search?'+new URLSearchParams({q:term,days}),{signal});
       if(!r.ok)throw Error('domestic search unavailable');
       for(const part of await r.json())if(!signal.aborted)onSource(part.name,part.items,part.ok,part.community||[]);
     }catch{if(!signal.aborted)onSource('国内媒体',[],false);}
