@@ -49,6 +49,10 @@ if(schedule.ready&&!reports.reports.some(r=>r.date===schedule.day&&r.entries.len
  if(entries.length)reports.reports.unshift({date:schedule.day,newsDate:window.newsDate,title:'CUE 早报',subtitle:entries.slice(0,3).map(i=>i.title).join('；'),scheduledAt:schedule.due,generatedAt:now.toISOString(),status:'ready',entries});
 }
 reports.reports=reports.reports.slice(0,90);
-const data={schemaVersion:3,generatedAt:now.toISOString(),translationCache:previous.translationCache||{},feed:{socialTrends:await socialTrends,radar:{engine:'TrendRadar',items:nativeItems,platforms:native.platforms,generatedAt:native.generatedAt},items:cleanItems,editorial,editorialCandidates:cleanItems,sources:activeSources,topics:[],hotlist:editorial.slice(0,8)},curated,reports,histories:{},sourceHealth:sources};
+const market=await socialTrends;
+market.editorialCases=uniqueCases(Object.values(curated).flat())
+ .filter(i=>Date.parse(i.publishedAt)>=now.getTime()-7*86400000)
+ .map(({title,originalTitle,url,originalUrl,publishedAt,publisher,excerpt})=>({title,originalTitle,url,originalUrl,publishedAt,publisher,excerpt}));
+const data={schemaVersion:3,generatedAt:now.toISOString(),translationCache:previous.translationCache||{},feed:{socialTrends:market,radar:{engine:'TrendRadar',items:nativeItems,platforms:native.platforms,generatedAt:native.generatedAt},items:cleanItems,editorial,editorialCandidates:cleanItems,sources:activeSources,topics:[],hotlist:editorial.slice(0,8)},curated,reports,histories:{},sourceHealth:sources};
 await mkdir(output.replace(/[\\/][^\\/]+$/,''),{recursive:true});await writeFile(output,JSON.stringify(data));
 console.log(JSON.stringify({articles:cleanItems.length,activeMedia:activeSources.length,nativeItems:nativeItems.length,platforms:native.platforms,reports:reports.reports.length,output}));
