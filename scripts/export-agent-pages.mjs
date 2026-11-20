@@ -65,7 +65,8 @@ await Promise.all([put('agent/articles.json',{generatedAt,items}),put('pulse/eve
  put('agent/openapi.json',{openapi:'3.1.0',info:{title:'CUE 公开数据',version:'1.0.0'},servers:[{url:base.replace(/\/$/,'')}],paths}),
  put('llms.txt','# CUE · 消费品牌与市场营销\n\n- [接入说明]('+base+'agent/)\n- [近 30 天报道]('+base+'agent/articles.json)\n- [热点榜与证据]('+base+'pulse/events.json)\n- [RSS]('+base+'agent/feed.xml)\n- [OpenAPI]('+base+'agent/openapi.json)\n\n数据随网站发布更新。引用报道时请保留发布方、发布日期及原文 URL。\n')]);
 // Keep the downloadable stdio connector a single file.
-const sharedSearch=await readFile('shared/public-topic-search.js','utf8');
+const marketRules=await readFile('integrations/hot-monitor/consumer-market.mjs','utf8');
+const sharedSearch=(await readFile('shared/public-topic-search.js','utf8')).replace("import {consumerContent,excludedTopic} from '../integrations/hot-monitor/consumer-market.mjs';",()=>marketRules);
 const connector=(await readFile('public/agent/cue-agent.mjs','utf8')).replace("import {publicTopicSearch} from '../../shared/public-topic-search.js';",()=>sharedSearch);
 await put('agent/cue-agent.mjs',connector);
 console.log('公开文章',items.length,'热点',events.results.length,'品牌',tools.ranking.length);

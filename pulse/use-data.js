@@ -8,7 +8,7 @@ async function read(file){
   cache.set(file,{at:Date.now(),promise});
   try{return await promise}catch(e){if(cache.get(file)?.promise===promise)cache.delete(file);throw e}
 }
-async function lookup(path,signal){
+async function lookup(path,signal,onProgress){
   const url=new URL(path,base),route=url.pathname.split('/').pop();
   if(route==='story'){const id=url.searchParams.get('id');if(!/^[a-f0-9]{20}$/.test(id||''))throw Error('无效事件');return read('pulse/stories/'+id+'.json');}
   if(route==='latest')return read('agent/articles.json');
@@ -19,11 +19,11 @@ async function lookup(path,signal){
     const page=Math.max(1,Number(url.searchParams.get('page'))||1);return {total:list.length,items:list.slice((page-1)*8,page*8)};
   }
   const [published,extra]=await Promise.all([read('pulse/cases.json').catch(()=>({cases:[]})),read('pulse/source-index.json').catch(()=>({items:[],publishers:[]}))]);
-  return publicTopicSearch(url.searchParams.get('q')||'',{index:[...published.cases,...extra.items],publishers:extra.publishers,signal});
+  return publicTopicSearch(url.searchParams.get('q')||'',{index:[...published.cases,...extra.items],publishers:extra.publishers,signal,onProgress});
 }
 export function useBrandData(path){
   const [state,setState]=useState({}),[attempt,setAttempt]=useState(0);
-  useEffect(()=>{let active=true,pending=false;const stop=new AbortController();async function refresh(){if(pending)return;pending=true;try{const data=await lookup(path,stop.signal);if(active)setState({data,path})}catch{if(active)setState({failed:true,path})}finally{pending=false}}
+  useEffect(()=>{let active=true,pending=false;const stop=new AbortController();async function refresh(){if(pending)return;pending=true;try{const data=await lookup(path,stop.signal,data=>{if(active)setState({data,path})});if(active)setState({data,path})}catch{if(active)setState({failed:true,path})}finally{pending=false}}
     refresh();const timer=setInterval(()=>{if(!document.hidden)refresh()},path.includes("/search?")?300000:60000);return()=>{active=false;stop.abort();clearInterval(timer)}},[path,attempt]);
   return {...(state.path===path?state:{}),retry:()=>setAttempt(n=>n+1)};
 }

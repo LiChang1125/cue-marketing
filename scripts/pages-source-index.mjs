@@ -1,7 +1,7 @@
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {gzipSync,gunzipSync} from 'node:zlib';
 import {resolve} from 'node:path';
-import {publicNews} from '../shared/public-topic-search.js';
+import {chinesePress,publicNews} from '../shared/public-topic-search.js';
 import {consumerBrands} from '../integrations/hot-monitor/brand-attention.mjs';
 import {pressIndex} from '../integrations/hot-monitor/press-index.mjs';
 import {brandNewsrooms,sections} from '../integrations/hot-monitor/brand-newsrooms.mjs';
@@ -15,7 +15,7 @@ const rows=new Map();
 function merge(list){for(const r of list){
  const time=Date.parse(r.publishedAt);if(!(time<=now&&now-time<=30*day)||!r.title||!/^https?:\/\//.test(r.url))continue;
  // Publish only public article metadata; operational tables and reader searches stay on their host.
- rows.set(r.url,{url:r.url,title:r.title,publishedAt:new Date(time).toISOString(),publisher:r.publisher,issuerChannel:r.issuerChannel,role:r.role||'media'});
+ rows.set(r.url,{url:r.url,title:r.title,publishedAt:new Date(time).toISOString(),publisher:r.publisher,attribution:r.attribution,excerpt:r.content?.slice(0,300)||r.excerpt?.slice(0,300),issuerChannel:r.issuerChannel,role:r.role||'media'});
 }}
 if(!seed){
  try{merge(JSON.parse(gunzipSync(await readFile(seedFile))));}catch(e){if(e.code!=='ENOENT')throw e}
@@ -24,15 +24,17 @@ if(!seed){
  await Promise.allSettled([index.feeds(56,10,ctl),index.minute(base+60000,ctl),index.pull(base,false,ctl),
    ...sections.map(s=>issuers.page('main_category',s,1)).slice(0,6)]);
  const terms=['品牌 联名','品牌 快闪','品牌 代言人','限定 首店','运动品牌 赞助','消费品牌 新品'];
- const runs=await Promise.allSettled(terms.map(t=>publicNews(t,ctl)));
+ const runs=await Promise.allSettled(terms.flatMap(t=>[publicNews(t,AbortSignal.timeout(13000)),chinesePress(t.replace(/^品牌 /,''),AbortSignal.timeout(13000))]));
  const general=runs.flatMap(r=>r.status==='fulfilled'?r.value:[]);merge(general);
  const leads=new Set();
- for(const r of general){
+ const edition=await readFile(resolve(out,'../content-data.json'),'utf8').then(JSON.parse).catch(()=>({}));
+ const headlines=(edition.feed?.items||[]).filter(r=>now-Date.parse(r.publishedAt)<3*day&&/联名|快闪|首店|限定|赞助|首发|代言/.test(r.title));
+ for(const r of [...headlines,...general]){
    const names=consumerBrands(r.title),entity=r.title.match(/[《「“]([^》」”]{2,20})[》」”]/u)?.[1];
-   if(names.length&&entity)leads.add(names[0]+' '+entity);
-   else if(names.length>=2)leads.add(names.slice(0,2).join(' '));
+   if(names.length&&entity)leads.add(entity);
+   else if(names.length)leads.add(names[0]);
  }
- const more=await Promise.allSettled([...leads].slice(0,8).map(t=>publicNews(t,AbortSignal.timeout(9000))));
+ const more=await Promise.allSettled([...leads].slice(0,8).map(t=>chinesePress(t,AbortSignal.timeout(9000))));
  for(const r of more)if(r.status==='fulfilled')merge(r.value);
 }
 merge(index.rows(30,40000));merge(issuers.recent(30,40000));index.close();issuers.close();

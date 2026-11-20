@@ -10,7 +10,7 @@ type Item={storyId?:string;url:string;title:string;content?:string;source:string
 type Coverage={name:string;count:number;read:number;status:string;reason?:string};
 const coverUrl=import.meta.env.VITE_PUBLIC_DATA==="true"?"../covers/brand.png":"/covers/brand.png";
 type Pattern={label:string;count:number;origins:number;brands:string[];examples:{title:string;url:string;brand:string}[]};
-type Result={relatedArticles?:Item[];patterns?:Pattern[];results:Item[];reportingOutlets?:number;brief?:{reach?:{liveCases?:number;readOrigins:number;matchedOrigins:number;readArticles:number;displayedOrigins:number};coverage:Coverage[]}};
+type Result={relatedArticles?:Item[];patterns?:Pattern[];results:Item[];reportingOutlets?:number;brief?:{searching?:boolean;reach?:{liveCases?:number;readOrigins:number;matchedOrigins:number;readArticles:number;displayedOrigins:number};coverage:Coverage[]}};
 const labels:Record<string,string>={media:"媒体",official:"品牌官方",creator:"创作者",community:"社区"};
 const day=(s:string)=>new Intl.DateTimeFormat("zh-CN",{month:"numeric",day:"numeric",timeZone:"Asia/Shanghai"}).format(new Date(s));
 function picture(url?:string){
@@ -91,7 +91,7 @@ function ReadingCases({query="",compact=false}:{query?:string;compact?:boolean})
   return <section aria-label={query?"近期营销案例":"当前品牌热点"} className="mb-6">
     {!compact&&!query&&<header className="mb-5"><p className="mb-1 text-xs font-bold text-accent">● 动态热度</p><h1 className="text-3xl font-bold text-ink">品牌热点榜</h1><p className="mt-2 text-sm text-ink-3">近 48 小时值得关注的消费营销事件</p></header>}
 
-    {query&&data?.brief?.reach&&<p className="mb-2 text-xs text-ink-3">{data.brief.reach.liveCases!=null?("联网找到 "+data.brief.reach.liveCases+" 个案例 · "):""}共 {items.length} 个案例{data.relatedArticles?.length?(" · "+data.relatedArticles.length+" 篇相关报道"):""}</p>}
+    {query&&data?.brief?.reach&&<p className="mb-2 text-xs text-ink-3">{data.brief.reach.liveCases!=null?("联网找到 "+data.brief.reach.liveCases+" 个案例 · "):""}共 {items.length} 个案例{data.brief.searching?" · 正在联网检索…":""}{data.relatedArticles?.length?(" · "+data.relatedArticles.length+" 篇相关报道"):""}</p>}
     <div className="mb-2 flex items-center justify-between gap-2"><h2 className="font-semibold text-ink">{query?"近 30 天 · 品牌现场":compact?"正在发生":"本期热点"}</h2>
     {compact?<a href={import.meta.env.VITE_PUBLIC_DATA==="true"?"#/hot":"/hot"} className="text-sm text-accent">完整榜单 ↗</a>:query?<select aria-label="事件排序" className="rounded-full bg-well px-2 py-1 text-sm" value={sort} onChange={e=>setSort(e.target.value)}>{["推荐","最新","证据评分"].map(s=><option key={s}>{s}</option>)}</select>:<small className="text-ink-4">参与者 · 24 小时走势 · 热度指数</small>}</div>
     {!data&&<p role="status" className="py-3 text-sm text-ink-3">{failed?<button onClick={retry}>重新加载</button>:query?"正在查找近期案例…":"正在汇集品牌报道…"}</p>}
