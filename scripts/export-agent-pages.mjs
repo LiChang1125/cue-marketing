@@ -16,6 +16,7 @@ const rows=new Map();
 for(const r of candidates){
   const url=originalHref(r),time=Date.parse(r.publishedAt);
   if(!url||!chinese(r.title)||!consumerContent(r)||!(time<=at&&at-time<=30*86400000)||rows.has(url))continue;
+  if(/贷后产品|零售信贷|授信模型|贷款风控|贷款审批流程/.test(r.title))continue;
   const publisher=r.publisher||r.sourceName||new URL(url).hostname;
   rows.set(url,{title:r.title,originalTitle:r.originalTitle||undefined,content:chinese(r.excerpt)?r.excerpt.slice(0,260):'',url,publisher,
     publishedAt:new Date(time).toISOString(),source:'editorial',role:'media',image:/^https:\/\//.test(r.image||'')?r.image:undefined});

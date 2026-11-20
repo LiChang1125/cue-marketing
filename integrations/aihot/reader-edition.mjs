@@ -16,6 +16,8 @@ export async function applyReaderEdition(engine){
   await edit(app+'components/shell/nav.ts',s=>s.split('\n').filter(line=>!removed.some(k=>line.includes('to: "/'+k+'"'))).join('\n').replace('icon: IconUser, changelog: true','icon: IconUser'));
   await edit('packages/backend/src/publication/sitemap.ts',s=>s.replace('ABOUT, ACCESS','ACCESS').split('\n').filter(l=>!l.startsWith('import { loadChangelog }')&&!removed.some(k=>l.includes('loc: "/'+k+'"'))).join('\n'));
   await edit('scripts/smoke.ts',s=>s.replace('const problem = res.status !== 200 ?', 'const retired = '+JSON.stringify(removed.map(k=>'/'+k))+'.includes(path);\n    const problem = retired ? (res.status === 302 && res.headers.get("location") === "/" ? null : "old route must redirect to home") : res.status !== 200 ?'));
+  // Keep the same noindex, cache and canonical assertions on pages the edition still serves.
+  await edit('apps/web/tests/cache.test.ts',s=>s.replace('fetch(origin + "/feedback")','fetch(origin + "/more")').replaceAll('${ephemeral.origin}/about','${ephemeral.origin}/privacy'));
   await edit(app+'routes/more.tsx',s=>s.replace(/\s*<Group title="关于">[\s\S]*?<\/Group>/,'').split('\n').filter(l=>!l.includes('to: "/starred"')).join('\n'));
   await edit(app+'routes/privacy.tsx',s=>s.replace(', { to: "/feedback", label: "反馈页" }',''));
   for(const file of ['routes/item.tsx','features/feed/FeedItem.tsx']){
