@@ -26,6 +26,7 @@ test('a campaign, a review and a syndicated release have two independent origins
   const mirror=item('two.test',launch.title,10);
   const review=item('three.test','到店实测耐克「冬日跑步计划」系列',2);
   assert.equal(clusterStories([launch,mirror],now).length,0);
+  assert.equal(clusterStories([launch,item('three.test',review.title,73)],now).length,0);
   const [story]=clusterStories([launch,mirror,review],now);
   assert.equal(story.outlets,2);
   assert.equal(story.trend.length,24);

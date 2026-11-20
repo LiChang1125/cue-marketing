@@ -11,6 +11,12 @@ const patterns=[
  ['饮食品牌的跨界联名',/联名|联乘|聯名|コラボ|collab/i,/咖啡|饮品|餐厅|奶茶|烘焙|食品|啤酒|食物|冰淇淋|coffee|brew|bakery|restaurant/i],
  ['服饰与鞋履的联名系列',/联名|联乘|聯名|collab|capsule collection/i,/服饰|时装|鞋|运动服|街头|牛仔|fashion|sneaker|footwear|apparel/i],
  ['香氛与美妆的新品发布',/首发|发布|上市|推出|首秀|新品|launch|debut|unveil/i,/香水|香氛|彩妆|护肤|fragrance|cosmetic|perfume/i],
+ ['节庆礼盒与限定包装',/圣诞|聖誕|春节|过年|新年|假日|holiday|christmas|festive/i,/礼盒|禮盒|包装|限定套装|倒数日历|advent calendar|gift set|packaging/i],
+ ['茶咖与餐饮的季节上新',/咖啡|茶饮|奶茶|烘焙|甜品|coffee|bakery|restaurant/i,/季节|季節|限定菜单|上新|新品|季節限定|seasonal|new menu|launch/i],
+ ['消费品牌开设城市首店',/首店|旗舰店|概念店|概念空间|flagship|concept store|first store/i,/开业|开幕|启幕|落地|进驻|揭幕|入驻|开设|open|debut/i],
+ ['运动品牌走进户外社群',/户外|露营|徒步|登山|攀岩|跑团|hiking|trail run|camping|climbing/i,/联名|发售|新品|体验营|社群|系列|collab|community|collectio|launch/i],
+ ['品牌与设计师推出限定系列',/设计师|設計師|艺术家|插画师|designer|artist/i,/联名|合作|跨界|限定系列|capsule|collab|partner/i],
+ ['文化 IP 的线下体验',/动漫|动画|漫画|动漫IP|宝可梦|迪士尼|三丽鸥|anime|character|Disney|Pok.mon/i,/主题乐园|主题展|沉浸式|巡展|见面会|pop.up|exhibition|theme park/i],
  ['品牌与代言人的合作',/代言|品牌大使|ambassador/i,/官宣|宣布|携手|签约|出任|成为|announc|appoint/i]
 ];
 function signals(e){
@@ -47,7 +53,7 @@ function describe(group,now){
  reports.sort((a,b)=>a.publishedAt.localeCompare(b.publishedAt));
  if(now-Date.parse(reports.at(-1).publishedAt)>=2*day)return;
  const lead=group.events[0],people=[...sources.values()],heat=heatAt(reports,now),prior=heatAt(reports,now-day);
- if(!heat)return;
+ if(!heat||new Set(reports.filter(r=>now-Date.parse(r.publishedAt)<2*day).map(r=>r.identity)).size<2)return;
  const trend=Array.from({length:24},(_,i)=>{const at=now-(23-i)*3600000;return {at,value:heatAt(reports,at)}});
  const storyId=id(group.key),kind=group.theme?'专题趋势':'事件追踪',title=group.theme||lead.title;
  const brands=[...new Set(group.events.flatMap(e=>consumerBrands(e.title)))];
@@ -73,5 +79,11 @@ export function clusterStories(events,now=Date.now()){
    if(matches.length<2||brands.size<2||new Set(matches.map(e=>groups.find(g=>g.events.includes(e)))).size<2)continue;
    const story=describe({key:'theme:'+theme,theme,events:matches},now);if(story)themes.push(story);
  }
- return [...singles,...themes].sort((a,b)=>b.heat-a.heat||b.outlets-a.outlets).slice(0,16);
+ const ranking=[];
+ for(const s of [...singles,...themes].sort((a,b)=>b.heat-a.heat||b.outlets-a.outlets)){
+   const links=new Set(s.reports.map(r=>r.url));
+   if(ranking.some(other=>other.reports.filter(r=>links.has(r.url)).length/Math.max(links.size,other.reports.length)>0.8))continue;
+   ranking.push(s);
+ }
+ return ranking.slice(0,16);
 }
