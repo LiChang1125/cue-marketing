@@ -10,6 +10,8 @@ COPY package*.json requirements-public.txt ./
 RUN npm ci --include=dev --registry=${NPM_REGISTRY} && python3 -m venv /opt/cue-python && /opt/cue-python/bin/pip install --no-cache-dir --index-url ${PYPI_INDEX_URL} -r requirements-public.txt
 ENV PATH="/opt/cue-python/bin:${PATH}" PYTHON=/opt/cue-python/bin/python PYTHONIOENCODING=utf-8
 COPY . .
+RUN python scripts/setup-pulse-japanese.py && python scripts/setup-pulse-query-models.py
+RUN node --input-type=module -e "import {prepareLast30} from './integrations/hot-monitor/setup-last30.mjs';await prepareLast30()"
 ARG TRENDRADAR_ARCHIVE
 RUN node scripts/setup-trendradar-native.mjs && npm run build && rm -f dist/access-preview.json && mkdir -p /var/data/cue /app/.tools/translation /app/.artifacts && chown -R node:node /var/data/cue /app/.tools /app/.artifacts
 RUN python -c "import sys,sqlite3,ctranslate2; sys.path.insert(0,'.tools/trendradar-native'); from trendradar.core import load_config; from trendradar.storage import get_storage_manager; print('Native collector runtime dependencies verified')"

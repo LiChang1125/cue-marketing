@@ -9,14 +9,15 @@ function postedDay(label,now){
   if(relative)return day(now-relative[1]*({秒:1000,分钟:60000,小时:3600000,天:dayMs})[relative[2]]);
   if(label.includes('昨天'))return day(now-dayMs);
   if(/今天|刚刚/.test(label))return day(now);
-  const parts=label.match(/(\d+)月(\d+)日/);
+  const parts=label.match(/(\d+)月(\d+)日/)||label.match(/(?:^|[·\s])(\d{1,2})-(\d{1,2})(?:$|\s)/);
   if(!parts)return null;
   const today=day(now),suffix=parts[1].padStart(2,'0')+'-'+parts[2].padStart(2,'0');
   return (Number(today.slice(0,4))-(suffix>today.slice(5)?1:0))+'-'+suffix;
 }
-export async function biliTopic(query,now=Date.now()){
+export async function biliTopic(query,now=Date.now(),matches=evidenceMatches,order){
   const u=new URL('https://search.bilibili.com/all');
   u.searchParams.set('keyword',topicKey(query));
+  if(order==='pubdate')u.searchParams.set('order','pubdate');
   const res=await fetch(u,{signal:AbortSignal.timeout(10000)});
   if(!res.ok)throw Error('B站 HTTP '+res.status);
   const $=load(await res.text()),cards=$('.bili-video-card__wrap');
@@ -26,9 +27,12 @@ export async function biliTopic(query,now=Date.now()){
     const card=$(el),title=card.find('h3').text().trim(),href=card.find('a[href*="/video/BV"]').first().attr('href')||'';
     const bv=href.match(/\/video\/(BV[a-zA-Z0-9]+)\/?(?:[?#].*)?$/)?.[1];
     const day=postedDay(card.find('.bili-video-card__info--date').text(),now);
-    if(!bv||!day||!evidenceMatches(title,query))return;
+    if(!bv||!day||!matches(title,query))return;
     const stats=card.find('.bili-video-card__stats--item').map((_,e)=>$(e).text().trim()).get();
-    items.push({platform:'B站',title,day,url:'https://www.bilibili.com/video/'+bv+'/',plays:stats[0]||null,danmaku:stats[1]||null});
+    const author=card.find('.bili-video-card__info--author').first().text().trim();
+    const raw=card.find('picture img,img').first().attr('src');
+    const image=raw?.startsWith('//')?'https:'+raw:raw;
+    items.push({platform:'B站',title,day,url:'https://www.bilibili.com/video/'+bv+'/',plays:stats[0]||null,danmaku:stats[1]||null,author,image});
   });
   return {checkedAt:new Date(now).toISOString(),items};
 }

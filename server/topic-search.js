@@ -22,6 +22,11 @@ async function lookup(def,query,since){
   });
   return rows;
 }
+export async function publicMarketingPress(query,since){
+  const batches=await Promise.allSettled(definitions.map(def=>lookup(def,query,since)));
+  if(batches.every(r=>r.status==='rejected'))throw Error('媒体检索暂不可用');
+  return batches.flatMap(r=>r.status==='fulfilled'?r.value:[]);
+}
 async function toutiao(query,days){
   const endpoint=new URL('https://www.toutiao.com/search/');
   endpoint.searchParams.set('keyword',topicKey(query));

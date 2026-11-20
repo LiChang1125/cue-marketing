@@ -1,0 +1,318 @@
+# Each line is one publisher domain and an optional first-party feed path.
+# Marketing, advertising, packaging, retail and design
+www.adweek.com
+digiday.com
+www.glossy.co
+campaignbrief.com
+www.marketingmag.com.au
+mumbrella.com.au
+www.bandt.com.au
+brandinginasia.com
+www.medianews4u.com
+thebrandberries.com
+marcommnews.com
+fabnews.live
+fieldmarketing.com
+www.creativebloq.com /feeds/all
+www.dezeen.com
+www.designboom.com
+www.yankodesign.com
+www.thisiscolossal.com
+www.printmag.com
+thedieline.com
+www.packaging-gateway.com
+www.packworld.com /rss
+insideretail.com.au
+retailworldmagazine.com.au
+www.retail-insight-network.com
+www.retaildive.com /feeds/news/
+www.marketingdive.com /feeds/news/
+www.socialmediatoday.com /feeds/news/
+www.modernretail.co
+www.retailbiz.com.au
+retail-focus.co.uk
+www.theindustry.fashion
+fashionista.com /.rss/full/
+wwd.com
+hypebae.com /feed
+sneakerbardetroit.com
+nicekicks.com
+www.gq.com /feed/rss
+www.teenvogue.com /feed/rss
+www.elle.com /rss/all.xml
+www.esquire.com /rss/all.xml
+www.cosmopolitan.com /rss/all.xml
+www.marieclaire.com /feeds/all
+www.dazeddigital.com /rss
+www.gcimagazine.com /rss
+cosmeticsbusiness.com /rss
+nstperfume.com
+# Licensing, IP, toys, entertainment, gaming and community
+www.licensingsource.net
+www.totallicensing.com
+toybook.com
+thepopinsider.com
+thetoyinsider.com
+www.thebrickfan.com
+www.brothers-brick.com
+brickfanatics.com
+jaysbrickblog.com
+www.actionfigureinsider.com
+www.gematsu.com
+animecorner.me
+anitrendz.net /news/feed/
+www.animenation.net
+animehunch.com
+soranews24.com
+animeanime.jp /rss/index.rdf
+game.watch.impress.co.jp /data/rss/1.0/gmw/feed.rdf
+www.4gamer.net /rss/index.xml
+www.gamespark.jp /rss/index.rdf
+automaton-media.com /feed/
+www.gamesradar.com /feeds/all
+www.videogameschronicle.com
+www.escapistmagazine.com
+www.timeextension.com /feeds/latest
+www.shacknews.com /feed/rss
+www.gameinformer.com /rss.xml
+comicsbeat.com
+comicbookmovie.com /rss
+variety.com
+www.hollywoodreporter.com
+www.thewrap.com
+www.indiewire.com
+www.cartoonbrew.com
+www.billboard.com
+www.rollingstone.com
+consequence.net
+www.stereogum.com
+www.musicbusinessworldwide.com
+www.digitalmusicnews.com
+# Consumer goods, food and beverage, sports business, travel, hospitality
+www.fooddive.com /feeds/news/
+www.grocerydive.com /feeds/news/
+www.restaurantdive.com /feeds/news/
+www.foodnavigator.com /arc/outboundfeeds/rss/
+www.bakeryandsnacks.com /arc/outboundfeeds/rss/
+www.beveragedaily.com /arc/outboundfeeds/rss/
+www.confectionerynews.com /arc/outboundfeeds/rss/
+www.just-drinks.com
+www.just-food.com
+www.eater.com /rss/index.xml
+www.foodrepublic.com /feed/
+vinepair.com
+www.restaurantbusinessonline.com
+restaurantandcafe.co.nz
+frontofficesports.com
+www.sportico.com
+www.sportcal.com
+www.thedrive.com
+bikerumor.com
+www.gearpatrol.com
+www.gearjunkie.com
+www.inc.com /rss
+skift.com
+# Greater China and regional trade press
+www.opp2.com
+pangjing.cn
+gnn.gamer.com.tw /rss.xml
+www.4gamers.com.tw /rss/latest-news
+www.gcores.com /rss
+daoinsights.com
+daxueconsulting.com
+www.marketingtochina.com
+# Creator publications (article bylines retained)
+seths.blog /feed/ creator
+kottke.org /feed/xml creator
+waxy.org /feed/ creator
+www.chrisbrogan.com /feed creator
+austinkleon.com /feed/ creator
+www.thephoblographer.com /feed/ creator
+stuckincustoms.com /feed/ creator
+www.toysrevil.net /feeds/posts/default creator
+blog.toysrevil.net /feeds/posts/default creator
+superplastic.co
+www.spankystokes.com /feeds/posts/default creator
+www.vinylpulse.com /feed creator
+www.creativebloq.com
+www.brandingstrategyinsider.com /feed/ creator
+brandnewschool.com
+www.underconsideration.com /brandnew/atom.xml creator
+sneakerhistory.com /feed/ creator
+uncrate.com /feed/ creator
+www.swiss-miss.com /feed creator
+www.diyphotography.net /feed/ creator
+petapixel.com /feed/
+thecosplayjournal.com /blog?format=rss creator
+cosplaycentral.com /feed
+cosplaymode.net /feed/
+www.cosplaymatters.com
+www.uisdc.com /feed/
+blog.hypeandhyper.com
+www.toodaylab.com /feed
+www.shejipi.com /feed/
+www.haconiwa-mag.com /feed/
+www.advertimes.com /feed/
+www.fashionsnap.com /rss.xml
+www.fashionsnap.com
+nijimen.kusuguru.co.jp /feed/
+numan.tokyo /feed/
+otakumode.com /news/rss
+www.superherohype.com /feed/
+tokyotreat.com /blog/feed
+# Official brand newsrooms
+www.thewaltdisneycompany.com /feed/ official
+disneyparksblog.com /feed/ official
+www.sonymusic.com /feed/ official
+news.adidas.com / official
+newsroom.porsche.com /rss/en/index.rss official
+global.toyota /en/rss.xml official
+www.capcom.co.jp /ir/english/news/rss.xml official
+# Open creative communities and project newsrooms
+creativecommons.org /feed/ community
+makezine.com /feed/ community
+www.kickstarter.com /blog.rss community
+www.creativecommons.tw /feed/ community
+# Chinese first-party article indexes
+36kr.com /feed
+finance.eastmoney.com /a/cgsxw.html media list
+www.foodaily.com /articles media list
+www.chinanews.com.cn /rss/life.xml
+socialbeta.com /campaign media list
+www.digitaling.com /articles media list
+36kr.jp /feed/
+www.chinatravelnews.com /rss/
+# Food, retail, hospitality and consumer culture
+www.thegrocer.co.uk /rss
+www.retailgazette.co.uk
+www.theindustry.beauty
+www.cosmeticsdesign.com /arc/outboundfeeds/rss/
+www.cosmeticsdesign-europe.com /arc/outboundfeeds/rss/
+www.cosmeticsdesign-asia.com /arc/outboundfeeds/rss/
+beautymatter.com /rss.xml
+www.beautypackaging.com /rss
+www.fragrantica.com /rss_news.php
+cafleurebon.com /feed/ creator
+persolaise.com /feed/ creator
+www.kafkaesqueblog.com /feed/ creator
+boisdejasmin.com /feed/ creator
+www.perfumeposse.com /feed/ creator
+www.theperfumesociety.org /feed/ community
+sprudge.com /feed/ creator
+dailycoffeenews.com /feed/
+perfectdailygrind.com /feed/
+worldcoffeeportal.com /rss/
+www.bworldonline.com /feed/
+www.thedrinksbusiness.com
+www.thespiritsbusiness.com
+drinksint.com /news/rss.php
+www.esmmagazine.com /feed
+www.thecaterer.com /rss
+www.qsrmagazine.com
+www.fsrmagazine.com
+www.fastcasual.com /rss/
+www.foodbusinessnews.net /rss
+www.nrn.com /rss.xml
+www.foodbev.com /blog-feed.xml
+www.snackandbakery.com /rss
+www.bakingbusiness.com /rss
+www.dairyfoods.com /rss
+www.preparedfoods.com /rss
+www.packagingnews.co.uk
+www.bevnet.com
+www.nosh.com
+www.hotelnewsresource.com /HNR_News.xml
+www.hospitalitynet.org /news/global.xml
+www.luxurydaily.com /feed/
+luxurylaunches.com
+jingdaily.com /feed
+fashionunited.com /rss
+fashionweekdaily.com
+fashionjournal.com.au
+fashionista.com /.rss/full/
+footwearnews.com
+sneakernews.com /feed/ creator
+sneakerfreaker.com /rss
+hypebeast.com /feed
+www.highsnobiety.com /feed/
+www.thefashionisto.com /feed/ creator
+www.fashiongonerogue.com /feed/ creator
+www.thefashionspot.com /feed/ community
+thebusinessoffashion.com /arc/outboundfeeds/rss/
+www.sportsbusinessjournal.com /rss/
+sportspromedia.com
+www.essentialretail.com /rss/
+www.campaignlive.co.uk /rss
+www.thedrum.com /feeds
+www.adobomagazine.com
+www.marketing-beat.co.uk
+www.marketing-interactive.com /rss
+www.exchange4media.com /rss/
+bestmediainfo.com /rss
+www.afaqs.com /rss
+www.campaignasia.com /rss.aspx
+www.brandingmag.com
+advertisingweek.com
+www.adsoftheworld.com /feed community
+www.creativereview.co.uk
+www.designweek.co.uk
+www.creativeboom.com /feed/
+www.itsnicethat.com /rss
+www.foodandwine.com /rss
+www.tastingtable.com /feed/
+thetakeout.com /feed/
+www.thedailymeal.com /feed/
+www.mashed.com /feed/
+www.chowhound.com /feed/
+www.slashfilm.com /feed/
+bleedingcool.com /feed/ community
+toyhypeusa.com /feed/ creator
+toynewsi.com /rss.php community
+www.toyark.com /feed/ community
+www.laughingplace.com /w/feed/ community
+attractionsmagazine.com /feed/
+wdwnt.com /feed/ community
+brickset.com /feed community
+www.newelementary.com /feeds/posts/default creator
+www.hollywoodcollectibles.com /blog/feed/
+www.internationalhiphop.com /feed/
+www.boardsportsource.com /feed/
+shop-eat-surf.com /feed/
+about.starbucks.com /feed/ official
+stories.hilton.com /feed/ official
+www.coca-colacompany.com /media-center/rss official
+
+# Independent writers, fan publications and first-party dispatches
+fashnerd.com /feed/ creator
+thebeautybrains.com /feed/ creator
+www.perfumestheguide.com /blog-feed.xml creator
+perfumeshrine.blogspot.com /feeds/posts/default creator
+www.theperfumegirl.com /blog/feed/ creator
+colognoisseur.com /feed/ creator
+www.thetoyboxphilosopher.com /feeds/posts/default creator
+coffeechronicler.com /feed/ creator
+www.theimpulsivebuy.com /wordpress/feed/ community
+campaignbriefasia.com /feed/
+collabo-cafe.com /feed/ community
+hobby.dengeki.com /feed/ community
+www.foodnavigator-asia.com /arc/outboundfeeds/rss/
+www.lego.com /en-us/aboutus/newsroom/rss official
+about.puma.com /en/newsroom/rss official
+www.unilever.com /news/news-search/rss/ official
+www.nestle.com /rss-feeds/pressreleases official
+www.heineken.com /global/en/our-stories official
+www.lvmh.com /en/news-lvmh official listed
+www.beiersdorf.com /newsroom/press-releases official listed
+www.shiseido.com.cn /news/ official listed
+www.fastretailing.com /eng/group/news/ official listed
+www.yili.com /news/ official listed
+www.lining.com / official listed
+
+# Outdoor, apparel and first-party releases
+campreview.jp /feed/ media
+web.goout.jp /feed/ media
+www.dod.camp /feed/ official
+gearjunkie.com /feed/ media
+www.coleman.co.jp /news/ official discover
+store.alpen-group.jp /corporate/news/ official list
+camphack.nap-camp.com / media discover

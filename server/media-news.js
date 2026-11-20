@@ -14,7 +14,7 @@ export function marketingArticle(item,source){
 }
 function safeUrl(value,base){if(typeof value!=='string'||!value.trim())return null;try{const u=new URL(value,base);return /^https?:$/.test(u.protocol)?u.href:null;}catch{return null;}}
 function sameSite(url,source){try{return new URL(url).hostname.replace(/^www\./,'')===new URL(source.url).hostname.replace(/^www\./,'');}catch{return false;}}
-function normalize(source,item,now){
+export function normalize(source,item,now){
  const title=text(item.title).replace(/\s*20\d{2}[-/]\d{1,2}[-/]\d{1,2}\s*$/,'').replace(/^[A-Z\s]+\d{1,2} [A-Za-z]+ 20\d{2}/,''),url=safeUrl(item.url,source.url),at=Date.parse(publicationDate(item.publishedAt));
  if(!url||!sameSite(url,source)||!title)return null;
  const publishedAt=Number.isFinite(at)&&at<=Date.parse(now)+300000?new Date(at).toISOString():null;

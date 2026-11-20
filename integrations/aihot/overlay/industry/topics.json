@@ -1,0 +1,124 @@
+{
+  "groups": [
+    {
+      "key": "company",
+      "name": "品牌",
+      "blurb": "品牌近期动向"
+    },
+    {
+      "key": "field",
+      "name": "消费圈层",
+      "blurb": "消费主题与近期活动"
+    },
+    {
+      "key": "genre",
+      "name": "营销方式",
+      "blurb": "活动与合作"
+    }
+  ],
+  "topics": [
+    {
+      "slug": "nike",
+      "name": "耐克",
+      "group": "company",
+      "entityId": "nike",
+      "definition": "近期合作与市场活动",
+      "aliases": [
+        "Nike",
+        "Air Jordan",
+        "Jordan"
+      ]
+    },
+    {
+      "slug": "popmart",
+      "name": "泡泡玛特",
+      "group": "company",
+      "entityId": "popmart",
+      "definition": "近期合作与市场活动",
+      "aliases": [
+        "POP MART",
+        "POP MART / 泡泡玛特",
+        "泡泡玛特 / POP MART"
+      ]
+    },
+    {
+      "slug": "disney",
+      "name": "迪士尼",
+      "group": "company",
+      "entityId": "disney",
+      "definition": "近期合作与市场活动",
+      "aliases": [
+        "Disney"
+      ]
+    },
+    {
+      "slug": "lego",
+      "name": "乐高",
+      "entityId": "lego",
+      "group": "company",
+      "definition": "近期合作与市场活动"
+    },
+    {
+      "slug": "adidas",
+      "name": "阿迪达斯",
+      "entityId": "adidas",
+      "group": "company",
+      "definition": "近期合作与市场活动"
+    },
+    {
+      "slug": "nintendo",
+      "name": "任天堂",
+      "entityId": "nintendo",
+      "group": "company",
+      "definition": "近期合作与市场活动"
+    },
+    {
+      "slug": "subculture",
+      "name": "亚文化",
+      "tags": [
+        "亚文化",
+        "街头文化",
+        "二次元"
+      ],
+      "group": "field",
+      "definition": "近期有出处的品牌活动与市场案例"
+    },
+    {
+      "slug": "perfume",
+      "name": "香水",
+      "tags": [
+        "香水",
+        "香氛"
+      ],
+      "group": "field",
+      "definition": "近期有出处的品牌活动与市场案例"
+    },
+    {
+      "slug": "toys",
+      "name": "潮玩",
+      "tags": [
+        "潮玩"
+      ],
+      "group": "field",
+      "definition": "近期有出处的品牌活动与市场案例"
+    },
+    {
+      "slug": "collabs",
+      "name": "品牌联名",
+      "tags": [
+        "品牌联名"
+      ],
+      "group": "genre",
+      "definition": "近期有出处的品牌活动与市场案例"
+    },
+    {
+      "slug": "retail",
+      "name": "线下快闪",
+      "tags": [
+        "快闪"
+      ],
+      "group": "genre",
+      "definition": "近期有出处的品牌活动与市场案例"
+    }
+  ]
+}

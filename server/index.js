@@ -1,4 +1,5 @@
 import {installTopicSearch} from './topic-search.js';
+import {installBrandPulse} from './brand-pulse.js';
 import express from 'express';
 import {publicCors} from './cors.js';
 import { fileURLToPath } from 'node:url';
@@ -176,6 +177,7 @@ app.patch('/api/topics/:id',(req,res)=>{
   store.saveTopic({...topic,paused:req.body.paused,...(!req.body.paused?{state:'queued',nextCheck:new Date().toISOString()}:{})});if(!req.body.paused)queueTopic(topic.id);res.json({ok:true});
 });
 installTopicSearch(app);
+const closePulse=installBrandPulse(app,{pollPublishers:true,feed:()=>({items:scopedItems(store.items())}),dataDir:process.env.DATA_DIR||resolve(root,'data'),allowed:()=>true});
 app.get('/api/topics/:id/history',(req,res)=>res.json({runs:store.topicHistory(req.params.id)}));
 
 app.get('/api/feed',(req,res)=>{
@@ -306,7 +308,7 @@ const reportStartup=setTimeout(checkReport,30000);
 let shuttingDown=false;
 async function shutdown(){
   if(shuttingDown)return;shuttingDown=true;
-  clearInterval(publicTimer);clearInterval(timer);clearInterval(cliTimer);clearInterval(topicTimer);clearInterval(reportTimer);clearTimeout(reportStartup);
+  closePulse();clearInterval(publicTimer);clearInterval(timer);clearInterval(cliTimer);clearInterval(topicTimer);clearInterval(reportTimer);clearTimeout(reportStartup);
   // Flush the persistent browser profile before exiting the app process.
   const closed=new Promise(resolve=>server.close(resolve));
   const deadline=setTimeout(()=>process.exit(1),25000);deadline.unref();

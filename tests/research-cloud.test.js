@@ -57,11 +57,11 @@ test('research search returns ten dated market reports, excludes hotlist pointer
  assert.equal(normalizeResearchItem({origin:'trendradar-rss',publishedAt:'2026-11-16T05:00:00'}).publishedAt,'2026-11-16T05:00:00Z');
  assert.equal(normalizeResearchItem({origin:'publisher-report',publishedAt:'2026-11-16T05:00:00+08:00'}).publishedAt,'2026-11-16T05:00:00+08:00');
 });
-test('cloud collector runs without visitors, avoids overlap, retries failure and retains last successful data',async()=>{
+test('cloud collector runs without visitors, avoids overlap, retries failure and retains last successful data',async(t)=>{
  const dir=await mkdtemp(join(tmpdir(),'cue-worker-'));await writeFile(join(dir,'content-data.json'),'previous');let calls=0,release;
  const worker=createPublicWorker({dataDir:dir,intervalMs:20,run:()=>{calls++;return new Promise((_,reject)=>{release=()=>reject(Error('source offline'));});}});
- const first=worker.start();await new Promise(r=>setTimeout(r,10));assert.equal(calls,1);assert.equal(await worker.refresh(),false);release();await first;
- await new Promise(r=>setTimeout(r,45));assert.equal(calls,2);worker.stop();release();await new Promise(r=>setTimeout(r,10));assert.equal(await readFile(join(dir,'content-data.json'),'utf8'),'previous');assert.equal(worker.state.lastError,'source offline');
+ const first=worker.start();await t.waitFor(()=>assert.equal(calls,1));assert.equal(await worker.refresh(),false);release();await first;
+ await t.waitFor(()=>assert.equal(calls,2));worker.stop();release();await t.waitFor(()=>assert.equal(worker.state.running,false));assert.equal(await readFile(join(dir,'content-data.json'),'utf8'),'previous');assert.equal(worker.state.lastError,'source offline');
 });
 test('cloud serves persisted shared data and China filter without platform login',async()=>{
  const dir=await mkdtemp(join(tmpdir(),'cue-public-'));await writeFile(join(dir,'content-data.json'),JSON.stringify({generatedAt:'2026-11-17',feed:{items:[{id:'test'}],topics:[],publicPulse:{researchItems:[]}},reports:{reports:[]},curated:{all:[{id:'cn',title:'品牌在上海开店',publishedAt:'2026-11-16'}]}}));

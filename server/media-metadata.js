@@ -15,7 +15,7 @@ export function readArticleMetadata(html,source={},now=Date.now()){
  if(source.key==='adguider')date=publicationDate(html.match(/"caCreateTime"\s*:\s*"([^"]+)"/)?.[1]);
  if(source.key==='media360'){const m=$('.time').first().text().match(/(\d{2})\.(\d{2})\.(\d{2})/);if(m)date=publicationDate(`20${m[3]}-${m[1]}-${m[2]}`);}
  if(source.key==='topmarketing'){const raw=$('.report_2_2').first().text().trim(),relative=raw.match(/^(\d+)\s*(分钟|小时|天)前$/);date=relative?new Date(now-Number(relative[1])*({'分钟':60000,'小时':3600000,'天':86400000}[relative[2]])).toISOString():publicationDate(raw);}
- for(const selector of ['meta[property="article:published_time"]','meta[name="pubdate"]','meta[name="publishdate"]','meta[name="PublishDate"]','meta[name="publication_date"]','meta[itemprop="datePublished"]','time[datetime]',dateSelectors[source.key]]){
+ for(const selector of ['meta[property="article:published_time"]','meta[name="pubdate" i]','meta[name="publish_time" i]','meta[name="weibo:article:create_at" i]','meta[name="publishdate"]','meta[name="PublishDate"]','meta[name="publication_date"]','meta[itemprop="datePublished"]','time[datetime]',dateSelectors[source.key]]){
   if(date)break;
   if(!selector)continue;const el=$(selector).first();const raw=el.attr('content')||el.attr('datetime')||el.text().trim();date=publicationDate(raw)||publicationDate(raw.match(/20\d{2}[-/.年]\d{1,2}[-/.月]\d{1,2}日?(?:\s+\d{1,2}:\d{2}(?::\d{2})?)?/)?.[0]);if(date)break;
  }

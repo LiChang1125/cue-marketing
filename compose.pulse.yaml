@@ -1,0 +1,41 @@
+services:
+  pulse-db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: cuepulse
+      POSTGRES_USER: cuepulse
+      POSTGRES_PASSWORD: ${CUE_PG_PASSWORD:?Set a private random database password}
+    volumes:
+      - pulse-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cuepulse -d cuepulse"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+  pulse:
+    build:
+      context: .
+      dockerfile: integrations/aihot/Dockerfile
+    restart: unless-stopped
+    init: true
+    network_mode: service:cue-public
+    depends_on:
+      cue-public:
+        condition: service_started
+      pulse-db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: ${CUE_PULSE_DATABASE_URL:?Set the private postgres URL for pulse-db}
+      ADMIN_PASSWORD: ${CUE_PULSE_ADMIN_PASSWORD:?Set a private admin password}
+      SESSION_SECRET: ${CUE_PULSE_SESSION_SECRET:?Set a private session secret}
+      IMG_PROXY_SIGN_SECRET: ${CUE_PULSE_IMAGE_SECRET:?Set a private signing secret}
+      MODEL_CALLS_ENABLED: "false"
+      COLLECT_ENABLED: "false"
+      TZ: Asia/Shanghai
+    volumes:
+      - cue-public-data:/var/data/cue:ro
+      - pulse-runtime:/var/data/pulse
+volumes:
+  pulse-db:
+  pulse-runtime:

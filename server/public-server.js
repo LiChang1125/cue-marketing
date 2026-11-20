@@ -1,5 +1,7 @@
 import {installTopicSearch} from './topic-search.js';
+import {installBrandPulse} from './brand-pulse.js';
 import express from 'express';
+import {createServer} from 'node:http';
 import {gzip} from 'node:zlib';
 import {promisify} from 'node:util';
 import {installAccess} from './access.js';
@@ -12,7 +14,7 @@ import {createResearchService} from './research-service.js';
 import {createPublicationStore} from './publication-store.js';
 import {reportSchedule} from './reports.js';
 
-export async function startPublicServer({dataDir=process.env.DATA_DIR||'.artifacts/cloud-data',port=Number(process.env.PORT||4173),host=process.env.HOST||'127.0.0.1',collect=true,authRequired=true,accountsFile=process.env.CUE_ACCOUNTS_FILE}={}){
+export async function startPublicServer({dataDir=process.env.DATA_DIR||'.artifacts/cloud-data',port=Number(process.env.PORT||4173),host=process.env.HOST||'127.0.0.1',collect=true,pollPublishers=collect,authRequired=true,accountsFile=process.env.CUE_ACCOUNTS_FILE,staticDir='dist',mountMonitor}={}){
  await mkdir(dataDir,{recursive:true});const path=join(dataDir,'content-data.json');let data;
  try{data=JSON.parse(await readFile(path,'utf8'));}catch{
   const r=await fetch('https://lichang1125.github.io/cue-marketing/content-data.json',{signal:AbortSignal.timeout(30000)});if(!r.ok)throw Error('Initial content unavailable');data=await r.json();if(!data.feed?.items?.length)throw Error('Invalid initial content');await writeFile(path,JSON.stringify(data));
@@ -25,7 +27,10 @@ export async function startPublicServer({dataDir=process.env.DATA_DIR||'.artifac
  const app=express();app.disable('x-powered-by');app.use(express.json({limit:'8kb'}));
  const research=createResearchService({dataDir,getData:()=>data});
  app.get('/api/health',(_,res)=>res.json({ok:true}));
- await installAccess(app,{required:authRequired,file:accountsFile});
+ const access=await installAccess(app,{required:authRequired,file:accountsFile});
+ const server=createServer(app);
+ const closePulse=installBrandPulse(app,{publishHome:store.publishItems,pollPublishers,feed:()=>data.feed,dataDir,allowed:access.sessionAllowed});
+ const closeMonitor=mountMonitor?.(app,server,access.sessionAllowed,()=>data.feed);
  let compressedFeed,compressedBody;
  app.get('/api/feed',async(req,res,next)=>{
    if(!req.acceptsEncodings('gzip'))return next();
@@ -44,8 +49,8 @@ export async function startPublicServer({dataDir=process.env.DATA_DIR||'.artifac
  app.get('/content-data.json',(_,res)=>res.set('Cache-Control','private, no-store').json(data));
  app.use('/trendradar',express.static(resolve(dataDir,'trendradar')));
  app.use('/media',express.static(resolve(dataDir,'media')));app.use('/research',express.static(resolve(dataDir,'research')));
- app.use(express.static(resolve('dist'),{setHeaders(res,path){if(path.endsWith('.html'))res.set('Cache-Control','no-cache');}}));
- const server=await new Promise(resolve=>{const s=app.listen(port,host,()=>resolve(s));});if(collect)worker.start();
- return {server,worker,close:async()=>{clearInterval(dailyTimer);worker.stop();await store.flush();return new Promise(resolve=>server.close(resolve));}};
+ app.use(express.static(resolve(staticDir),{setHeaders(res,path){if(path.endsWith('.html'))res.set('Cache-Control','no-cache');}}));
+ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(port,host,()=>{server.off('error',reject);resolve();});});if(collect)worker.start();
+ return {server,worker,close:async()=>{clearInterval(dailyTimer);closePulse();worker.stop();await closeMonitor?.();await store.flush();return new Promise(resolve=>server.close(resolve));}};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){const runtime=await startPublicServer();console.log('CUE public cloud service ready');for(const signal of ['SIGTERM','SIGINT'])process.on(signal,()=>runtime.close().then(()=>process.exit(0)));}

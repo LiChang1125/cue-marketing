@@ -1,0 +1,1106 @@
+{
+ "sites": [
+  {
+   "name": "数英网",
+   "group": "国内营销垂直",
+   "url": "https://www.digitaling.com"
+  },
+  {
+   "name": "SocialBeta",
+   "group": "国内营销垂直",
+   "url": "https://socialbeta.com"
+  },
+  {
+   "name": "广告门",
+   "group": "国内营销垂直",
+   "url": "https://www.adquan.com"
+  },
+  {
+   "name": "梅花网",
+   "group": "国内营销垂直",
+   "url": "https://www.meihua.info"
+  },
+  {
+   "name": "胖鲸",
+   "group": "国内营销垂直",
+   "url": "https://www.fatwhale.com"
+  },
+  {
+   "name": "刀法研究所",
+   "group": "国内营销垂直",
+   "url": "https://www.daofabrand.com"
+  },
+  {
+   "name": "品牌星球 BrandStar",
+   "group": "国内营销垂直",
+   "url": "https://brandstar.com.cn"
+  },
+  {
+   "name": "创意星球",
+   "group": "国内营销垂直",
+   "url": "https://www.yuanchu.com"
+  },
+  {
+   "name": "麦迪逊邦",
+   "group": "国内营销垂直",
+   "url": "https://www.madisonboom.com"
+  },
+  {
+   "name": "广告大观",
+   "group": "国内营销垂直",
+   "url": "https://www.adguan.com"
+  },
+  {
+   "name": "营销智库",
+   "group": "国内营销垂直",
+   "url": "https://www.360ing.com"
+  },
+  {
+   "name": "品牌联盟",
+   "group": "国内营销垂直",
+   "url": "https://www.brandcn.com"
+  },
+  {
+   "name": "独角招聘",
+   "group": "国内营销垂直",
+   "url": "https://dujiao.com"
+  },
+  {
+   "name": "数英 DIGITALING 项目库",
+   "group": "国内营销垂直",
+   "url": "https://www.digitaling.com/projects"
+  },
+  {
+   "name": "铱星云商",
+   "group": "国内营销垂直",
+   "url": "https://www.irvinecn.com"
+  },
+  {
+   "name": "品牌观察网",
+   "group": "国内营销垂直",
+   "url": "https://www.ppbrand.com"
+  },
+  {
+   "name": "广告雷达",
+   "group": "国内营销垂直",
+   "url": "https://www.adradar.com"
+  },
+  {
+   "name": "新营销",
+   "group": "国内营销垂直",
+   "url": "https://www.newmarketingcn.com"
+  },
+  {
+   "name": "市场部网",
+   "group": "国内营销垂直",
+   "url": "https://www.shichangbu.com"
+  },
+  {
+   "name": "品牌进化论",
+   "group": "国内营销垂直",
+   "url": "https://www.brandevolve.cn"
+  },
+  {
+   "name": "Morketing",
+   "group": "国内营销垂直",
+   "url": "https://www.morketing.com"
+  },
+  {
+   "name": "华丽志",
+   "group": "国内营销垂直",
+   "url": "https://luxe.co"
+  },
+  {
+   "name": "中国品牌网",
+   "group": "国内营销垂直",
+   "url": "https://www.cbrand.com.cn"
+  },
+  {
+   "name": "广告客",
+   "group": "国内营销垂直",
+   "url": "https://www.adke.com"
+  },
+  {
+   "name": "营销案例库",
+   "group": "国内营销垂直",
+   "url": null
+  },
+  {
+   "name": "品牌几何",
+   "group": "国内营销垂直",
+   "url": "https://www.brandgeom.com"
+  },
+  {
+   "name": "利马广告",
+   "group": "国内营销垂直",
+   "url": "https://www.limaad.com"
+  },
+  {
+   "name": "营销周报",
+   "group": "国内营销垂直",
+   "url": "https://www.yingxiaozhoubao.com"
+  },
+  {
+   "name": "创意广告网",
+   "group": "国内营销垂直",
+   "url": "https://www.51idea.com"
+  },
+  {
+   "name": "品牌智库",
+   "group": "国内营销垂直",
+   "url": "https://www.brandzhiku.com"
+  },
+  {
+   "name": "广告界",
+   "group": "国内营销垂直",
+   "url": null
+  },
+  {
+   "name": "营销星球",
+   "group": "国内营销垂直",
+   "url": "https://www.yingxiaoxingqiu.com"
+  },
+  {
+   "name": "品牌公社",
+   "group": "国内营销垂直",
+   "url": "https://www.brandsns.com"
+  },
+  {
+   "name": "广告在线",
+   "group": "国内营销垂直",
+   "url": "https://www.adonline.com.cn"
+  },
+  {
+   "name": "营销研究社",
+   "group": "国内营销垂直",
+   "url": "https://www.mktresearch.cn"
+  },
+  {
+   "name": "品牌情报局",
+   "group": "国内营销垂直",
+   "url": "https://www.brandintel.cn"
+  },
+  {
+   "name": "媒介 360",
+   "group": "国内营销垂直",
+   "url": "https://www.media360.cn"
+  },
+  {
+   "name": "传媒圈",
+   "group": "国内营销垂直",
+   "url": "https://www.chuanmeiquan.com"
+  },
+  {
+   "name": "营销兵法",
+   "group": "国内营销垂直",
+   "url": "https://www.yingxiaobingfa.com"
+  },
+  {
+   "name": "品牌赋能",
+   "group": "国内营销垂直",
+   "url": "https://www.brandfun.cn"
+  },
+  {
+   "name": "36 氪",
+   "group": "国内商业消费",
+   "url": "https://36kr.com"
+  },
+  {
+   "name": "虎嗅网",
+   "group": "国内商业消费",
+   "url": "https://www.huxiu.com"
+  },
+  {
+   "name": "晚点 LatePost",
+   "group": "国内商业消费",
+   "url": "https://www.latepost.com"
+  },
+  {
+   "name": "第一财经",
+   "group": "国内商业消费",
+   "url": "https://www.yicai.com"
+  },
+  {
+   "name": "财新网",
+   "group": "国内商业消费",
+   "url": "https://www.caixin.com"
+  },
+  {
+   "name": "亿邦动力",
+   "group": "国内商业消费",
+   "url": "https://www.ebrun.com"
+  },
+  {
+   "name": "网经社",
+   "group": "国内商业消费",
+   "url": "https://www.100ec.cn"
+  },
+  {
+   "name": "CBNData",
+   "group": "国内商业消费",
+   "url": "https://www.cbndata.com"
+  },
+  {
+   "name": "窄门餐眼",
+   "group": "国内商业消费",
+   "url": "https://www.zhaimen.cn"
+  },
+  {
+   "name": "爱范儿",
+   "group": "国内商业消费",
+   "url": "https://www.ifanr.com"
+  },
+  {
+   "name": "少数派",
+   "group": "国内商业消费",
+   "url": "https://sspai.com"
+  },
+  {
+   "name": "亿欧",
+   "group": "国内商业消费",
+   "url": "https://www.iyiou.com"
+  },
+  {
+   "name": "创业邦",
+   "group": "国内商业消费",
+   "url": "https://www.cyzone.cn"
+  },
+  {
+   "name": "界面新闻",
+   "group": "国内商业消费",
+   "url": "https://www.jiemian.com"
+  },
+  {
+   "name": "澎湃新闻商业板块",
+   "group": "国内商业消费",
+   "url": "https://www.thepaper.cn"
+  },
+  {
+   "name": "消费日报网",
+   "group": "国内商业消费",
+   "url": "https://www.xfrb.com.cn"
+  },
+  {
+   "name": "零售商业评论",
+   "group": "国内商业消费",
+   "url": "https://www.lsplreview.com"
+  },
+  {
+   "name": "灵兽网",
+   "group": "国内商业消费",
+   "url": "https://www.lingshou.com"
+  },
+  {
+   "name": "品牌消费网",
+   "group": "国内商业消费",
+   "url": "https://www.brandxf.com"
+  },
+  {
+   "name": "电商报",
+   "group": "国内商业消费",
+   "url": "https://www.dsb.cn"
+  },
+  {
+   "name": "中购联",
+   "group": "国内商业消费",
+   "url": "https://www.mallchina.org"
+  },
+  {
+   "name": "联商网",
+   "group": "国内商业消费",
+   "url": "https://www.linkshop.com"
+  },
+  {
+   "name": "红餐网",
+   "group": "国内商业消费",
+   "url": "https://www.hongcan.com"
+  },
+  {
+   "name": "化妆品财经在线",
+   "group": "国内商业消费",
+   "url": "https://www.cbo.cn"
+  },
+  {
+   "name": "母婴前沿",
+   "group": "国内商业消费",
+   "url": "https://www.momfront.com"
+  },
+  {
+   "name": "酒业家",
+   "group": "国内商业消费",
+   "url": "https://www.jiuyejia.com"
+  },
+  {
+   "name": "食品板",
+   "group": "国内商业消费",
+   "url": "https://www.spiban.com"
+  },
+  {
+   "name": "眼镜财经",
+   "group": "国内商业消费",
+   "url": "https://www.yanjingcaijing.com"
+  },
+  {
+   "name": "家电圈",
+   "group": "国内商业消费",
+   "url": "https://www.jdquan.com"
+  },
+  {
+   "name": "汽车商业评论",
+   "group": "国内商业消费",
+   "url": "https://www.autobizreview.com"
+  },
+  {
+   "name": "赢商网",
+   "group": "国内商业消费",
+   "url": "https://www.winshang.com"
+  },
+  {
+   "name": "开店邦",
+   "group": "国内商业消费",
+   "url": "https://www.kaidianbang.com"
+  },
+  {
+   "name": "新消费内参",
+   "group": "国内商业消费",
+   "url": "https://www.newcins.cn"
+  },
+  {
+   "name": "消费界",
+   "group": "国内商业消费",
+   "url": "https://www.xiaofeijie.com"
+  },
+  {
+   "name": "快消品网",
+   "group": "国内商业消费",
+   "url": "https://www.fmcgchina.com"
+  },
+  {
+   "name": "茶饮界",
+   "group": "国内商业消费",
+   "url": "https://www.chayinjie.com"
+  },
+  {
+   "name": "烘焙地球村",
+   "group": "国内商业消费",
+   "url": "https://www.bakingearth.com"
+  },
+  {
+   "name": "潮玩族资讯",
+   "group": "国内商业消费",
+   "url": "https://www.chao-wan-zu.com"
+  },
+  {
+   "name": "运动品牌观察",
+   "group": "国内商业消费",
+   "url": "https://www.sportbrand.cn"
+  },
+  {
+   "name": "家居微观察",
+   "group": "国内商业消费",
+   "url": "https://www.jiajuweiguance.com"
+  },
+  {
+   "name": "艾瑞咨询",
+   "group": "国内智库 & 数据",
+   "url": "https://www.iresearch.com.cn"
+  },
+  {
+   "name": "易观分析",
+   "group": "国内智库 & 数据",
+   "url": "https://www.analysys.cn"
+  },
+  {
+   "name": "QuestMobile",
+   "group": "国内智库 & 数据",
+   "url": "https://www.questmobile.com.cn"
+  },
+  {
+   "name": "益普索中国",
+   "group": "国内智库 & 数据",
+   "url": "https://www.ipsos.com/zh-cn"
+  },
+  {
+   "name": "凯度中国",
+   "group": "国内智库 & 数据",
+   "url": "https://www.kantar.com/cn"
+  },
+  {
+   "name": "欧睿 Euromonitor 中国",
+   "group": "国内智库 & 数据",
+   "url": "https://www.euromonitor.com"
+  },
+  {
+   "name": "头豹研究院",
+   "group": "国内智库 & 数据",
+   "url": "https://www.leadleo.com"
+  },
+  {
+   "name": "弗若斯特沙利文",
+   "group": "国内智库 & 数据",
+   "url": "https://www.frostchina.com"
+  },
+  {
+   "name": "清科研究中心",
+   "group": "国内智库 & 数据",
+   "url": "https://research.pedaily.cn"
+  },
+  {
+   "name": "魔方数据",
+   "group": "国内智库 & 数据",
+   "url": "https://www.mofangdata.com"
+  },
+  {
+   "name": "知微数据",
+   "group": "国内智库 & 数据",
+   "url": "https://www.zhiweidata.com"
+  },
+  {
+   "name": "新榜",
+   "group": "国内智库 & 数据",
+   "url": "https://www.newrank.cn"
+  },
+  {
+   "name": "蝉妈妈研究院",
+   "group": "国内智库 & 数据",
+   "url": "https://www.chanmama.com"
+  },
+  {
+   "name": "千瓜数据研究院",
+   "group": "国内智库 & 数据",
+   "url": "https://www.qian-gua.com"
+  },
+  {
+   "name": "克劳锐",
+   "group": "国内智库 & 数据",
+   "url": "https://www.klr.com.cn"
+  },
+  {
+   "name": "极光大数据",
+   "group": "国内智库 & 数据",
+   "url": "https://www.jiguang.cn"
+  },
+  {
+   "name": "易观数科",
+   "group": "国内智库 & 数据",
+   "url": "https://www.analysys.cn"
+  },
+  {
+   "name": "炬量研究院",
+   "group": "国内智库 & 数据",
+   "url": "https://www.juliang.cn"
+  },
+  {
+   "name": "微播易",
+   "group": "国内智库 & 数据",
+   "url": "https://www.weiboyi.com"
+  },
+  {
+   "name": "艺恩数据",
+   "group": "国内智库 & 数据",
+   "url": "https://www.enbase.com"
+  },
+  {
+   "name": "赛迪顾问",
+   "group": "国内智库 & 数据",
+   "url": "https://www.ccidconsulting.com"
+  },
+  {
+   "name": "德勤中国研究",
+   "group": "国内智库 & 数据",
+   "url": "https://www2.deloitte.com/cn/insights"
+  },
+  {
+   "name": "普华永道中国洞察",
+   "group": "国内智库 & 数据",
+   "url": "https://www.pwccn.com/zh/insights"
+  },
+  {
+   "name": "毕马威中国",
+   "group": "国内智库 & 数据",
+   "url": "https://home.kpmg/cn/zh/home/insights.html"
+  },
+  {
+   "name": "罗兰贝格",
+   "group": "国内智库 & 数据",
+   "url": "https://www.rolandberger.com"
+  },
+  {
+   "name": "奥纬咨询",
+   "group": "国内智库 & 数据",
+   "url": "https://www.oliverwyman.com"
+  },
+  {
+   "name": "朴睿铂尔",
+   "group": "国内智库 & 数据",
+   "url": "https://www.purplereport.cn"
+  },
+  {
+   "name": "星图数据",
+   "group": "国内智库 & 数据",
+   "url": "https://www.syntun.com"
+  },
+  {
+   "name": "维卓研究院",
+   "group": "国内智库 & 数据",
+   "url": "https://www.weizhuo.com"
+  },
+  {
+   "name": "飞瓜数据研究院",
+   "group": "国内智库 & 数据",
+   "url": "https://www.feigua.cn"
+  },
+  {
+   "name": "国家市场监督管理总局",
+   "group": "国内官方权威",
+   "url": "https://www.samr.gov.cn"
+  },
+  {
+   "name": "商务部商务预报",
+   "group": "国内官方权威",
+   "url": "https://cif.mofcom.gov.cn"
+  },
+  {
+   "name": "国家知识产权局商标公告",
+   "group": "国内官方权威",
+   "url": "https://sbj.cnipa.gov.cn"
+  },
+  {
+   "name": "中国消费者协会",
+   "group": "国内官方权威",
+   "url": "https://www.cca.org.cn"
+  },
+  {
+   "name": "央视财经",
+   "group": "国内官方权威",
+   "url": "https://finance.cctv.com"
+  },
+  {
+   "name": "新华网财经",
+   "group": "国内官方权威",
+   "url": "https://www.xinhuanet.com/finance"
+  },
+  {
+   "name": "人民网经济",
+   "group": "国内官方权威",
+   "url": "https://finance.people.com.cn"
+  },
+  {
+   "name": "中国质量新闻网",
+   "group": "国内官方权威",
+   "url": "https://www.cqn.com.cn"
+  },
+  {
+   "name": "信用中国",
+   "group": "国内官方权威",
+   "url": "https://www.creditchina.gov.cn"
+  },
+  {
+   "name": "上交所",
+   "group": "国内官方权威",
+   "url": "https://www.sse.com.cn"
+  },
+  {
+   "name": "深交所",
+   "group": "国内官方权威",
+   "url": "https://www.szse.cn"
+  },
+  {
+   "name": "国家统计局",
+   "group": "国内官方权威",
+   "url": "https://www.stats.gov.cn"
+  },
+  {
+   "name": "海关总署",
+   "group": "国内官方权威",
+   "url": "https://www.customs.gov.cn"
+  },
+  {
+   "name": "国家药监局",
+   "group": "国内官方权威",
+   "url": "https://www.nmpa.gov.cn"
+  },
+  {
+   "name": "文旅部",
+   "group": "国内官方权威",
+   "url": "https://www.mct.gov.cn"
+  },
+  {
+   "name": "中国商标网",
+   "group": "国内官方权威",
+   "url": "https://sbj.cnipa.gov.cn/sbcx"
+  },
+  {
+   "name": "中国消费者报",
+   "group": "国内官方权威",
+   "url": null
+  },
+  {
+   "name": "中国市场监管报",
+   "group": "国内官方权威",
+   "url": "https://www.cjzzb.org"
+  },
+  {
+   "name": "工信部",
+   "group": "国内官方权威",
+   "url": "https://www.miit.gov.cn"
+  },
+  {
+   "name": "国家邮政局",
+   "group": "国内官方权威",
+   "url": "https://www.spb.gov.cn"
+  },
+  {
+   "name": "AdAge",
+   "group": "海外品牌 & 广告营销",
+   "url": "https://adage.com"
+  },
+  {
+   "name": "Adweek",
+   "group": "海外品牌 & 广告营销",
+   "url": "https://www.adweek.com"
+  },
+  {
+   "name": "Brand New",
+   "group": "海外品牌 & 广告营销",
+   "url": "https://www.underconsideration.com/brandnew"
+  },
+  {
+   "name": "The Drum",
+   "group": "海外品牌 & 广告营销",
+   "url": "https://www.thedrum.com"
+  },
+  {
+   "name": "Marketing Week",
+   "group": "海外品牌 & 广告营销",
+   "url": "https://www.marketingweek.com"
+  },
+  {
+   "name": "Campaign",
+   "group": "海外品牌 & 广告营销",
+   "url": "https://www.campaignlive.com"
+  },
+  {
+   "name": "Fast Company",
+   "group": "海外品牌 & 广告营销",
+   "url": "https://www.fastcompany.com"
+  },
+  {
+   "name": "Creative Review",
+   "group": "海外品牌 & 广告营销",
+   "url": "https://www.creativereview.co.uk"
+  },
+  {
+   "name": "AdverTimes",
+   "group": "海外品牌 & 广告营销",
+   "url": "https://www.advertimes.com"
+  },
+  {
+   "name": "電通報",
+   "group": "海外品牌 & 广告营销",
+   "url": "https://dentsu-ho.com/"
+  },
+  {
+   "name": "PR Week",
+   "group": "海外品牌 & 广告营销",
+   "url": "https://www.prweek.com"
+  },
+  {
+   "name": "WARC",
+   "group": "海外品牌 & 广告营销",
+   "url": "https://www.warc.com"
+  },
+  {
+   "name": "LBBOnline",
+   "group": "海外品牌 & 广告营销",
+   "url": "https://www.lbbonline.com"
+  },
+  {
+   "name": "It’s Nice That",
+   "group": "海外品牌 & 广告营销",
+   "url": "https://www.itsnicethat.com"
+  },
+  {
+   "name": "Design Week",
+   "group": "海外品牌 & 广告营销",
+   "url": "https://www.designweek.co.uk"
+  },
+  {
+   "name": "Marketing Dive",
+   "group": "海外品牌 & 广告营销",
+   "url": "https://www.marketingdive.com"
+  },
+  {
+   "name": "Digiday",
+   "group": "海外品牌 & 广告营销",
+   "url": "https://digiday.com"
+  },
+  {
+   "name": "Content Marketing Institute",
+   "group": "海外品牌 & 广告营销",
+   "url": "https://contentmarketinginstitute.com"
+  },
+  {
+   "name": "HubSpot Blog",
+   "group": "海外品牌 & 广告营销",
+   "url": "https://blog.hubspot.com"
+  },
+  {
+   "name": "Social Media Examiner",
+   "group": "海外品牌 & 广告营销",
+   "url": "https://socialmediaexaminer.com"
+  },
+  {
+   "name": "The Branding Journal",
+   "group": "海外品牌 & 广告营销",
+   "url": "https://www.thebrandingjournal.com"
+  },
+  {
+   "name": "Marketing Brew",
+   "group": "海外品牌 & 广告营销",
+   "url": "https://www.marketingbrew.com"
+  },
+  {
+   "name": "MarTech",
+   "group": "海外品牌 & 广告营销",
+   "url": "https://martech.org"
+  },
+  {
+   "name": "DMNews",
+   "group": "海外品牌 & 广告营销",
+   "url": "https://dmnews.com"
+  },
+  {
+   "name": "Mediapost",
+   "group": "海外品牌 & 广告营销",
+   "url": "https://www.mediapost.com"
+  },
+  {
+   "name": "WWD",
+   "group": "海外品牌 & 广告营销",
+   "url": "https://wwd.com"
+  },
+  {
+   "name": "AdExchanger",
+   "group": "海外品牌 & 广告营销",
+   "url": "https://adexchanger.com"
+  },
+  {
+   "name": "CXL",
+   "group": "海外品牌 & 广告营销",
+   "url": "https://cxl.com"
+  },
+  {
+   "name": "Search Engine Land",
+   "group": "海外品牌 & 广告营销",
+   "url": "https://searchengineland.com"
+  },
+  {
+   "name": "MarketingProfs",
+   "group": "海外品牌 & 广告营销",
+   "url": "https://www.marketingprofs.com"
+  },
+  {
+   "name": "Retail Dive",
+   "group": "海外零售 & 电商资讯",
+   "url": "https://retaildive.com"
+  },
+  {
+   "name": "Digital Commerce 360",
+   "group": "海外零售 & 电商资讯",
+   "url": "https://digitalcommerce360.com"
+  },
+  {
+   "name": "Modern Retail",
+   "group": "海外零售 & 电商资讯",
+   "url": "https://www.modernretail.co"
+  },
+  {
+   "name": "Retail TouchPoints",
+   "group": "海外零售 & 电商资讯",
+   "url": "https://retailtouchpoints.com"
+  },
+  {
+   "name": "Shopify Blog",
+   "group": "海外零售 & 电商资讯",
+   "url": "https://www.shopify.com/blog"
+  },
+  {
+   "name": "CNBC Retail",
+   "group": "海外零售 & 电商资讯",
+   "url": "https://www.cnbc.com/retail"
+  },
+  {
+   "name": "Forbes Retail",
+   "group": "海外零售 & 电商资讯",
+   "url": "https://www.forbes.com/retail"
+  },
+  {
+   "name": "Retail Insight Network",
+   "group": "海外零售 & 电商资讯",
+   "url": "https://retail-insight-network.com"
+  },
+  {
+   "name": "Ecommerce News Europe",
+   "group": "海外零售 & 电商资讯",
+   "url": "https://ecommercenews.eu"
+  },
+  {
+   "name": "Practical Ecommerce",
+   "group": "海外零售 & 电商资讯",
+   "url": "https://www.practicalecommerce.com"
+  },
+  {
+   "name": "eMarketer",
+   "group": "海外零售 & 电商资讯",
+   "url": "https://www.emarketer.com"
+  },
+  {
+   "name": "Grocery Dive",
+   "group": "海外零售 & 电商资讯",
+   "url": "https://grocerydive.com"
+  },
+  {
+   "name": "Fashion Dive",
+   "group": "海外零售 & 电商资讯",
+   "url": "https://fashiondive.com"
+  },
+  {
+   "name": "Beauty Inc",
+   "group": "海外零售 & 电商资讯",
+   "url": "https://beautyinc.com"
+  },
+  {
+   "name": "Chain Store Age",
+   "group": "海外零售 & 电商资讯",
+   "url": "https://chainstoreage.com"
+  },
+  {
+   "name": "Retail Leader",
+   "group": "海外零售 & 电商资讯",
+   "url": "https://retailleader.com"
+  },
+  {
+   "name": "Ecommerce Bytes",
+   "group": "海外零售 & 电商资讯",
+   "url": "https://www.ecommercebytes.com"
+  },
+  {
+   "name": "Internet Retailer",
+   "group": "海外零售 & 电商资讯",
+   "url": "https://internetretailer.com"
+  },
+  {
+   "name": "ESMA Retail",
+   "group": "海外零售 & 电商资讯",
+   "url": "https://esmarretail.com"
+  },
+  {
+   "name": "World Retail Congress",
+   "group": "海外零售 & 电商资讯",
+   "url": "https://worldretailcongress.com"
+  },
+  {
+   "name": "McKinsey 中国 & 零售洞察",
+   "group": "海外商业 & 消费者智库",
+   "url": "https://www.mckinsey.com"
+  },
+  {
+   "name": "BCG 波士顿咨询",
+   "group": "海外商业 & 消费者智库",
+   "url": "https://www.bcg.com"
+  },
+  {
+   "name": "Bain & Company",
+   "group": "海外商业 & 消费者智库",
+   "url": "https://www.bain.com"
+  },
+  {
+   "name": "Deloitte Insights",
+   "group": "海外商业 & 消费者智库",
+   "url": "https://www2.deloitte.com/insights"
+  },
+  {
+   "name": "PwC 洞察",
+   "group": "海外商业 & 消费者智库",
+   "url": "https://www.pwc.com/gx/en/insights"
+  },
+  {
+   "name": "Ipsos Global Trends",
+   "group": "海外商业 & 消费者智库",
+   "url": "https://www.ipsos.com"
+  },
+  {
+   "name": "NielsenIQ",
+   "group": "海外商业 & 消费者智库",
+   "url": "https://nielseniq.com"
+  },
+  {
+   "name": "Euromonitor",
+   "group": "海外商业 & 消费者智库",
+   "url": "https://www.euromonitor.com"
+  },
+  {
+   "name": "Harvard Business Review HBR",
+   "group": "海外商业 & 消费者智库",
+   "url": "https://hbr.org"
+  },
+  {
+   "name": "Business Insider",
+   "group": "海外商业 & 消费者智库",
+   "url": "https://www.businessinsider.com"
+  },
+  {
+   "name": "Forrester",
+   "group": "海外商业 & 消费者智库",
+   "url": "https://www.forrester.com"
+  },
+  {
+   "name": "Gartner",
+   "group": "海外商业 & 消费者智库",
+   "url": "https://www.gartner.com"
+  },
+  {
+   "name": "Kantar Worldpanel",
+   "group": "海外商业 & 消费者智库",
+   "url": "https://www.kantarworldpanel.com"
+  },
+  {
+   "name": "Statista",
+   "group": "海外商业 & 消费者智库",
+   "url": "https://www.statista.com"
+  },
+  {
+   "name": "The Conference Board",
+   "group": "海外商业 & 消费者智库",
+   "url": "https://www.conference-board.org"
+  },
+  {
+   "name": "J.D. Power",
+   "group": "海外商业 & 消费者智库",
+   "url": "https://www.jdpower.com"
+  },
+  {
+   "name": "Accenture Research",
+   "group": "海外商业 & 消费者智库",
+   "url": "https://www.accenture.com/us-en/insights"
+  },
+  {
+   "name": "Capgemini Research",
+   "group": "海外商业 & 消费者智库",
+   "url": "https://www.capgemini.com/research"
+  },
+  {
+   "name": "The Economist",
+   "group": "海外商业 & 消费者智库",
+   "url": "https://www.economist.com"
+  },
+  {
+   "name": "Bloomberg",
+   "group": "海外商业 & 消费者智库",
+   "url": "https://www.bloomberg.com"
+  }
+ ],
+ "bylines": [
+  "空手",
+  "小马宋",
+  "品牌星球",
+  "基哥品牌洞察",
+  "李叫兽",
+  "张知愚",
+  "高韬品牌",
+  "品牌几何",
+  "数英DIGITALING",
+  "胖鲸",
+  "品牌思维",
+  "品牌人老罗",
+  "华杉华楠",
+  "观远品牌",
+  "品牌进化论",
+  "品牌研究员",
+  "欧赛斯",
+  "品牌志",
+  "定位研习社",
+  "品牌侦探",
+  "姜茶茶",
+  "广告门",
+  "梅花网",
+  "创意广告精选",
+  "李欣频",
+  "文案摇滚帮",
+  "广告情报局",
+  "顶尖文案TOPYS",
+  "广告常识",
+  "创意铺子",
+  "文案君",
+  "广告人干货库",
+  "壹读",
+  "创意厂牌",
+  "广告研习社",
+  "运营研究社",
+  "薛辉小清新",
+  "阿泽运营笔记",
+  "卡思数据",
+  "新抖",
+  "蝉妈妈",
+  "顾小北",
+  "短视频老杨",
+  "运营公举小磊磊",
+  "视频号观察局",
+  "短视频洞察官",
+  "直播营销研究院",
+  "红书研究院",
+  "小红书商业观察",
+  "短视频方法论",
+  "刀法研究所",
+  "36氪消费",
+  "窄播",
+  "李檬",
+  "新消费内参",
+  "品牌捕手",
+  "消费Z世代",
+  "电商在线",
+  "亿邦动力",
+  "种草情报局",
+  "新消费品牌观察",
+  "虎嗅消费",
+  "餐饮O2O",
+  "茶饮品牌观察",
+  "美业品牌研究院",
+  "公关界的007",
+  "公关人",
+  "数说传媒",
+  "鸟哥笔记",
+  "人人都是产品经理",
+  "热点研究所",
+  "传媒圈",
+  "危机公关观察",
+  "内容营销研究院",
+  "媒哥媒体采购",
+  "增长黑客",
+  "曲卉",
+  "私域肖厂长",
+  "鉴锋",
+  "增长官研究院",
+  "投放老炮",
+  "数据驱动增长",
+  "私域流量观察",
+  "流量研究所",
+  "投放情报局",
+  "出海马克",
+  "白牌出海研究院",
+  "海外品牌观察",
+  "TikTok营销观察",
+  "出海早知道",
+  "独立站大叔",
+  "海外营销笔记",
+  "品牌出海智库",
+  "欧美品牌研究",
+  "跨境营销观察",
+  "晚点LatePost",
+  "吴晓波频道",
+  "商业评论",
+  "营销智库",
+  "市场部网"
+ ]
+}

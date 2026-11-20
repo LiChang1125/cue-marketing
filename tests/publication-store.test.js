@@ -20,3 +20,14 @@ test('autonomous report survives a concurrent collection carrying an older archi
  const restored=createPublicationStore({initial:saved,path,now:()=>new Date('2026-11-17T02:00:00Z')});assert.equal(await restored.publish(),false);
  }finally{await rm(dir,{recursive:true,force:true});}
 });
+
+test('a slower full collection preserves a newly published story and its original publication time',async()=>{
+ const dir=await mkdtemp(join(tmpdir(),'cue-wire-'));
+ try{
+  const initial=data(),store=createPublicationStore({initial,path:join(dir,'data.json'),now:()=>new Date('2026-11-17T00:00:00Z')});
+  const row={...initial.feed.items[0],id:'b',title:'星巴克推出节日联名香水系列',url:'https://socialbeta.com/campaign/45678',mediaEditorial:true,rollingPublication:true,publishedAt:'2026-11-16T23:55:00Z'};
+  await Promise.all([store.publishItems([row]),store.publish(initial)]);
+  assert.equal(store.get().feed.items.filter(i=>i.id==='b').length,1);
+  assert.equal(store.get().feed.editorial[0].publishedAt,row.publishedAt);
+ }finally{await rm(dir,{recursive:true,force:true});}
+});
