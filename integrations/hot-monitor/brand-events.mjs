@@ -125,7 +125,7 @@ export function eventCards(rows,now=Date.now()){
   }
   return events;
 }
-export function currentHotspots(feed,localize,desk,archive){
+export function currentHotspots(feed,localize,desk,archive,{online=true}={}){
   let last,pending;
   return async()=>{
     if(last?.until>Date.now()&&last.version===desk?.version())return last.data;
@@ -133,7 +133,7 @@ export function currentHotspots(feed,localize,desk,archive){
     pending=(async()=>{
       const now=Date.now(),queries=['品牌 联名 官宣','品牌 快闪 首发','IP 授权 联动','品牌 代言人 发布','新品 限定 发售'];
       let available=true;
-      const [web,...trades]=await Promise.all([webNews(queries,['联名','品牌','首发','联动','营销']).catch(()=>{available=false;return [];}),...['联名','快闪','首发'].map(term=>publicMarketingPress(term,now-7*day).catch(()=>[]))]);
+      const [web,...trades]=online?await Promise.all([webNews(queries,['联名','品牌','首发','联动','营销']).catch(()=>{available=false;return [];}),...['联名','快闪','首发'].map(term=>publicMarketingPress(term,now-7*day).catch(()=>[]))]):[[]];
       const snapshot=feed(),local=(snapshot.items||[]).map(r=>({...r,url:originalHref(r),content:r.excerpt,source:'editorial'}));
       await desk?.ready;
       const live=desk?.summary().filter(s=>s.active)||[];

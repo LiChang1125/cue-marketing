@@ -57,6 +57,7 @@ jobs:
         run: |
           npm run build -- --base=/cue-marketing/
           cp .artifacts/public-data/content-data.json dist/content-data.json
+          node scripts/export-agent-pages.mjs
           cp -r .artifacts/public-articles/media dist/media
           mkdir -p dist/licenses
           cp .artifacts/public-data/trendradar/LICENSE.txt dist/licenses/TrendRadar.txt

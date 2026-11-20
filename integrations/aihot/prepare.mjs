@@ -5,6 +5,7 @@ import {execFileSync} from 'node:child_process';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {customizeFixtures} from './fixtures.mjs';
+import {applyReaderEdition} from './reader-edition.mjs';
 import {prepareLast30} from '../hot-monitor/setup-last30.mjs';
 const root=fileURLToPath(new URL('../../',import.meta.url));
 const revision='88b114d7efbcdee17c3fc4d2e29c27672178e10a';
@@ -72,5 +73,6 @@ await cp(resolve(root,'public/favicon.svg'),at('site/brand/logo.svg'));
 await cp(resolve(root,'public/cue-logo.svg'),at('site/brand/wordmark.svg'));
 await edit('packages/backend/src/reports/compose.ts',s=>s.replace('async function saveReport(', 'export async function saveReport('));
 await customizeFixtures(engine,archive);
+await applyReaderEdition(engine);
 await prepareLast30();
 

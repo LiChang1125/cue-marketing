@@ -6,6 +6,7 @@ type Person={name:string;domain:string;avatar?:string;role:string;url:string};
 type Point={at:number;value:number};
 type Item={url:string;title:string;content?:string;source:string;publisher?:string;brand?:string;author?:string;role?:string;image?:string;imageLocal?:string;people?:Person[];trend?:Point[];delta?:number|null;angle?:string;parties?:string[];reports:Report[];outlets:number;heat:number;score:number|null;metricDisplay?:string;publishedAt:string;review?:{score:number;grounds:string[];accepted:boolean}};
 type Coverage={name:string;count:number;read:number;status:string;reason?:string};
+const coverUrl=import.meta.env.VITE_PUBLIC_DATA==="true"?"../covers/brand.png":"/covers/brand.png";
 type Pattern={label:string;count:number;origins:number;brands:string[];examples:{title:string;url:string;brand:string}[]};
 type Result={relatedArticles?:Item[];patterns?:Pattern[];results:Item[];reportingOutlets?:number;brief?:{reach?:{readOrigins:number;matchedOrigins:number;readArticles:number;displayedOrigins:number};coverage:Coverage[]}};
 const labels:Record<string,string>={media:"媒体",official:"品牌官方",creator:"创作者",community:"社区"};
@@ -18,8 +19,8 @@ function picture(url?:string){
 function Cover({item}:{item:Item}){
   const [failed,setFailed]=useState(false);
   const src=!failed&&(picture(item.imageLocal)||picture(item.image));
-  return <a href={item.url} target="_blank" rel="noreferrer" aria-label={item.title} style={{backgroundImage:"url(/covers/brand.png)",backgroundSize:"cover"}} className="relative block overflow-hidden rounded-tile bg-well">
-    <img loading="lazy" className="h-full w-full object-cover" alt="" referrerPolicy="no-referrer" src={src||"/covers/brand.png"} onError={()=>setFailed(true)}/>
+  return <a href={item.url} target="_blank" rel="noreferrer" aria-label={item.title} style={{backgroundImage:"url("+coverUrl+")",backgroundSize:"cover"}} className="relative block overflow-hidden rounded-tile bg-well">
+    <img loading="lazy" className="h-full w-full object-cover" alt="" referrerPolicy="no-referrer" src={src||coverUrl} onError={()=>setFailed(true)}/>
     {!src&&<span className="absolute bottom-1 right-1 rounded-mark bg-white px-1 text-[10px] text-black">配图</span>}
   </a>;
 }
@@ -86,7 +87,7 @@ export default function BrandCases({query="",compact=false}:{query?:string;compa
     {!query&&!compact&&Boolean(data?.patterns?.length)&&<section aria-label="跨品牌动向" className="mb-6"><h2 className="mb-2 font-semibold">跨品牌动向 <span className="text-xs font-normal text-ink-3">近 7 天</span></h2><div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{data?.patterns?.map(p=><details id={"trend-"+p.label} key={p.label} className="card p-3"><summary className="cursor-pointer text-sm font-semibold">{p.label}<span className="mt-1 block text-xs font-normal text-ink-3">{p.count} 个事件 · {p.brands.length} 个品牌或 IP · {p.origins} 个来源</span></summary><p className="mt-2 text-xs text-ink-3">{p.brands.slice(0,8).join("、")}</p>{p.examples.map(e=><a className="mt-2 block text-xs text-accent" key={e.url} href={e.url} target="_blank" rel="noreferrer">{e.title} ↗</a>)}</details>)}</div></section>}
     {query&&data?.brief?.reach&&<p className="mb-2 text-xs text-ink-3">本次检视 {data.brief.reach.readArticles.toLocaleString()} 篇候选原文 · {items.length} 个案例{data.relatedArticles?.length?(" · "+data.relatedArticles.length+" 篇相关报道"):""}</p>}
     <div className="mb-2 flex items-center justify-between gap-2"><h2 className="font-semibold text-ink">{query?"近 30 天 · 品牌现场":compact?"正在发生":"本期热点"}</h2>
-    {compact?<a href="/hot" className="text-sm text-accent">完整榜单 ↗</a>:query?<select aria-label="事件排序" className="rounded-full bg-well px-2 py-1 text-sm" value={sort} onChange={e=>setSort(e.target.value)}>{["推荐","最新","证据评分"].map(s=><option key={s}>{s}</option>)}</select>:<small className="text-ink-4">参与者 · 24 小时走势 · 热度指数</small>}</div>
+    {compact?<a href={import.meta.env.VITE_PUBLIC_DATA==="true"?"#/hot":"/hot"} className="text-sm text-accent">完整榜单 ↗</a>:query?<select aria-label="事件排序" className="rounded-full bg-well px-2 py-1 text-sm" value={sort} onChange={e=>setSort(e.target.value)}>{["推荐","最新","证据评分"].map(s=><option key={s}>{s}</option>)}</select>:<small className="text-ink-4">参与者 · 24 小时走势 · 热度指数</small>}</div>
     {!data&&<p role="status" className="py-3 text-sm text-ink-3">{failed?<button onClick={retry}>重新加载</button>:query?"正在查找近期案例…":"正在汇集品牌报道…"}</p>}
     {data&&<>{query?<ol>{items.map(r=><SearchRow key={r.url} item={r}/>)}</ol>:compact?<ol>{items.slice(0,3).map((r,i)=><HeatRow key={r.url} item={r} index={i}/>)}</ol>:<><div className="grid gap-3 lg:grid-cols-[2fr_1fr]">{items.slice(0,3).map((r,i)=><Podium key={r.url} item={r} index={i}/>)}</div>{items.length>3&&<><h2 className="mb-2 mt-6 font-semibold text-ink">继续看 <span className="ml-1 text-sm font-normal text-ink-3">No.04–{items.length}</span></h2><ol start={4} className="card px-4">{items.slice(3).map((r,i)=><HeatRow key={r.url} item={r} index={i+3}/>)}</ol></>}</>}
     {!items.length&&!data.relatedArticles?.length&&<p className="py-4 text-sm text-ink-3">{query?(data.brief?.coverage.some(s=>s.reason)?"部分公开来源暂未返回，本次尚未核实近期案例。":"近 30 天尚未找到可核实的案例。"):"近 48 小时暂无符合选题的事件。"}</p>}

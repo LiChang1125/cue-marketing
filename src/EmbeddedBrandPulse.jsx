@@ -1,4 +1,5 @@
 import React,{useLayoutEffect,useRef} from 'react';
+import {assetUrl,publicMode} from './urls.js';
 export default function EmbeddedBrandPulse({topic}){
  const ref=useRef(null);
  useLayoutEffect(()=>{
@@ -11,5 +12,6 @@ export default function EmbeddedBrandPulse({topic}){
   resize();
   return ()=>{observer.disconnect();window.removeEventListener('resize',resize);};
  },[]);
- return <iframe ref={ref} title="品牌脉动" src={topic?'/all?q='+encodeURIComponent(topic):'/?cueReader=pulse'} style={{display:'block',width:'100%',border:0}}/>;
+ const src=publicMode?assetUrl('pulse/')+(topic?'#/all?q='+encodeURIComponent(topic):''):topic?'/all?q='+encodeURIComponent(topic):'/?cueReader=pulse';
+ return <iframe ref={ref} title="品牌脉动" src={src} style={{display:'block',width:'100%',border:0}}/>;
 }

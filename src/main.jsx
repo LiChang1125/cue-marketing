@@ -55,7 +55,7 @@ function App(){
   const [failedFeatured,setFailedFeatured]=useState([]);
   const featured=featuredNews(feed.editorial||[],now,failedFeatured);
   const coverFailed=id=>setFailedFeatured(ids=>ids.includes(id)?ids:[...ids,id]);
-  const embeddedMonitor=view==='stats'&&!previewMode&&!publicMode;
+  const embeddedMonitor=view==='stats'&&!previewMode;
   const page=pages.find(p=>p[0]===view),logic=selected?marketingLogic(selected):null;
   return <>
     <header className="header"><div className="header-inner"><a className="logo" href={assetUrl('/')} aria-label="CUE 首页"><img className="brand-wordmark" src={assetUrl('/cue-logo.svg')} alt="CUE"/><span className="brand-descriptor">MARKETING<br/>& CULTURE</span></a><nav className="top-nav" aria-label="主导航">{pages.map(([id,name,,meaning])=><button key={id} className={view===id?'active':''} onClick={()=>navigate(id)}>{name}<span className="nav-meaning"> · {meaning}</span></button>)}</nav><div className="internal-use"><img src={assetUrl('/baidu.ico')} alt="百度" width="20" height="20"/><span><span>泛科技通用拓展二组</span><span>内部使用</span></span></div></div></header>

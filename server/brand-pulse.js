@@ -80,11 +80,12 @@ export function installBrandPulse(app,{feed,dataDir,allowed,publishHome,pollPubl
   }catch{res.status(503).json({error:'动态暂不可用'});}
  });
  app.get('/dispatch',(req,res)=>res.redirect(req.query.q?'/all?q='+encodeURIComponent(String(req.query.q)):'/?cueReader=pulse'));
+ app.all('/api/site/feedback',(req,res)=>res.sendStatus(410));
+ app.get(/^\/(starred|about|changelog|feedback)\/?$/,(req,res)=>res.redirect('/?cueReader=pulse'));
  const paths=/^\/(?:search-busy|all|hot|topics|items|story|daily|weekly|monthly|about|terms|privacy|feedback|more|starred|agent|changelog)(?:[/.]|$)|^\/(?:_\.data|_root\.data|__manifest|root\.data|manifest\.webmanifest|favicon\.ico|icon\.png|feed\.xml|llms\.txt|openapi-v1\.json|sitemap\.xml|api\/mcp)$|^\/(?:api\/site|api\/v1|feed|sitemaps|brand|media-proxy|og)\//;
  app.use(async(req,res,next)=>{
-  const feedback=req.method==='POST'&&req.path==='/api/site/feedback'&&req.is('multipart/form-data');
   const mcp=req.method==='POST'&&req.path==='/api/mcp'&&req.is('application/json');
-  if(!feedback&&!mcp&&!['GET','HEAD'].includes(req.method))return next();
+  if(!mcp&&!['GET','HEAD'].includes(req.method))return next();
    if(/^\/topics(?:[/.]|$)/.test(req.path))return res.redirect(302,'/all');
    if(/^\/(?:brand-lab\/benefits|daily|weekly|monthly)(?:[/.]|$)/.test(req.path))return res.redirect('/hot');
    const home=req.path==='/'&&(req.query.cueReader==='pulse'||req.headers['sec-fetch-dest']==='iframe');
@@ -96,9 +97,8 @@ export function installBrandPulse(app,{feed,dataDir,allowed,publishHome,pollPubl
    if(target.pathname!==req.path||/%2f|%5c/i.test(target.pathname))return res.sendStatus(404);
    target.search=new URL(req.originalUrl,'http://localhost').search;
    const headers={accept:req.headers.accept||'*/*'};
-   if(feedback)headers['content-type']=req.headers['content-type'];
    if(mcp)headers['content-type']='application/json';
-   const body=feedback?{body:req,duplex:'half'}:mcp?{body:JSON.stringify(req.body)}:{};
+   const body=mcp?{body:JSON.stringify(req.body)}:{};
    const response=await fetch(target,{method:req.method,redirect:'manual',signal:AbortSignal.timeout(18000),headers,...body});
    if(asset&&response.status!==200)return next();
    const location=response.headers.get('location');if(location){const to=new URL(location,target);if(to.origin===target.origin)return res.redirect(response.status,to.pathname+to.search);return res.sendStatus(502);}
