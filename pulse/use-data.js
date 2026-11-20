@@ -11,7 +11,7 @@ async function read(file){
 async function lookup(path,signal,onProgress){
   const url=new URL(path,base),route=url.pathname.split('/').pop();
   if(route==='story'){const id=url.searchParams.get('id');if(!/^[a-f0-9]{20}$/.test(id||''))throw Error('无效事件');return read('pulse/stories/'+id+'.json');}
-  if(route==='latest')return read('agent/articles.json');
+  if(route==='latest')return read('pulse/edition.json');
   if(route==='hot')return read('pulse/events.json');
   if(route==='tools')return read('pulse/tools.json');
   if(route==='brand-cases'){

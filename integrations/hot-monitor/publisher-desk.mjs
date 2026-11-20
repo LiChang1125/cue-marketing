@@ -1,12 +1,11 @@
 import {beatSites} from './subject-publications.mjs';
 import {listedPublishers,discoverPublisher,creditedAuthor} from './recommended-sources.mjs';
-import {brandNewsrooms} from './brand-newsrooms.mjs';
 import {originalHref} from '../../shared/original.js';
 import {readFile,writeFile,mkdir,rename} from 'node:fs/promises';
 import {join} from 'node:path';
 import {load} from 'cheerio';
 
-import {consumerContent} from './consumer-market.mjs';
+import {consumerContent,excludedSearchSource} from './consumer-market.mjs';
 import {listedArticles} from './listed-articles.mjs';
 import {mediaSources} from '../../shared/media-sources.js';
 import {collectMediaSource} from '../../server/media-news.js';
@@ -15,6 +14,14 @@ const day=86400000;
 const canonical=host=>host.toLowerCase().replace(/^www\./,'');
 const clear=s=>String(s||'').replace(/\s+/g,' ').trim();
 const plain=s=>clear(load(String(s||''),null,false).text());
+// Public feeds issued by brands themselves and independent specialist publications.
+export const specialistFeeds=[
+ ['https://stories.hilton.com/feed','official'],['https://newsroom.hyatt.com/news-releases?pagetemplate=rss','official'],
+ ['https://newsroom.chipotle.com/press-releases?pagetemplate=rss','official'],['https://newsroom.subway.com/Press-Releases?pagetemplate=rss','official'],
+ ['https://www.snaxshot.com/feed','creator'],['https://www.magasin.ltd/feed','creator'],['https://www.blackbirdspyplane.com/feed','creator'],
+ ['https://perfumeposse.com/feed/','creator'],['https://keedan.com/track/feed/','media'],['https://www.advertimes.com/feed/','media'],
+ ['https://www.just-style.com/feed/','media'],['https://www.nrn.com/rss.xml','media'],['https://outdoori.com/feed/','media']
+].map(([url,role])=>({id:canonical(new URL(url).hostname),url,role,format:'rss'}));
 export async function publisherCatalog(){
   const raw=await readFile(new URL('../../config/pulse-publishers.txt',import.meta.url),'utf8');
   const unique=new Map();
@@ -27,6 +34,7 @@ export async function publisherCatalog(){
     const id=canonical(new URL(source.url).hostname);
     if(!unique.has(id)&&source.specialized&&source.key!=='adobe99u')unique.set(id,{id,url:source.url,role:'media',format:'cue',key:source.key});
   }
+  for(const s of specialistFeeds)unique.set(s.id,s);
   for(const s of listedPublishers())if(!unique.has(s.id))unique.set(s.id,s);
   return [...unique.values()];
 }
@@ -112,8 +120,8 @@ async function scan(source,old,now,stop){
 }
 export function publisherDesk(dataDir){
   const discovery=editorialDiscovery(dataDir);
-  let globalIndex,newsrooms;
-  const indexReady=import('./press-index.mjs').then(({pressIndex})=>{if(!closed){globalIndex=pressIndex(dataDir);newsrooms=brandNewsrooms(dataDir);}});
+  let globalIndex;
+  const indexReady=import('./press-index.mjs').then(({pressIndex})=>{if(!closed){globalIndex=pressIndex(dataDir);}});
   let sources={},round=null,timer,fastTimer,closed=false,revision=0;
   const inFlight=new Set();
   const controller=new AbortController(),path=join(dataDir,'pulse-publishers.json');
@@ -154,7 +162,7 @@ export function publisherDesk(dataDir){
       return {domain:s.id,role:s.role||'media',url:s.url,checkedAt:s.checkedAt,active:s.ok&&Date.now()-Date.parse(s.checkedAt)<day&&recent.length>0,count:recent.length,sample:recent[0]?.url,sampleTitle:recent[0]?.title,date:recent[0]?.publishedAt,error:s.error};
     }).sort((a,b)=>a.domain.localeCompare(b.domain));
   }
-  function start(){const quick=()=>fastTick().catch(e=>console.error('优先新闻轮询',e.message));void quick();fastTimer=setInterval(quick,60000);fastTimer.unref();const tick=()=>refresh().catch(e=>console.error('媒体轮询',e.message));void ready.then(()=>{if(!closed){globalIndex.start();newsrooms.start();}});void tick();timer=setInterval(tick,3*60000);timer.unref();}
+  function start(){const quick=()=>fastTick().catch(e=>console.error('优先新闻轮询',e.message));void quick();fastTimer=setInterval(quick,60000);fastTimer.unref();const tick=()=>refresh().catch(e=>console.error('媒体轮询',e.message));void ready.then(()=>{if(!closed){globalIndex.start();}});void tick();timer=setInterval(tick,3*60000);timer.unref();}
   async function search(query,terms){
     await ready;
     const english=terms.find(t=>/^[a-z]/i.test(t))||query;
@@ -192,5 +200,5 @@ export function publisherDesk(dataDir){
     const batches=await Promise.all(matches.map(({s})=>scan(s,sources[s.id],Date.now(),controller.signal)));
     return batches.flatMap(s=>s.items||[]);
   }
-  return {ready,refresh,start,summary,search,officialSearch,version:()=>revision,scope:()=>({domains:new Set([...(globalIndex?.sources()||[]).map(r=>r.domain),...Object.values(sources).filter(s=>s.items?.some(r=>Date.parse(r.publishedAt)>Date.now()-30*day)).map(s=>s.id)]).size,newsrooms:newsrooms?.channels().length||0}),globalSearch:terms=>globalIndex?.search(terms)||[],issuerSearch:terms=>newsrooms?.search(terms)||[],issuerLookup:(term,signal)=>newsrooms.keyword(term,signal),issuerChannels:()=>newsrooms?.channels()||[],globalSources:()=>globalIndex?.sources()||[],directFeeds:()=>globalIndex?.directFeeds()||[],patternHistory:()=>globalIndex?.rows(7,6000)||[],globalRecent:()=>[...(globalIndex?.rows()||[]),...(newsrooms?.recent()||[])],items:()=>[...Object.values(sources).flatMap(s=>s.items),...discovery.items()].filter(r=>consumerContent(r)&&Date.now()-Date.parse(r.publishedAt)<30*day),close(){closed=true;discovery.close();globalIndex?.close();newsrooms?.close();clearInterval(timer);clearInterval(fastTimer);controller.abort();}};
+  return {ready,refresh,start,summary,search,officialSearch,version:()=>revision,scope:()=>({domains:new Set([...(globalIndex?.sources()||[]).map(r=>r.domain),...Object.values(sources).filter(s=>s.items?.some(r=>Date.parse(r.publishedAt)>Date.now()-30*day)).map(s=>s.id)]).size}),globalSearch:terms=>globalIndex?.search(terms)||[],globalSources:()=>globalIndex?.sources()||[],directFeeds:()=>globalIndex?.directFeeds()||[],patternHistory:()=>globalIndex?.rows(7,6000)||[],globalRecent:()=>(globalIndex?.rows()||[]).filter(r=>!excludedSearchSource(r)),items:()=>[...Object.values(sources).flatMap(s=>s.items),...discovery.items()].filter(r=>consumerContent(r)&&Date.now()-Date.parse(r.publishedAt)<30*day),close(){closed=true;discovery.close();globalIndex?.close();clearInterval(timer);clearInterval(fastTimer);controller.abort();}};
 }

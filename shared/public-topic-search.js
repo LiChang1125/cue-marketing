@@ -1,4 +1,4 @@
-import {consumerContent,excludedTopic} from '../integrations/hot-monitor/consumer-market.mjs';
+import {consumerContent,excludedTopic,excludedSearchSource} from '../integrations/hot-monitor/consumer-market.mjs';
 // Public GET endpoints only. The same transport runs in browsers and in the Agent connector.
 const day=86400000;
 const vocabulary=[
@@ -41,6 +41,53 @@ const defaults=[
  ['球鞋资讯','https://sneakerbardetroit.com','en'],['乐高社区 The Brick Fan','https://www.thebrickfan.com','en'],
  ['食品饮料资讯','https://fabnews.live','en'],['授权行业 Licensing Source','https://www.licensingsource.net','en']
 ];
+// These are first-party, date-filterable publication searches, grouped by editorial beat.
+const specialistDesks=[
+ [/设计|設計|品牌形象|包装|包裝|标[志识]|視覺|视觉|吉祥物|design|packaging|identity|logo/i,[
+  ['标志情报局','www.logonews.cn','cn'],['包装设计 Dieline','thedieline.com'],['Design Week','www.designweek.co.uk'],['DesignWanted','designwanted.com']]],
+ [/美妆|美妝|护肤|香水|香氛|护发|化妆|美容|奢侈|免税|beauty|perfume|fragrance|cosmetic|luxury/i,[
+  ['全球美妆行业新闻','www.globalcosmeticsnews.com'],['旅购行业 Moodie Davitt','www.moodiedavittreport.com'],['旅行零售 TRBusiness','www.trbusiness.com'],['生活风格 ZTYLEZ','ztylez.com','tw']]],
+ [/服[饰装]|潮牌|街头|时[装尚]|穿搭|奢侈|箱包|fashion|apparel|luxury|streetwear/i,[
+  ['时尚媒体 DSCENE','www.designscene.net'],['时装周日报','fashionweekdaily.com'],['Fashionotography','www.fashionotography.com'],['MILK X','www.milkx.com','tw']]],
+ [/运动|運動|跑步|跑鞋|球鞋|户外|戶外|露营|足球|篮球|网球|匹克球|体育|运动员|sneaker|sport|outdoor|camping|running/i,[
+  ['勘履者 KENLU','www.kenlu.net','tw'],['运动社区 Fitz','fitz.hk','tw'],['Sneaker News','sneakernews.com'],['SportsPro','www.sportspro.com'],['运动用品行业 SGB','sgbonline.com'],['球鞋文化 Modern Notoriety','modernnotoriety.com']]],
+ [/食品|饮[料品]|咖啡|茶饮|茶|乳品|零食|巧克力|烘焙|啤酒|餐饮|coffee|snack|food|drink|beer/i,[
+  ['咖啡独立媒体 Sprudge','sprudge.com'],['消费品行业 FMCG CEO','www.fmcgceo.co.uk']]],
+ [/潮玩|二次元|动漫|动画|谷子|玩具|授权|联名|角色扮演|漫画|游戏|IP|cosplay|anime|toy|comic|licensing/i,[
+  ['流行文化 Bleeding Cool','bleedingcool.com'],['球鞋文化 Modern Notoriety','modernnotoriety.com']]],
+ [null,[['世界品牌论坛','brandingforum.org'],['广告周刊 Adweek','www.adweek.com'],['广告营销 B&T','www.bandt.com.au'],['亚洲零售观察','insideretail.asia'],['美国零售观察','insideretail.us'],['英国零售公报','www.retailgazette.co.uk']]]
+];
+const toPublisher=([name,host,lang])=>[name,'https://'+host,lang||'en'];
+export const industryPublishers=[...new Map(specialistDesks.flatMap(([,rows])=>rows.map(r=>[r[1],toPublisher(r)]))).values()];
+export function desksForTopic(terms){
+ const subject=terms.join(' '),matching=specialistDesks.filter(([rule])=>rule&&rule.test(subject));
+ const desks=(matching.length?[...matching,specialistDesks.at(-1)]:specialistDesks).flatMap(([,rows])=>rows);
+ return [...new Map(desks.map(r=>[r[1],toPublisher(r)])).values()];
+}
+const regionalWords=[['包装','包裝'],['设计','設計'],['联名','聯名'],['球鞋','球鞋'],['越野跑','越野跑'],['户外','戶外'],['露营','露營'],['运动','運動'],['咖啡','咖啡'],['动漫','動漫'],['二次元','二次元'],['亚文化','次文化'],['玩具','玩具'],['护肤','護膚'],['美妆','美妝'],['品牌','品牌'],['时尚','時尚'],['快闪','快閃'],['网球','網球'],['匹克球','匹克球']];
+function deskTerm(src,q,terms,en){
+ if(src[2]==='cn')return q;
+ if(src[2]==='tw'){
+   const match=regionalWords.find(([word])=>q.includes(word));
+   return match?q.replaceAll(match[0],match[1]):q;
+ }
+ return en||q;
+}
+// Limits simultaneous connections; a slow publication cannot block the first results from the others.
+export async function visitIndustryDesks(desks,visit,signal){
+ let next=0;
+ async function worker(){while(next<desks.length&&!signal?.aborted)await visit(desks[next++]);}
+ await Promise.all(Array.from({length:Math.min(5,desks.length)},worker));
+}
+export async function industryArticles(src,term,signal){return wordpress(src,term,signal);}
+export async function searchIndustryArticles(query,terms,english){
+ const rows=[];let answered=0;
+ await visitIndustryDesks(desksForTopic(terms),async src=>{
+   try{const batch=await wordpress(src,deskTerm(src,query,terms,english));answered++;rows.push(...batch.map(r=>({...r,source:'editorial',firstPartyFeed:true})));}catch{}
+ });
+ if(!answered)throw Error('行业出版方暂不可读');
+ return rows;
+}
 export async function chinesePress(term,signal,page=1){
  const kind='cmsArticleWebOld',param={uid:'',keyword:term,type:[kind],client:'web',clientType:'web',clientVersion:'curr',
    param:{[kind]:{searchScope:'default',sort:'time',pageIndex:page,pageSize:50,preTag:'',postTag:''}}};
@@ -96,7 +143,7 @@ async function translate(text,to,signal){
  const backup=new URL('https://api.mymemory.translated.net/get');backup.search=new URLSearchParams({q:text,langpair:from+'|'+to});
  const result=await getJson(backup,signal);return Number(result.responseStatus)===200?clear(result.responseData?.translatedText):'';
 }
-export async function publicTopicSearch(q,{index=[],publishers=[],signal,limit=10,onProgress,supplement}={}){
+export async function publicTopicSearch(q,{index=[],publishers=[],signal,limit=Infinity,onProgress,supplement}={}){
  q=q.trim().slice(0,100);if(!q)throw Error('请输入主题');
  const terms=topicTerms(q),now=Date.now(),coverage=[],found=new Map(),inspected=new Set(),origins=new Set();
  const indexByUrl=new Map(index.map(r=>[r.url,r]));
@@ -111,6 +158,7 @@ export async function publicTopicSearch(q,{index=[],publishers=[],signal,limit=1
  function accept(rows,name,live){
    let count=0;
    for(const row of rows){
+     if(excludedSearchSource(row))continue;
      const url=urlOf(row.url);
      if(row.indexedDate){const dated=indexByUrl.get(url);if(!dated)continue;row.publishedAt=dated.publishedAt;}
      const at=Date.parse(row.publishedAt);if(!url||clear(row.title).length<7||!(at<=now&&now-at<=30*day))continue;
@@ -159,6 +207,9 @@ export async function publicTopicSearch(q,{index=[],publishers=[],signal,limit=1
      return lane(src[0],wordpress(src,term,signal));
    });
  }
+ const specialist=desksForTopic([q,...terms]);
+ for(const src of specialist)queriedSites.add(new URL(src[1]).hostname);
+ tasks.push(visitIndustryDesks(specialist,src=>lane(src[0],wordpress(src,deskTerm(src,q,terms,en),signal)),signal));
  tasks.push(...searchPublishers(defaults,defaults.length),...searchPublishers(publishers,6));
  const addIndex=rows=>{
    if(!rows.length)return;
@@ -175,15 +226,18 @@ export async function publicTopicSearch(q,{index=[],publishers=[],signal,limit=1
  const caseWeight=r=>(relevant({...r,content:''})?4:0)+(action.test(r.title)?4:0)+(r.live?3:0)+(r.content?1:0);
  const ranked=[...found.values()].sort((a,b)=>caseWeight(b)-caseWeight(a)||Number(b.live)-Number(a.live)||Number(han.test(b.title)&&!/[ぁ-ヿ]/u.test(b.title))-Number(han.test(a.title)&&!/[ぁ-ヿ]/u.test(a.title))||Number(relevant({...b,content:''}))-Number(relevant({...a,content:''}))||Date.parse(b.publishedAt)-Date.parse(a.publishedAt));
  const grouped=new Map();
- for(const row of ranked){const k=titleKey(row.originalTitle||row.title);if(!k)continue;const r={title:row.title,url:row.url,publisher:row.publisher,publishedAt:row.publishedAt};
+ for(const hit of ranked){
+   const archived=indexByUrl.get(hit.url);
+   const row=hit.live&&archived?.originalTitle===hit.title&&han.test(archived.title)?{...hit,originalTitle:hit.title,title:archived.title}:hit;
+   const k=titleKey(row.originalTitle||row.title);if(!k)continue;const r={title:row.title,url:row.url,publisher:row.publisher,publishedAt:row.publishedAt};
    if(grouped.has(k))grouped.get(k).reports.push(r);else {
      const variants=row.title.match(/[《「“]([^》」”]{3,24})[》」”]/gu)||[];
      const initials=row.title.match(/(?:[A-Z][A-Za-z0-9]{2,})|[\u3400-\u9fff]{2,6}(?=联名|联动|携手)/gu)||[];
      const match=[...grouped.values()].find(v=>Math.abs(Date.parse(v.publishedAt)-Date.parse(row.publishedAt))<4*day&&variants.some(w=>v.title.includes(w))&&initials.some(w=>v.title.toLowerCase().includes(w.toLowerCase())));
-     if(match)match.reports.push(r);else grouped.set(k,{...row,reports:row.reports?.length?[...row.reports]:[r]});
+     if(match)match.reports.push(r);else grouped.set(k,{...row,reports:[r,...(row.reports||[]).filter(report=>report.url!==r.url&&!excludedSearchSource(report))]});
    }}
  const picked=[...grouped.values()].slice(0,limit*2);
- if(final)await Promise.all(picked.filter(r=>!han.test(r.title)||/[ぁ-ヿ]/.test(r.title)).map(async r=>{try{const title=await translate(r.title,'zh-CN',signal);if(han.test(title)){r.originalTitle=r.title;r.title=title;}}catch{}if(!han.test(r.content))r.content='';}));
+ if(final)await visitIndustryDesks(picked.filter(r=>!han.test(r.title)||/[ぁ-ヿ]/.test(r.title)),async r=>{try{const title=await translate(r.title,'zh-CN',signal);if(han.test(title)){r.originalTitle=r.title;r.title=title;}}catch{}if(!han.test(r.content))r.content='';},signal);
  const results=picked.filter(r=>han.test(r.title)&&!/[ぁ-ヿ]/u.test(r.title)).slice(0,limit);
  for(const r of results){
    const sources=new Set(r.reports.map(x=>new URL(x.url).hostname)).size;

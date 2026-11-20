@@ -1,7 +1,7 @@
 import {clusterStories} from './brand-stories.mjs';
 import {marketPatterns,patternCandidate} from './market-patterns.mjs';
 import {createHash} from 'node:crypto';
-import {consumerContent} from './consumer-market.mjs';
+import {consumerContent,excludedSearchSource} from './consumer-market.mjs';
 import {brandScore,headlineParties} from '../aihot/overlay/apps/web/app/lib/brand-score.ts';
 import {publisherIdentity} from './publisher-identity.mjs';
 import {heatAt,consumerBrands} from './brand-attention.mjs';
@@ -97,7 +97,7 @@ export function eventCards(rows,now=Date.now()){
     const original=originalHref(row);if(!original)continue;
     let url;try{url=new URL(original);if(!['https:','http:'].includes(url.protocol)||url.username||url.password)continue;}catch{continue;}
     url.hash='';for(const k of [...url.searchParams.keys()])if(/^utm_|^spm$/.test(k))url.searchParams.delete(k);
-    if(!consumerContent(row)||seen.has(url.href)||!row.title||noise.test(row.title)||!(Date.parse(row.publishedAt)<=now&&Date.parse(row.publishedAt)>=now-30*day))continue;
+    if(excludedSearchSource(row)||!consumerContent(row)||seen.has(url.href)||!row.title||noise.test(row.title)||!(Date.parse(row.publishedAt)<=now&&Date.parse(row.publishedAt)>=now-30*day))continue;
     seen.add(url.href);
     const host=url.hostname.replace(/^www\./,'');
     const publisher=row.publisher==='品牌星球'?(/(^|\.)brandstar\.com\.cn$/.test(host)?'首发原文':host):row.publisher||labels[row.source]||host;
@@ -135,7 +135,7 @@ export function currentHotspots(feed,localize,desk,archive,{online=true}={}){
       const now=Date.now(),queries=['品牌 联名 官宣','品牌 快闪 首发','IP 授权 联动','品牌 代言人 发布','新品 限定 发售'];
       let available=true;
       const [web,...trades]=online?await Promise.all([webNews(queries,['联名','品牌','首发','联动','营销']).catch(()=>{available=false;return [];}),...['联名','快闪','首发'].map(term=>publicMarketingPress(term,now-7*day).catch(()=>[]))]):[[]];
-      const snapshot=feed(),local=(snapshot.items||[]).map(r=>({...r,url:originalHref(r),content:r.excerpt,source:'editorial'}));
+      const snapshot=feed(),local=(snapshot.items||[]).map(r=>({...r,url:originalHref(r),content:r.excerpt||r.content,source:'editorial'}));
       await desk?.ready;
       const live=desk?.summary().filter(s=>s.active)||[];
       const posts=archive?.recent()||[];
@@ -144,13 +144,13 @@ export function currentHotspots(feed,localize,desk,archive,{online=true}={}){
         if(now-Date.parse(r.publishedAt)>=14*day||!consumerContent(r)||!r.title)return false;
         if(/standout.{0,35}campaigns|campaigns so far|weekly roundup|best campaigns|裁员|营收|\bbest\b.{0,30}\b(?:weekly|this week|releases)\b|官方入口|传闻|回顾|折扣码|订阅|球赛比分|歌曲翻唱|\bstream\b|skyscraper|tower design|best.{0,20}gifts|明星街拍|gaming monitor|holiday cover|click here/i.test(r.title))return false;
         const names=consumerBrands(r.title);
-        const concrete=/联名|联乘|联动|快闪|赞助商|新品|上新|代言|首店|销量|开业|上新|开售|限定|首发|発售|コラボ|首映|event activation|capsule collection|campaign|collab|ambassador|flagship|limited.edition|brand partnership|brand identity/i;
+        const concrete=/联名|联乘|联动|快闪|赞助商|新品|上新|代言|首店|销量|开业|上新|开售|限定|首发|発售|コラボ|首映|event activation|capsule collection|campaign|collab|ambassador|flagship|limited.edition|brand partnership|brand identity|launch|debut|collection|rebrand|sponsor|partnership|设计师|推出|合作系列|官宣|品牌大使|广告片|品牌焕新|主题店|快閃|聯名/i;
         return concrete.test(r.title)||(names.length>0&&concrete.test(String(r.content||'').slice(0,240)));
       });
       const candidates=pool.filter(r=>now-Date.parse(r.publishedAt)<14*day&&consumerContent(r)&&r.title);
       const related=candidates.filter(r=>/测评|实测|评测|开箱|复盘|解析|探访|销量|补货|review|hands.on|sold out/i.test(r.title));
-      const events=clusterStories(eventCards([...recent,...related],now),now);
-      const results=await localize(events.slice(0,16));
+      const events=clusterStories(eventCards([...recent,...related],now),now,{trendsOnly:true});
+      const results=await localize(events.slice(0,10));
       const weekly=[...new Map([...pool,...(desk?.patternHistory?.()||[])].filter(r=>now-Date.parse(r.publishedAt)<7*day&&patternCandidate(r)).map(r=>[r.url,r])).values()];
       const patterns=marketPatterns(eventCards(weekly,now),now);
       const excerpts=await localize(patterns.flatMap(p=>p.examples.map(e=>({title:e.title,url:e.url}))));

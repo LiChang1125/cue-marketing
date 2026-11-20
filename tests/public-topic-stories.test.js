@@ -41,3 +41,25 @@ test('a crop release containing a fragrance keyword is distinct from a perfume r
   const result=await publicTopicSearch('香水');
   assert.deepEqual(result.results.map(r=>r.title),[items[1].title]);
 });
+
+test('search keeps every qualified case and discards excluded issuers and their copies',async t=>{
+ const date=new Date().toISOString(),title=i=>'乌龙茶品牌第'+i+'款限定新品首发';
+ t.mock.method(globalThis,'fetch',async()=>Response.json([]));
+ const index=Array.from({length:18},(_,i)=>({title:title(i),url:'https://tea.example/'+i,publishedAt:date,publisher:'茶饮观察'}));
+ index[0].reports=[{title:title(0),url:'https://prtimes.jp/copy'}];
+ const rejected=[{...index[1],url:'https://sub.prtimes.jp/1'},{...index[1],url:'https://other.example/2',author:'㍿茶饮'}];
+ const result=await publicTopicSearch('乌龙茶',{index:[...index,...rejected]});
+ assert.equal(result.results.length,18);
+ assert.ok(result.results.every(r=>r.reports.length===1));
+});
+
+test('the trend leaderboard needs different campaigns and independent reporting',()=>{
+ const now=Date.now(),publishedAt=new Date(now-3600000).toISOString();
+ const item=(domain,title)=>{const url='https://'+domain+'/report';return {title,url,publishedAt,parties:[],reports:[{title,url,publishedAt,publisher:domain}]};};
+ const one=item('a.example','麦当劳联名迪士尼推出限定套餐'),mirror=item('c.example',one.title);
+ assert.deepEqual(clusterStories([one,mirror],now,{trendsOnly:true}),[]);
+ const another=item('b.example','瑞幸联名宝可梦推出限定咖啡');
+ const trends=clusterStories([one,mirror,another],now,{trendsOnly:true});
+ assert.ok(trends.some(r=>r.title==='品牌与 IP 的联名合作'&&r.outlets===2));
+ assert.ok(trends.every(r=>r.kind==='专题趋势'&&r.eventCount===r.cases.length&&r.eventCount>=2));
+});

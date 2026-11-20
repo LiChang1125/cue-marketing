@@ -12,6 +12,6 @@ export default function EmbeddedBrandPulse({topic}){
   resize();
   return ()=>{observer.disconnect();window.removeEventListener('resize',resize);};
  },[]);
- const src=publicMode?assetUrl('pulse/')+(topic?'#/all?q='+encodeURIComponent(topic):''):topic?'/all?q='+encodeURIComponent(topic):'/hot';
+ const src=publicMode?assetUrl('pulse/')+(topic?'#/search?q='+encodeURIComponent(topic):''):topic?'/all?q='+encodeURIComponent(topic):'/hot';
  return <iframe ref={ref} title="品牌脉动" src={src} style={{display:'block',width:'100%',border:0}}/>;
 }

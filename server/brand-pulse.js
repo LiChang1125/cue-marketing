@@ -29,7 +29,7 @@ export function installBrandPulse(app,{feed,dataDir,allowed,publishHome,pollPubl
  const desk=publisherDesk(dataDir),archive=caseArchive(dataDir);
  const wire=liveNewswire(desk,createChineseDisplay(dataDir),dataDir,publishHome);
  if(pollPublishers){desk.start();wire.start();}
- app.get('/api/brand-pulse/sources',async(req,res)=>{if(!allowed(req))return res.sendStatus(401);await desk.ready;res.json({sources:desk.summary(),indexedSources:desk.globalSources(),directoryFeeds:desk.directFeeds(),officialNewsrooms:desk.issuerChannels()});});
+ app.get('/api/brand-pulse/sources',async(req,res)=>{if(!allowed(req))return res.sendStatus(401);await desk.ready;res.json({sources:desk.summary(),indexedSources:desk.globalSources(),directoryFeeds:desk.directFeeds(),officialNewsrooms:desk.summary().filter(s=>s.role==='official'&&s.active)});});
  const research=createTopicBrief(feed,localize,{publicationSearch:publications,desk,archive,dataDir});
  const collectHot=currentHotspots(feed,localize,desk,archive);
  const stories=new Map();
@@ -101,9 +101,9 @@ export function installBrandPulse(app,{feed,dataDir,allowed,publishHome,pollPubl
  app.use(async(req,res,next)=>{
   const mcp=req.method==='POST'&&req.path==='/api/mcp'&&req.is('application/json');
   if(!mcp&&!['GET','HEAD'].includes(req.method))return next();
-   if(/^\/topics(?:[/.]|$)/.test(req.path))return res.redirect(302,'/all');
+   if(/^\/topics(?:[/.]|$)/.test(req.path))return res.redirect(302,'/?cueReader=pulse');
    if(/^\/(?:brand-lab\/benefits|daily|weekly|monthly)(?:[/.]|$)/.test(req.path))return res.redirect('/hot');
-   const home=req.path==='/'&&(req.query.cueReader==='pulse'||req.headers['sec-fetch-dest']==='iframe');
+   const home=req.path==='/'&&(req.query.cueReader==='pulse'||req.query.channel==='firstParty'||['collab','campaign','launch','culture','industry','opinion'].includes(req.query.category)||req.headers['sec-fetch-dest']==='iframe');
    const asset=req.path.startsWith('/assets/');
    if(!home&&!asset&&!paths.test(req.path)&&!/^\/brand-lab\/(?:ranking|calendar)(?:\.data)?$/.test(req.path))return next();
   if(!allowed(req)){if(asset)return next();return res.status(401).send('请先登录 CUE');}

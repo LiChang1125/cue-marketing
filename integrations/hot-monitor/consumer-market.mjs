@@ -13,3 +13,26 @@ export function consumerContent(r){
  return market.test(text)||retailActivation.test(text);
 }
 export function excludedTopic(topic){return tech.test(topic)||/^(苹果|小米|三星|索尼|科技|互联网|AI|Kimi|Meta|腾讯|百度|美团|阿里巴巴|亚马逊|谷歌|英伟达|微软|字节跳动)$/i.test(topic);}
+
+export function excludedSearchSource(row){
+ const credits=[row.publisher,row.sourceName,row.attribution,row.author,row.publisherId,row.source];
+ if(credits.some(v=>/株式[会會]社|珠[师師式][会會]社|^pr\s*times(?:$|[:\s/])/i.test(String(v||'').normalize('NFKC').trim())))return true;
+ return [row.url,row.originalUrl,row.issuerChannel].some(value=>{
+   if(!value)return false;
+   try{return /(^|\.)prtimes\.jp$/i.test(new URL(value).hostname);}catch{return false;}
+ });
+}
+
+export function publicationCategory(row){
+ const rules=[
+  ['collab',/联名|联动|联乘|聯[名動乘]|跨界合作|IP授权|collab|licensing deal/i],
+  ['opinion',/复盘|解读|调研|研究报告|洞察|调查报告|趋势报告|消费者调查|consumer insights|market research|survey finds/i],
+  ['campaign',/快闪|快閃|代言|品牌大使|广告片|廣告片|广告大片|品牌活动|营销活动|campaign|pop.up|ambassador|sponsor/i],
+  ['culture',/亚文化|二次元|街头文化|谷子文化|消费文化|消费趋势|圈层|潮玩文化|兴趣消费|fandom|subculture/i],
+  ['launch',/新品|上新|推出|发布|上市|门店|首店|旗舰店|开业|发售|launch|flagship|debut/i]
+ ];
+ for(const text of [[row.title,row.originalTitle].join(' '),String(row.excerpt||row.content||row.summary||'').slice(0,240)]){
+   for(const [key,test] of rules)if(test.test(text))return key;
+ }
+ return row.categories?.includes('culture')?'culture':'industry';
+}

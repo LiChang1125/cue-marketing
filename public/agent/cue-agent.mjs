@@ -7,7 +7,7 @@ const definitions = [
   {name:'search_articles',description:'联网检索公开新闻和出版方来源，补充近期索引中的品牌与 IP 报道。'},
   {name:'hot_events',description:'获取当前发布的热点事件、热度指数和报道来源。'}
 ].map(tool => ({...tool,inputSchema:{type:'object',additionalProperties:false,
-  properties:{limit:{type:'integer',minimum:1,maximum:20},...(tool.name==='search_articles'?{query:{type:'string',minLength:1,maxLength:100}}:{})},
+  properties:{limit:{type:'integer',minimum:1,...(tool.name==='search_articles'?{}:{maximum:20})},...(tool.name==='search_articles'?{query:{type:'string',minLength:1,maxLength:100}}:{})},
   ...(tool.name==='search_articles'?{required:['query']}:{})}}));
 async function data(file){
   const response=await fetch(new URL(file,site),{signal:AbortSignal.timeout(20000)});
@@ -23,8 +23,8 @@ async function handle(request){
   if(request.method!=='tools/call')throw {code:-32601,message:'未知方法'};
   const {name,arguments:args={}}=request.params||{};
   if(!definitions.some(t=>t.name===name)||!args||typeof args!=='object'||Array.isArray(args))throw {code:-32602,message:'无效工具或参数'};
-  const limit=args.limit===undefined?10:args.limit;
-  if(!Number.isInteger(limit)||limit<1||limit>20||Object.keys(args).some(k=>k!=='limit'&&(name!=='search_articles'||k!=='query')))throw {code:-32602,message:'无效参数'};
+  const limit=args.limit??(name==='search_articles'?Infinity:10);
+  if((args.limit!==undefined&&!Number.isSafeInteger(limit))||limit<1||(name!=='search_articles'&&limit>20)||Object.keys(args).some(k=>k!=='limit'&&(name!=='search_articles'||k!=='query')))throw {code:-32602,message:'无效参数'};
   const query=typeof args.query==='string'?args.query.trim():'';
   if(name==='search_articles'&&(!query||query.length>100))throw {code:-32602,message:'请输入 1 至 100 字的主题'};
   try{

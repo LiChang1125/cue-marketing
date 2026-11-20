@@ -1,6 +1,6 @@
 import {writeFile,readFile,rename} from 'node:fs/promises';
 import {join} from 'node:path';
-import {consumerContent} from './consumer-market.mjs';
+import {consumerContent,excludedSearchSource} from './consumer-market.mjs';
 import {publicationPictures} from './publication-pictures.mjs';
 import {mediaSources} from '../../shared/media-sources.js';
 import {normalize,marketingArticle} from '../../server/media-news.js';
@@ -12,12 +12,12 @@ export function liveNewswire(desk,translate,dir,publishHome){
  async function poll(){
    await desk.ready;
    const before=JSON.parse(await readFile(file,'utf8').catch(()=>'[]')),known=new Set(before.map(r=>r.url)),now=Date.now();
-   const pool=[...desk.items(),...desk.globalRecent()].filter(r=>r.title&&Date.parse(r.publishedAt)<=now&&now-Date.parse(r.publishedAt)<48*3600000&&consumerContent(r)&&change.test(r.title));
+   const pool=[...desk.items(),...desk.globalRecent()].filter(r=>r.title&&Date.parse(r.publishedAt)<=now&&now-Date.parse(r.publishedAt)<48*3600000&&!excludedSearchSource(r)&&consumerContent(r)&&change.test(r.title));
    const latest=new Map();for(const r of pool.sort((a,b)=>b.publishedAt.localeCompare(a.publishedAt)))if(!known.has(r.url)&&!latest.has(r.url))latest.set(r.url,r);
    const allowed=[...latest.values()].filter(r=>homeSources.has(host(r.url))&&/[一-龥]/.test(r.title)&&!/[ぁ-ヿ]/.test(r.title));
-   const fresh=[...new Map([...allowed.slice(0,6),...[...latest.values()].slice(0,12)].map(r=>[r.url,r])).values()];
+   const fresh=[...new Map([...allowed.slice(0,6),...[...latest.values()].filter(r=>r.role==='official').slice(0,4),...[...latest.values()].slice(0,12)].map(r=>[r.url,r])).values()];
    if(!fresh.length||closed)return;
-   const rendered=await translate(fresh.map(r=>({title:r.title,content:r.content?.slice(0,160)||'',originalTitle:r.title,image:r.image,url:r.url,publishedAt:r.publishedAt,publisher:r.publisher||r.publisherId})));
+   const rendered=await translate(fresh.map(r=>({title:r.title,content:r.content?.slice(0,160)||'',originalTitle:r.title,role:r.role,image:r.image,url:r.url,publishedAt:r.publishedAt,publisher:r.publisher||r.publisherId})));
    const rows=rendered.filter(r=>(r.title.match(/[一-龥]/g)||[]).length>=5&&!/^\d{1,2}月\d{1,2}日(?:\(.{1,4}\))?[,，.。]?$/.test(r.title)&&r.title!=='中文标题暂不可用'&&/[一-龥]/.test(r.title));
    if(!rows.length||closed)return;
    const all=[...rows,...before].filter(r=>now-Date.parse(r.publishedAt)<7*86400000).sort((a,b)=>b.publishedAt.localeCompare(a.publishedAt)).slice(0,450);

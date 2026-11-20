@@ -1,4 +1,4 @@
-import {topicTerms} from '../../shared/public-topic-search.js';
+import {topicTerms,searchIndustryArticles} from '../../shared/public-topic-search.js';
 import {localizeSearchHeadlines,brokenCopy} from './search-headline.mjs';
 import {regionalTerms,searchRegionalNews} from './regional-search.mjs';
 import {subjectOf,phraseMatches,translatedSubject,probeFragments,subjectPassage} from './query-language.mjs';
@@ -7,7 +7,7 @@ import {editorialBeat} from './subject-publications.mjs';
 import {readArticleMetadata} from '../../server/media-metadata.js';
 import {publisherText} from './open-news.mjs';
 import {leadsFor,japaneseNews,relatedCampaigns,campaignMatch} from './search-leads.mjs';
-import {consumerContent,excludedTopic} from './consumer-market.mjs';
+import {consumerContent,excludedTopic,excludedSearchSource} from './consumer-market.mjs';
 import {searchMarketingNews} from './marketing-news.mjs';
 import {webNews,webPages,publicWebArticles,internationalNews,worldNews} from './open-news.mjs';
 import {eventCards} from './brand-events.mjs';
@@ -60,6 +60,7 @@ export function planTopic(query){
  return recipe||{terms:vocab||aliases,probes:[query+' 联名',query+' 品牌活动'],subs:['advertising','marketing'],communityTerms:[query]};
 }
 export function qualify(row,query,plan,now=Date.now()){
+ if(excludedSearchSource(row))return null;
  const at=Date.parse(row.publishedAt),title=row.title||'',text=[title,row.content,row.originalTitle].filter(Boolean).join(' ');
  const specialist=editorialBeat(query,row);
  if(excludedTopic(query)||excludedTopic(title)||excludedTopic(row.originalTitle||'')||(!specialist&&!consumerContent(row))||!(at<=now&&at>=now-30*day)||noise.test(title)||noise.test(row.originalTitle||'')||!/^https?:\/\//.test(row.url||''))return null;
@@ -194,6 +195,7 @@ export function createTopicBrief(feed,localize,{publicationSearch,desk,archive,d
   const selected=[],reading=new Map(),examined=new Set(),readOrigins=new Set();let campaigns=[];
   const originOf=r=>{try{return r.issuerChannel||r.publisherId||new URL(r.url).hostname.replace(/^www\./,'');}catch{return null;}};
   function accept(name,rows,status,reason){
+   rows=rows.filter(row=>!excludedSearchSource(row));
    for(const r of rows){if(r.url)examined.add(r.url);const id=originOf(r);if(id)readOrigins.add(id);}
    for(const r of rows){
      const date=Date.parse(r.publishedAt),headline=r.originalTitle||r.title||'';
@@ -238,15 +240,8 @@ export function createTopicBrief(feed,localize,{publicationSearch,desk,archive,d
   if(desk?.globalSearch)accept('全球出版物原文索引',desk.globalSearch(plan.terms),'按原文发表日期');
   const jp=plan.japanese;
   const overseas=plan.terms.includes('camping')?'キャンプ用品':jp||plan.terms.find(t=>/[ァ-ヶぁ-ん]/u.test(t))||english||query;
-  if(desk?.issuerSearch)accept('企业发布室',desk.issuerSearch(plan.terms),'品牌公开发布');
-  if(desk?.issuerLookup)tasks.push(lane('品牌发布室站内搜索',()=>desk.issuerLookup(overseas,AbortSignal.timeout(40000)),'按原文检索'));
   const compact=jp?.replace(/(?:の|な|と|に|で|を)(?=[\p{Script=Han}ァ-ヶ])/gu,'');
   const extraTerms=[...new Set([compact,...plan.terms.filter(t=>/[ァ-ヶぁ-ん]/u.test(t)),...(jp?probeFragments(jp).slice(0,1):[])].filter(t=>t&&t!==overseas))].slice(0,3);
-  if(desk?.issuerLookup&&extraTerms.length)tasks.push(lane('相关产品与活动发布室',async()=>{
-    const found=await Promise.allSettled(extraTerms.map(t=>desk.issuerLookup(t,AbortSignal.timeout(45000))));
-    if(found.every(r=>r.status==='rejected'))throw Error('发布室暂不可用');
-    return found.flatMap(r=>r.status==='fulfilled'?r.value:[]);
-  },'关联产品词检索'));
   tasks.push(lane('日本媒体与品牌通讯',async()=>{
     const parts=await Promise.allSettled([...new Set([overseas,jp||overseas,overseas+' コラボ',overseas+' キャンペーン',overseas+' 発売',overseas+' ポップアップ',...extraTerms.slice(0,2),...(jp&&jp!==overseas?[jp+' 発売',jp+' ブランド']:[])])].map(q=>japaneseNews(q,dataDir)));
     if(parts.every(p=>p.status==='rejected'))throw Error('上游未返回内容');
@@ -261,6 +256,7 @@ export function createTopicBrief(feed,localize,{publicationSearch,desk,archive,d
     },'媒体站内全文搜索'));
   }
   tasks.push(lane('公众号公开文章',()=>webPages(query+' site:mp.weixin.qq.com',plan.terms).then(rows=>rows.filter(r=>new URL(r.url).hostname==='mp.weixin.qq.com')),'有原文日期的公众号文章'));
+  tasks.push(lane('消费行业媒体直搜',()=>searchIndustryArticles(query,plan.terms,english),'按出版方原文检索'));
   if(desk)tasks.push(lane('出版方站内公开搜索',()=>desk.search(query,plan.terms),'按主题直查'));
   tasks.push(lane('公开网页新闻',()=>webNews([query,...plan.probes,query+' 品牌',query+' 快闪'],plan.terms),'按主题即时检索'));
   tasks.push(lane('网页搜索',()=>webPages(query,plan.terms),'按原文日期筛选'));
@@ -327,8 +323,6 @@ export function createTopicBrief(feed,localize,{publicationSearch,desk,archive,d
       lane('品牌与活动追查',()=>webNews(leads.map(n=>query+' '+n),plan.terms),'按已发现的参与方继续检索'),
       ...leads.slice(0,2).map(n=>lane('活动原文 · '+n,()=>webPages(query+' '+n,plan.terms),'按原主题复核')),
       ...(desk?.officialSearch?[lane('品牌官网与活动页',()=>desk.officialSearch(leads,query),'首发与跟进')]:[]),
-      ...(desk?.issuerSearch?[lane('品牌官方公告',async()=>desk.issuerSearch(leads),'追查发布主体')]:[]),
-      ...(desk?.issuerLookup?leads.slice(0,2).map(n=>lane('发布室追查 · '+n,()=>desk.issuerLookup(n,AbortSignal.timeout(26000)),'复核参与者与活动')):[]),
       ...(desk?.globalSearch?[lane('延伸报道索引',()=>desk.globalSearch(leads),'按原主题复核')]:[])
     ]);
   }
@@ -340,7 +334,7 @@ export function createTopicBrief(feed,localize,{publicationSearch,desk,archive,d
    if(!coverage.some(c=>c.name==='搜狗公开网页'&&c.count))retry.push(lane('相关网页补查',()=>publicWebArticles(alternate,plan.terms),'按词组重组检索'));
    if(retry.length)await Promise.all(retry);
   }
-  const live=r=>['亚太企业新闻稿','国际企业新闻稿','企业发布室','品牌发布室站内搜索','出版方站内公开搜索','网页搜索','公开网页新闻','国际出版社区','公共新闻索引','国际新闻索引','全球出版物原文索引','日本媒体与品牌通讯','品牌与活动追查','延伸报道索引'].includes(r.discovery)?1:0;
+  const live=r=>['亚太企业新闻稿','国际企业新闻稿','出版方站内公开搜索','网页搜索','公开网页新闻','国际出版社区','公共新闻索引','国际新闻索引','全球出版物原文索引','日本媒体与品牌通讯','品牌与活动追查','延伸报道索引'].includes(r.discovery)?1:0;
   const headlineMatch=r=>plan.terms.some(t=>coversTerm(r.originalTitle||r.title,t))?1:0;
   const sorted=eventCards(selected.sort((a,b)=>headlineMatch(b)-headlineMatch(a)||live(b)-live(a)),now).sort((a,b)=>headlineMatch(b)-headlineMatch(a)||live(b)-live(a)||marketingWeight(b,query)-marketingWeight(a,query)||Date.parse(b.publishedAt)-Date.parse(a.publishedAt));
   // Compare like metrics only inside a platform. A view is not a vote or a like.
@@ -353,13 +347,13 @@ export function createTopicBrief(feed,localize,{publicationSearch,desk,archive,d
   }
   for(const group of groups.values())if(group[0].source!=='editorial')group.sort((a,b)=>samePlatformValue(b)-samePlatformValue(a));
   const pool=[];
-  for(let i=0;i<45;i++)for(const group of groups.values())if(group[i])pool.push(group[i]);
+  for(let i=0;i<Math.max(0,...Array.from(groups.values(),g=>g.length));i++)for(const group of groups.values())if(group[i])pool.push(group[i]);
   const unique=new Map();
-  for(const row of pool){if(!unique.has(row.url))unique.set(row.url,row);if(unique.size===40)break;}
+  for(const row of pool){if(!unique.has(row.url))unique.set(row.url,row);}
   const enriched=await Promise.all([...unique.values()].map(r=>r.source==='bilibili'?enrichVideo(r):r));
   const candidates=enriched.filter(r=>qualify(r,query,plan,now)||r.relatedVia&&campaignMatch(r,campaigns)).map(r=>({...r,id:r.url,createdAt:r.publishedAt,importance:'low',isReal:true,relevance:50,keywordMentioned:true,relevanceReason:'未配置 AI，使用主题与营销事件筛选',summary:r.content||null,metricDisplay:metricText(r),content:r.content?.slice(0,480)}));
   const localizedEvents=new Map();
-  for(let i=0;i<candidates.length&&localizedEvents.size<10;i+=8){
+  for(let i=0;i<candidates.length;i+=8){
    const batch=await localize(candidates.slice(i,i+8));
    for(const r of batch){
     if(!r.title||r.title==='中文标题暂不可用'||brokenCopy(r.title))continue;
@@ -371,7 +365,7 @@ export function createTopicBrief(feed,localize,{publicationSearch,desk,archive,d
     }else localizedEvents.set(key,r);
   }
   }
-  const rows=[...localizedEvents.values()].slice(0,10).map(r=>({...r,review:reviewEvidence(r)}));
+  const rows=[...localizedEvents.values()].map(r=>({...r,review:reviewEvidence(r)}));
   let relatedArticles=[];
   if(rows.length<10&&reading.size){
    const covered=new Set(selected.map(r=>r.url));
@@ -379,7 +373,7 @@ export function createTopicBrief(feed,localize,{publicationSearch,desk,archive,d
       .sort((a,b)=>Date.parse(b.publishedAt)-Date.parse(a.publishedAt)).slice(0,16);
    const local=await localize(more.map(r=>({...r,originalTitle:r.originalTitle||r.title})));
    const titles=new Set(rows.map(r=>r.title));
-   relatedArticles=local.filter(r=>r.title&&r.title!=='中文标题暂不可用'&&!brokenCopy(r.title)&&!titles.has(r.title)&&titles.add(r.title)).slice(0,10-rows.length);
+   relatedArticles=local.filter(r=>r.title&&r.title!=='中文标题暂不可用'&&!brokenCopy(r.title)&&!titles.has(r.title)&&titles.add(r.title));
   }
   await localizeSearchHeadlines([...rows,...relatedArticles],query,plan.terms,localize);
   archive?.save(rows.filter(r=>r.review.accepted));
@@ -423,7 +417,7 @@ export function createTopicBrief(feed,localize,{publicationSearch,desk,archive,d
   let old=cache.get(key);
   if(!old){
    const saved=await readFile(path,'utf8').then(JSON.parse).catch(()=>null);
-   if(saved?.format===2&&saved.data?.brief&&Array.isArray(saved.data.results)&&Array.isArray(saved.data.relatedArticles)&&saved.checked>Date.now()-86400000){
+   if(saved?.format===3&&saved.data?.brief&&Array.isArray(saved.data.results)&&Array.isArray(saved.data.relatedArticles)&&saved.checked>Date.now()-86400000){
     if([...saved.data.results,...saved.data.relatedArticles].every(r=>Date.parse(r.publishedAt)>=Date.now()-30*day))old=saved;
    }
   }
@@ -433,7 +427,7 @@ export function createTopicBrief(feed,localize,{publicationSearch,desk,archive,d
    const work=research(query,searchWeb).then(async data=>{
     const found=data.results.length+data.relatedArticles.length;
     if(!found&&old&&data.brief.coverage.some(c=>c.reason))return old.data;
-    const checked=Date.now(),entry={format:2,data,checked,until:checked+(found?5:1)*60000};
+    const checked=Date.now(),entry={format:3,data,checked,until:checked+(found?5:1)*60000};
     if(cache.size>=40)cache.delete(cache.keys().next().value);cache.set(key,entry);
     if(found)try{await mkdir(dir,{recursive:true});const tmp=path+'.'+randomUUID();await writeFile(tmp,JSON.stringify(entry));await rename(tmp,path);}catch(e){console.error('保存检索结果',e.code||e.name);}
     return data;
