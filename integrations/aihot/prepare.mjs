@@ -28,6 +28,7 @@ const clientGuide=(await readFile(resolve(root,'public/agent/index.html'),'utf8'
   .replace("new URL('./',location.href)","new URL('"+publicBase+"agent/')").replace("fetch('articles.json'","fetch(new URL('articles.json',here)");
 await mkdir(at('apps/web/public'),{recursive:true});
 await writeFile(at('apps/web/public/cue-client-guide.html'),clientGuide);
+await edit('apps/web/server.ts',s=>s.replace('  ".css":','  ".html": "text/html; charset=utf-8",\n  ".css":'));
 await edit('industry/selection.ts',s=>s.replace('ecosystem: { label: "生态与基础设施"','brand_pr: { label: "品牌自述"').replace('leaderboard: { label: "评测榜单"','ranking: { label: "榜单转载"'));
 const casesImport='import BrandCases from "../components/BrandCases";\n';
 await writeFile(at('apps/web/app/routes/home.tsx'),'import {redirect} from "react-router";\nexport function loader({request}:{request:Request}){const q=new URL(request.url).searchParams.get("q");return redirect(q?"/all?q="+encodeURIComponent(q):"/hot");}\nexport default function Home(){return null;}');
