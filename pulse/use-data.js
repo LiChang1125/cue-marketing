@@ -18,8 +18,8 @@ async function lookup(path,signal,onProgress){
     const tools=await read('pulse/tools.json'),list=tools.ranking.find(x=>x.name===url.searchParams.get('brand'))?.cases||[];
     const page=Math.max(1,Number(url.searchParams.get('page'))||1);return {total:list.length,items:list.slice((page-1)*8,page*8)};
   }
-  const [published,extra]=await Promise.all([read('pulse/cases.json').catch(()=>({cases:[]})),read('pulse/source-index.json').catch(()=>({items:[],publishers:[]}))]);
-  return publicTopicSearch(url.searchParams.get('q')||'',{index:[...published.cases,...extra.items],publishers:extra.publishers,signal,onProgress});
+  const supplement=Promise.all([read('pulse/cases.json').catch(()=>({cases:[]})),read('pulse/source-index.json').catch(()=>({items:[],publishers:[]}))]).then(([p,e])=>({items:[...p.cases,...e.items],publishers:e.publishers}));
+  return publicTopicSearch(url.searchParams.get('q')||'',{supplement,signal,onProgress});
 }
 export function useBrandData(path){
   const [state,setState]=useState({}),[attempt,setAttempt]=useState(0);

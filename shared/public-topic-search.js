@@ -96,7 +96,7 @@ async function translate(text,to,signal){
  const backup=new URL('https://api.mymemory.translated.net/get');backup.search=new URLSearchParams({q:text,langpair:from+'|'+to});
  const result=await getJson(backup,signal);return Number(result.responseStatus)===200?clear(result.responseData?.translatedText):'';
 }
-export async function publicTopicSearch(q,{index=[],publishers=[],signal,limit=10,onProgress}={}){
+export async function publicTopicSearch(q,{index=[],publishers=[],signal,limit=10,onProgress,supplement}={}){
  q=q.trim().slice(0,100);if(!q)throw Error('请输入主题');
  const terms=topicTerms(q),now=Date.now(),coverage=[],found=new Map(),inspected=new Set(),origins=new Set();
  const indexByUrl=new Map(index.map(r=>[r.url,r]));
@@ -138,12 +138,28 @@ export async function publicTopicSearch(q,{index=[],publishers=[],signal,limit=1
  if(en&&han.test(q))tasks.push(lane('海外独立出版',readerSearch(en,signal)));
  if(en&&han.test(q))tasks.push(lane('海外新闻 · '+en,publicNews(en+' collaboration',signal)));
  tasks.push(lane('国际新闻索引',international(en||q,signal)));
- const endpoints=[...new Map([...defaults,...publishers].filter(r=>Array.isArray(r)&&/^https:\/\//.test(r[1])).map(r=>[new URL(r[1]).hostname,r])).values()];
- const hash=Array.from(q).reduce((n,c)=>n*31+c.codePointAt(0)>>>0,0);
- const additional=endpoints.slice(defaults.length);
- const selected=[...endpoints.slice(0,defaults.length),...Array.from({length:Math.min(6,additional.length)},(_,i)=>additional[(hash+i)%additional.length])];
- for(const src of selected){const term=src[2]==='zh'?(cn.find(x=>/[聯營動漫]/.test(x))||cn[0]||q):en||q;tasks.push(lane(src[0],wordpress(src,term,signal)));}
- accept(index.map(r=>({...r,content:r.content||r.summary||r.excerpt})), '已核验原文索引',false);
+ const hash=Array.from(q).reduce((n,c)=>n*31+c.codePointAt(0)>>>0,0),queriedSites=new Set();
+ function searchPublishers(list,max){
+   const unique=new Map();
+   for(const row of list||[]){
+     if(!Array.isArray(row)||!/^https:\/\//.test(row[1]))continue;
+     try{const host=new URL(row[1]).hostname;if(!queriedSites.has(host))unique.set(host,row);}catch{}
+   }
+   const rows=[...unique.entries()],rotation=max<rows.length?hash%rows.length:0;
+   return [...rows.slice(rotation),...rows.slice(0,rotation)].slice(0,max).map(([site,src])=>{
+     queriedSites.add(site);
+     const term=src[2]==='zh'?(cn.find(x=>/[聯營動漫]/.test(x))||cn[0]||q):en||q;
+     return lane(src[0],wordpress(src,term,signal));
+   });
+ }
+ tasks.push(...searchPublishers(defaults,defaults.length),...searchPublishers(publishers,6));
+ const addIndex=rows=>{
+   if(!rows.length)return;
+   for(const r of rows)indexByUrl.set(r.url,r);
+   accept(rows.map(r=>({...r,content:r.content||r.summary||r.excerpt})), '已核验原文索引',false);
+ };
+ addIndex(index);
+ if(supplement)tasks.push(supplement.then(async extra=>{if(signal?.aborted)return;addIndex(extra.items||[]);await Promise.all(searchPublishers(extra.publishers,6));}));
  await Promise.all(tasks);signal?.throwIfAborted();
  const leads=[...new Set([...found.values()].filter(r=>r.live&&relevant({...r,content:''})).sort((a,b)=>Number(action.test(b.title))-Number(action.test(a.title))).flatMap(r=>campaignLeads(r.title)).filter(t=>!terms.includes(norm(t))))].slice(0,3);
  await Promise.all(leads.flatMap(n=>[lane('中文媒体追踪 · '+n,chinesePress(n,signal)),lane('活动与 IP 后续 · '+n,publicNews(q+' '+n,signal))]));

@@ -29,8 +29,8 @@ async function handle(request){
   if(name==='search_articles'&&(!query||query.length>100))throw {code:-32602,message:'请输入 1 至 100 字的主题'};
   try{
     if(query){
-      const [snapshot,index]=await Promise.all([data('agent/articles.json').catch(()=>({items:[]})),data('pulse/source-index.json').catch(()=>({items:[]}))]);
-      const hit=await publicTopicSearch(query,{index:[...(snapshot.items||[]),...(index.items||[])],publishers:index.publishers,limit});
+      const supplement=Promise.all([data('agent/articles.json').catch(()=>({items:[]})),data('pulse/source-index.json').catch(()=>({items:[]}))]).then(([s,i])=>({items:[...(s.items||[]),...(i.items||[])],publishers:i.publishers}));
+      const hit=await publicTopicSearch(query,{supplement,limit});
       return {content:[{type:'text',text:JSON.stringify({generatedAt:new Date(),total:hit.results.length,items:hit.results,coverage:hit.brief.coverage})}]};
     }
     const feed=await data(name==='hot_events'?'pulse/events.json':'agent/articles.json');

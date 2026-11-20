@@ -136,11 +136,11 @@ export function publisherDesk(dataDir){
       .sort((a,b)=>(Date.parse(sources[a.id]?.checkedAt)||0)-(Date.parse(sources[b.id]?.checkedAt)||0)).slice(0,5);
     await Promise.allSettled(fast.map(updateSource));
   }
-  async function refresh(concurrency=10){
+  async function refresh(concurrency=10,sourceLimit=Infinity){
     await ready;
     if(round)return round;
     round=(async()=>{
-      const queue=(await publisherCatalog()).sort((a,b)=>(Date.parse(sources[a.id]?.checkedAt)||0)-(Date.parse(sources[b.id]?.checkedAt)||0));
+      const queue=(await publisherCatalog()).sort((a,b)=>(Date.parse(sources[a.id]?.checkedAt)||0)-(Date.parse(sources[b.id]?.checkedAt)||0)).slice(0,sourceLimit);
       async function worker(){while(queue.length&&!closed){const s=queue.shift();if(Date.now()-(Date.parse(sources[s.id]?.checkedAt)||0)>120000)await updateSource(s);}}
       await Promise.all(Array.from({length:concurrency},worker));
       if(closed)return;
