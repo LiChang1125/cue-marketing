@@ -31,7 +31,18 @@ export function installBrandPulse(app,{feed,dataDir,allowed,publishHome,pollPubl
  if(pollPublishers){desk.start();wire.start();}
  app.get('/api/brand-pulse/sources',async(req,res)=>{if(!allowed(req))return res.sendStatus(401);await desk.ready;res.json({sources:desk.summary(),indexedSources:desk.globalSources(),directoryFeeds:desk.directFeeds(),officialNewsrooms:desk.summary().filter(s=>s.role==='official'&&s.active)});});
  const research=createTopicBrief(feed,localize,{publicationSearch:publications,desk,archive,dataDir});
- const collectHot=currentHotspots(feed,localize,desk,archive);
+ const localizeStories=async rows=>{
+   const output=await localize(rows),links=new Map();
+   for(const story of output)for(const r of [...(story.reports||[]),...(story.cases||[])])links.set(r.url,{url:r.url,title:r.title});
+   if(!links.size)return output;
+   const translated=new Map((await translate([...links.values()])).map(r=>[r.url,r.title]));
+   for(const story of output)for(const r of [...(story.reports||[]),...(story.cases||[])]){
+     const title=translated.get(r.url);
+     r.title=title&&title!=='中文标题暂不可用'?title:'查看原文 · '+r.publisher;
+   }
+   return output;
+ };
+ const collectHot=currentHotspots(feed,localizeStories,desk,archive);
  const stories=new Map();
  const hotspots=async()=>{
    const data=await collectHot();

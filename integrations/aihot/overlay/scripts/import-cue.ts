@@ -17,23 +17,32 @@ const feed=data.feed as {items:Item[];editorial?:Item[];hotlist?:Item[]};
 const ids=new Map<string,string>();
 const featured=new Set([...(feed.editorial||[]),...(feed.hotlist||[])].map(r=>r.url));
 // Merge dated original dispatches that arrived after the main CUE snapshot.
-type Wire={title:string;url:string;publishedAt:string;content?:string;publisher?:string};
+type Wire={title:string;url:string;publishedAt:string;content?:string;publisher?:string;role?:string};
 const deskPath=join(dirname(snapshot),"pulse-publishers.json");
 const wires:Record<string,{items:Wire[]}>=JSON.parse(await readFile(deskPath,"utf8").catch(()=>"{}"));
-const seen=new Set(feed.items.map(r=>r.url)),recent=Object.values(wires).flatMap(v=>v.items||[])
- .filter(r=>consumerContent(r)&&Date.parse(r.publishedAt)>=Date.now()-7*86400000&&/[一-龥]/.test(r.title)&&!/[ぁ-ヿ]/.test(r.title)&&r.content&&/联名|快闪|新系列|品牌大使|新品|发售|联动|签约|代言|首店/.test(r.title))
- .sort((a,b)=>b.publishedAt.localeCompare(a.publishedAt)).slice(0,100);
+const byUrl=new Map(feed.items.map(r=>[r.url,r]));
+const allWires=Object.values(wires).flatMap(v=>v.items||[]);
+const officialHosts=new Set(allWires.filter(r=>r.role==='official').map(r=>new URL(r.url).hostname));
+const recent=allWires.filter(r=>consumerContent(r)&&!excludedSearchSource(r)&&Date.parse(r.publishedAt)>=Date.now()-7*86400000&&/[一-龥]/.test(r.title)&&!/[ぁ-ヿ]/.test(r.title))
+ .sort((a,b)=>b.publishedAt.localeCompare(a.publishedAt));
+const perCategory=new Map<string,number>();
 for(const r of recent){
- if(seen.has(r.url))continue;
- seen.add(r.url);featured.add(r.url);
- feed.items.push({...r,mediaEditorial:true,excerpt:r.content?.slice(0,500)});
+ const category=publicationCategory(r),count=perCategory.get(category)||0;
+ if(category==='industry'||count>=30)continue;
+ perCategory.set(category,count+1);featured.add(r.url);
+ if(!byUrl.has(r.url)){
+   const item={...r,mediaEditorial:true,excerpt:r.content?.slice(0,500)||r.title};
+   feed.items.push(item);byUrl.set(r.url,item);
+ }
 }
 const liveWire:Wire[]=JSON.parse(await readFile(join(dirname(snapshot),"pulse-wire.json"),"utf8").catch(()=>"[]"));
 for(const r of liveWire){
  if(!r.title||!r.url||!r.publishedAt)continue;
  featured.add(r.url);
- if(seen.has(r.url))continue;
- seen.add(r.url);feed.items.push({...r,liveAction:true,mediaEditorial:true,excerpt:r.content?.trim()||r.title});
+ const existing=byUrl.get(r.url);
+ if(existing){if(r.role==='official')existing.role=r.role;continue;}
+ const item={...r,liveAction:true,mediaEditorial:true,excerpt:r.content?.trim()||r.title};
+ byUrl.set(r.url,item);feed.items.push(item);
 }
 let count=0;const cutoff=Date.now()-30*86400000;
 try{for(const r of feed.items){
@@ -44,11 +53,12 @@ try{for(const r of feed.items){
  const host=link.hostname,source='cue-media-'+host;
  const publisher=r.originalUrl||r.publisher==='品牌星球'?host:r.publisher||host;
  const text=r.title+' '+copy;
- const actionable=r.liveAction===true||consumerContent({...r,content:copy})&&/联名|联动|联乘|合作|携手|推出|发售|快闪|开店|门店|发布|新品|上线|广告片|任命|赞助|代言|收购|升级|首秀|市场份额|销量|销售额/.test(text)&&!/速成课|(?:是什么意思|入门教程|历史沿革|优惠券|基础知识)/.test(r.title);
  const category=publicationCategory(r) as 'collab'|'campaign'|'launch'|'culture'|'industry'|'opinion';
- const tier=r.role==='official'?'T1':'T2';
+ const interpretive=(category==='opinion'||category==='culture')&&consumerContent(r);
+ const actionable=r.liveAction===true||interpretive||consumerContent({...r,content:copy})&&/联名|联动|联乘|合作|携手|推出|发售|快闪|开店|门店|发布|新品|上线|广告片|任命|赞助|代言|收购|升级|首秀|市场份额|销量|销售额/.test(text)&&!/速成课|(?:是什么意思|入门教程|历史沿革|优惠券|基础知识)/.test(r.title);
+ const tier=r.role==='official'||officialHosts.has(host)?'T1':'T2';
  const tags=[{collab:'品牌联名',campaign:'营销活动',launch:'新品上市',culture:'消费趋势',industry:'行业动态',opinion:'市场研究'}[category],...['亚文化','街头文化','二次元','潮玩','香水','球鞋','快闪'].filter(k=>text.includes(k)),...Object.entries(ENTITIES).filter(([,e])=>e.aliases.some(a=>text.toLowerCase().includes(a.toLowerCase()))).map(([id])=>'entity:'+id)];
- const selected=featured.has(r.url)&&actionable;
+ const selected=(featured.has(r.url)||interpretive||tier==='T1')&&actionable;
  const fingerprint=createHash('sha256').update(JSON.stringify([r.title,copy,category,tags,selected,actionable,tier])).digest('hex');
  await sql.begin(async tx=>{
   await tx`INSERT INTO sources(id,name,kind,config,tier,participation_mode,interval_minutes,enabled,health,tags) VALUES (${source},${publisher},'external','{}',${tier},'editorial',60,true,'ok','{}') ON CONFLICT(id) DO UPDATE SET name=EXCLUDED.name,tier=CASE WHEN sources.tier='T1' THEN sources.tier ELSE EXCLUDED.tier END`;

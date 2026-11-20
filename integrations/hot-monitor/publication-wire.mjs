@@ -12,7 +12,7 @@ export function liveNewswire(desk,translate,dir,publishHome){
  async function poll(){
    await desk.ready;
    const before=JSON.parse(await readFile(file,'utf8').catch(()=>'[]')),known=new Set(before.map(r=>r.url)),now=Date.now();
-   const pool=[...desk.items(),...desk.globalRecent()].filter(r=>r.title&&Date.parse(r.publishedAt)<=now&&now-Date.parse(r.publishedAt)<48*3600000&&!excludedSearchSource(r)&&consumerContent(r)&&change.test(r.title));
+   const pool=[...desk.items(),...desk.globalRecent()].filter(r=>r.title&&Date.parse(r.publishedAt)<=now&&now-Date.parse(r.publishedAt)<(r.role==='official'?7*86400000:48*3600000)&&!excludedSearchSource(r)&&consumerContent(r)&&change.test(r.title));
    const latest=new Map();for(const r of pool.sort((a,b)=>b.publishedAt.localeCompare(a.publishedAt)))if(!known.has(r.url)&&!latest.has(r.url))latest.set(r.url,r);
    const allowed=[...latest.values()].filter(r=>homeSources.has(host(r.url))&&/[一-龥]/.test(r.title)&&!/[ぁ-ヿ]/.test(r.title));
    const fresh=[...new Map([...allowed.slice(0,6),...[...latest.values()].filter(r=>r.role==='official').slice(0,4),...[...latest.values()].slice(0,12)].map(r=>[r.url,r])).values()];
