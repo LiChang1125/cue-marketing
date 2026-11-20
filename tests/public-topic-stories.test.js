@@ -33,3 +33,11 @@ test('a campaign, a review and a syndicated release have two independent origins
   assert.equal(story.reports.at(-1).stage,'体验与测评');
   assert.equal(story.lastAt,review.publishedAt);
 });
+
+test('a crop release containing a fragrance keyword is distinct from a perfume release',async t=>{
+  const date=new Date().toISOString().slice(0,19).replace('T',' ');
+  const items=['品牌推出香水百合种花新品','香氛品牌推出旅行香水新品'].map((title,i)=>({title,description:title,link:'https://example.org/launch/'+i,pubDate:date}));
+  t.mock.method(globalThis,'fetch',async url=>Response.json(new URL(url).hostname==='api.rss2json.com'?{status:'ok',items}:[]));
+  const result=await publicTopicSearch('香水');
+  assert.deepEqual(result.results.map(r=>r.title),[items[1].title]);
+});

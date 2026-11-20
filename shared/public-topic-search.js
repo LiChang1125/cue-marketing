@@ -100,7 +100,14 @@ export async function publicTopicSearch(q,{index=[],publishers=[],signal,limit=1
  q=q.trim().slice(0,100);if(!q)throw Error('请输入主题');
  const terms=topicTerms(q),now=Date.now(),coverage=[],found=new Map(),inspected=new Set(),origins=new Set();
  const indexByUrl=new Map(index.map(r=>[r.url,r]));
- const relevant=(r)=>terms.some(t=>norm([r.title,r.originalTitle,r.content].join(' ')).includes(norm(t)));
+ const relevant=(r)=>{
+   let text=norm([r.title,r.originalTitle,r.content].join(' '));
+   // Some flower and fruit cultivar names contain the fragrance keyword but refer to crops.
+   if(terms.includes('perfume')&&!/百合|柠檬|檸檬|椰|月季|菠萝|菠蘿/.test(q)){
+     text=text.replace(/香水(?:百合|[柠檸][檬檸]|椰[子青]?|月季|菠[萝蘿])/gu,' ');
+   }
+   return terms.some(t=>text.includes(norm(t)));
+ };
  function accept(rows,name,live){
    let count=0;
    for(const row of rows){
