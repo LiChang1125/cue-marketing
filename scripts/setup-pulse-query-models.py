@@ -4,7 +4,7 @@ import os
 import shutil
 import sys
 import tempfile
-import urllib.request
+from pulse_model_download import download
 import zipfile
 from pathlib import Path
 
@@ -27,8 +27,7 @@ def install(pair, archive=None):
         working = Path(temp)
         if archive is None:
             archive = working / "package.zip"
-            with urllib.request.urlopen(f"https://argos-net.com/v1/translate-{pair}-{version}.argosmodel", timeout=180) as response, archive.open("wb") as out:
-                shutil.copyfileobj(response, out)
+            download(f"translate-{pair}-{version}.argosmodel", archive, digest)
         with Path(archive).open("rb") as src:
             if hashlib.file_digest(src, "sha256").hexdigest() != digest:
                 raise ValueError(f"Invalid checksum for {pair}")

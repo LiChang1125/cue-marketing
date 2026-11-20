@@ -3,7 +3,7 @@ import hashlib
 import shutil
 import sys
 import tempfile
-import urllib.request
+from pulse_model_download import download
 import zipfile
 from pathlib import Path
 
@@ -22,8 +22,7 @@ def main():
         stage = Path(directory)
         archive = Path(sys.argv[1]) if len(sys.argv) > 1 else stage / "ja-en.zip"
         if len(sys.argv) == 1:
-            with urllib.request.urlopen(URL, timeout=120) as response, archive.open("wb") as output:
-                shutil.copyfileobj(response, output)
+            download(URL.rsplit("/", 1)[1], archive, DIGEST)
         with archive.open("rb") as stream:
             if hashlib.file_digest(stream, "sha256").hexdigest() != DIGEST:
                 raise ValueError("Japanese translation package checksum mismatch")
