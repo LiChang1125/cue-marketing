@@ -6,9 +6,9 @@ const publications=[
  ["Marketing Dive","英文 · 营销策略","看国际消费品牌如何设计广告活动、安排媒体投放和选择合作方。","https://www.marketingdive.com/"],
  ["Retail Dive","英文 · 零售渠道","跟进门店开闭、零售商合作和会员策略，观察品牌怎样触达消费者。","https://www.retaildive.com/"],
  ["Dieline","英文 · 包装设计","用实物图对照包装改版，追溯设计方和品牌想传达的变化。","https://thedieline.com/"],
- ["Sprudge","英文 · 咖啡文化","从咖啡馆、烘焙商和产地故事入手，观察精品咖啡里的新产品与新场景。","https://sprudge.com/"],
+ ["Sprudge","英文 · 咖啡文化","从咖啡馆、烘焙商和产地故事入手，观察精品咖啡里的新产品与新场景。","https://sprudge.com/category/news"],
  ["Modern Retail","英文 · 消费与零售","跟踪新消费品牌的增长、渠道选择和与大型商超的合作。","https://www.modernretail.co/"],
- ["License Global","英文 · IP 授权","核对娱乐、动漫和游戏 IP 的授权方、合作品牌和商品品类。","https://www.licenseglobal.com/"]
+ ["Licensing Magazine","英文 · IP 授权","核对娱乐、动漫和游戏 IP 的授权方、合作品牌和商品品类。","https://www.licensingmagazine.com/"]
 ];
 export default function ReadingSites(){
  return <section><header className="mb-5"><h1 className="text-3xl font-bold">值得阅读</h1><p className="mt-2 text-sm text-ink-3">10 家关注消费品牌与市场营销的新闻网站</p></header>
