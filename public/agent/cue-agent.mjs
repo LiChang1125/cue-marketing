@@ -40,16 +40,36 @@ async function handle(request){
     return {content:[{type:'text',text:JSON.stringify({generatedAt:feed.generatedAt,total:hits.length,items:hits.slice(0,limit)})}]};
   }catch(e){return {isError:true,content:[{type:'text',text:e.message}]};}
 }
-const lines=createInterface({input:process.stdin,crlfDelay:Infinity});
-lines.on('line',async line=>{
+async function respond(line){
   let msg;
   try{
     msg=JSON.parse(line);
-    if(msg&&msg.id===undefined&&typeof msg.method==='string')return;
+    if(msg?.jsonrpc==='2.0'&&msg.id===undefined&&typeof msg.method==='string')return null;
     const result=await handle(msg||{});
-    process.stdout.write(JSON.stringify({jsonrpc:'2.0',id:msg.id,result})+'\n');
+    return {jsonrpc:'2.0',id:msg.id,result};
   }catch(e){
-    const error={code:e instanceof SyntaxError?-32700:e.code||-32603,message:e.message||'请求失败'};
-    process.stdout.write(JSON.stringify({jsonrpc:'2.0',id:msg?.id??null,error})+'\n');
+    return {jsonrpc:'2.0',id:msg?.id??null,error:{code:e instanceof SyntaxError?-32700:e.code||-32603,message:e.message||'请求失败'}};
   }
-});
+}
+if(process.argv.includes('--http')){
+  const {createServer}=await import('node:http');
+  const host='127.0.0.1',port=48173,authority=host+':'+port;
+  const server=createServer(async(req,res)=>{
+    if(req.headers.host!==authority||(req.headers.origin&&req.headers.origin!=='http://'+authority)){res.writeHead(403).end();return;}
+    if(req.url!=='/mcp'){res.writeHead(404).end();return;}
+    if(req.method!=='POST'){res.writeHead(405,{Allow:'POST'}).end();return;}
+    if(!req.headers['content-type']?.toLowerCase().startsWith('application/json')){res.writeHead(415).end();return;}
+    try{
+      const chunks=[];let size=0;
+      for await(const chunk of req){size+=chunk.length;if(size>65536){res.writeHead(413).end();return;}chunks.push(chunk);}
+      const result=await respond(Buffer.concat(chunks).toString('utf8'));
+      if(result===null){res.writeHead(202).end();return;}
+      res.writeHead(200,{'Content-Type':'application/json','Cache-Control':'no-store'}).end(JSON.stringify(result));
+    }catch{if(!res.headersSent)res.writeHead(400);res.end();}
+  });
+  server.on('error',e=>{console.error('CUE 本地 MCP 启动失败',e.message);process.exitCode=1;});
+  server.listen(port,host,()=>console.error('CUE MCP 已启动 http://'+authority+'/mcp'));
+}else{
+  const lines=createInterface({input:process.stdin,crlfDelay:Infinity});
+  lines.on('line',async line=>{const result=await respond(line);if(result)process.stdout.write(JSON.stringify(result)+'\n');});
+}

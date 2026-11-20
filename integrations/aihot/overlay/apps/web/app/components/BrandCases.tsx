@@ -1,5 +1,6 @@
 import {useEffect,useState} from "react";
-import {useLocation} from 'react-router';
+import {useLocation,useNavigate} from 'react-router';
+import "./brand-search.css";
 import BrandStory,{storyLink} from './BrandStory';
 import {Sparkline} from "../features/hot/Sparkline";
 import {useBrandData} from "../lib/use-brand-data";
@@ -77,6 +78,12 @@ export default function BrandCases(props:{query?:string;compact?:boolean}){
   const id=new URLSearchParams(useLocation().search).get('story');
   return id&&/^[a-f0-9]{20}$/.test(id)?<BrandStory key={id} id={id}/>:<ReadingCases {...props}/>;
 }
+function TopicSearch({query=""}:{query?:string}){
+ const [term,setTerm]=useState(query),navigate=useNavigate();
+ const target=import.meta.env.VITE_PUBLIC_DATA==="true"?"/search":"/all";
+ return <form role="search" className="pulse-topic-search" onSubmit={e=>{e.preventDefault();if(term.trim())navigate(target+"?q="+encodeURIComponent(term.trim()));}}>
+ <input type="search" maxLength={100} aria-label="搜索品牌、IP 或营销主题" placeholder="搜索品牌、IP 或营销主题" value={term} onChange={e=>setTerm(e.target.value)}/><button>搜索</button></form>;
+}
 function ReadingCases({query="",compact=false}:{query?:string;compact?:boolean}){
   const {data,failed,retry}=useBrandData<Result>(query?"/api/brand-pulse/search?q="+encodeURIComponent(query):"/api/brand-pulse/hot");
   const [visible,setVisible]=useState(24);useEffect(()=>setVisible(24),[query]);
@@ -90,7 +97,7 @@ function ReadingCases({query="",compact=false}:{query?:string;compact?:boolean})
   if(sort==="最新")items.sort((a,b)=>Date.parse(b.publishedAt)-Date.parse(a.publishedAt));
   if(sort==="证据评分")items.sort((a,b)=>(b.review?.score??0)-(a.review?.score??0));
   return <section aria-label={query?"近期营销案例":"当前品牌热点"} className="mb-6">
-    {!compact&&!query&&<header className="mb-5"><p className="mb-1 text-xs font-bold text-accent">● 动态热度</p><h1 className="text-3xl font-bold text-ink">品牌热点榜</h1><p className="mt-2 text-sm text-ink-3">近 7 天的消费营销趋势 · 按近 48 小时报道人气排序</p></header>}
+    {!compact&&<header className="pulse-hot-header mb-5"><div>{!query&&<p className="mb-1 text-xs font-bold text-accent">● 动态热度</p>}<h1 className="text-3xl font-bold text-ink">{query?"主题搜索":"品牌热点榜"}</h1>{!query&&<p className="mt-2 text-sm text-ink-3">近 7 天的消费营销趋势 · 按近 48 小时报道人气排序</p>}</div><TopicSearch query={query}/></header>}
 
     {query&&data?.brief?.reach&&<p className="mb-2 text-xs text-ink-3">{data.brief.reach.liveCases!=null?("联网找到 "+data.brief.reach.liveCases+" 个案例 · "):""}共 {items.length} 个案例{data.brief.searching?" · 正在联网检索…":""}{data.relatedArticles?.length?(" · "+data.relatedArticles.length+" 篇相关报道"):""}</p>}
     <div className="mb-2 flex items-center justify-between gap-2"><h2 className="font-semibold text-ink">{query?"近 30 天 · 品牌现场":compact?"正在发生":"本期热点"}</h2>

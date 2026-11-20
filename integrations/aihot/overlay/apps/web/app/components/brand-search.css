@@ -1,0 +1,8 @@
+
+.pulse-hot-header{display:flex;align-items:flex-start;justify-content:space-between;gap:1.5rem}
+.pulse-topic-search{display:flex;align-items:center;gap:.4rem;width:min(100%,22rem);padding:.25rem;border:1px solid var(--line,#d6dedb);border-radius:.65rem;background:var(--bg,#fff)}
+.pulse-topic-search:focus-within{outline:2px solid var(--accent,#176a70);outline-offset:2px}
+.pulse-topic-search input{min-width:0;flex:1;padding:.48rem .65rem;border:0;background:transparent;color:inherit;font:inherit;font-size:.9rem}
+.pulse-topic-search input:focus{outline:none}
+.pulse-topic-search button{border:0;border-radius:.42rem;background:var(--ink,#202b30);color:var(--bg,#fff);padding:.48rem .8rem;font-size:.85rem;cursor:pointer}
+@media(max-width:740px){.pulse-hot-header{flex-direction:column;gap:.85rem}.pulse-topic-search{width:100%}}

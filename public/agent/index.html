@@ -1,14 +1,29 @@
 <!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Agent 接入 · CUE</title><style>
 *{box-sizing:border-box}body{margin:0;background:#faf9f6;color:#202b30;font:16px/1.65 system-ui,sans-serif}main{max-width:810px;padding:clamp(18px,5vw,64px);margin:auto}h1{font-size:clamp(32px,6vw,50px);letter-spacing:-.055em;margin:.25em 0}h2{font-size:20px;margin:0}p{color:#546267}header{margin-bottom:32px}section{padding:22px 0;border-top:1px solid #d8dfdb}a{color:#176a70;text-underline-offset:3px}pre{white-space:pre-wrap;overflow-wrap:anywhere;padding:14px;background:#edf1ec;border-radius:6px;font-size:13px}button{cursor:pointer;border:1px solid #abbdb6;border-radius:20px;padding:7px 14px;color:#235852;background:white}code{overflow-wrap:anywhere}small{color:#506465}li{margin:.45em 0}button:focus-visible,a:focus-visible{outline:3px solid #196c70}
-</style><main><header><a href="../#pulse" target="_top">返回脉动</a><br><small>CUE · MARKETING &amp; CULTURE</small><h1>Agent 接入</h1><p>让你的助手检索消费品牌报道、读取热点榜，并在回答里附上原文。</p></header>
-<section><h2>连接 MCP 客户端</h2><p>下载连接器，用 Node.js 22 或更高版本运行。在支持标准输入输出（stdio）的客户端中添加以下配置，将路径换成文件的实际位置。</p><a href="cue-agent.mjs" download>下载 CUE 连接器</a><pre id="config"></pre><button data-copy="config">复制配置</button>
+</style><main><header><a href="../pulse/#/hot" target="_top">返回脉动</a><br><small>CUE · MARKETING &amp; CULTURE</small><h1>Agent 接入</h1><p>让你的助手检索消费品牌报道、读取热点榜，并在回答里附上原文。</p></header>
+<nav aria-label="选择客户端"><a href="#codex">Codex</a> · <a href="#dumate">百度 DuMate</a> · <a href="#workbuddy">腾讯 WorkBuddy</a></nav>
+<section><h2>下载连接器</h2><p>先安装 Node.js 22 或更高版本，在终端运行 <code>node --version</code> 确认版本。下载连接器并保存到固定文件夹。以下 Windows 示例使用 <code>C:/CUE/cue-agent.mjs</code>，macOS 和 Linux 用户请换成自己的绝对路径。CUE 的公开数据可免费读取，无需 API Key。</p><a href="cue-agent.mjs" download>下载 CUE 连接器</a>
 <ul><li><code>search_articles</code> 联网检索公开新闻和出版方报道</li><li><code>latest_articles</code> 获取最新报道和原文</li><li><code>hot_events</code> 查看热点走势与报道依据</li></ul></section>
+<section id="codex"><h2>Codex</h2><ol><li>在已安装 Codex CLI 的电脑上打开终端，将命令中的路径换成连接器的实际位置并运行。</li></ol>
+<pre id="codex-add">codex mcp add cue -- node "C:/CUE/cue-agent.mjs"</pre><button data-copy="codex-add">复制命令</button>
+<ol start="2"><li>运行 <code>codex mcp get cue</code> 核对启动命令和路径。桌面版与 CLI 使用同一配置目录时，重新打开 Codex 会话即可加载。</li><li>在新会话发送下面的测试问题。在 CLI 中也可以先输入 <code>/mcp</code> 查看工具列表。</li></ol></section>
+<section id="dumate"><h2>百度 DuMate（百度搭子）</h2><ol><li>打开终端并运行下面的命令。看到本地地址后保持这个终端开启。</li></ol>
+<pre id="dumate-start">node "C:/CUE/cue-agent.mjs" --http</pre><button data-copy="dumate-start">复制启动命令</button>
+<ol start="2"><li>打开桌面版的「专家套件 · 技能」，选择「连接应用」，依次点击「添加」「添加应用」，选择手动配置。</li><li>应用名称填 <code>CUE 品牌资讯</code>，传输协议选 <strong>Streamable HTTP</strong>，服务端点填下方地址，请求头留空。</li></ol>
+<pre id="endpoint">http://127.0.0.1:48173/mcp</pre><button data-copy="endpoint">复制本地地址</button>
+<ol start="4"><li>保存并启用应用，在同一台电脑的新对话里选择 CUE，发送测试问题。重新开机后先运行上面的启动命令。</li></ol><a href="https://cloud.baidu.com/doc/OCR/s/2mwn8vni7" target="_blank" rel="noreferrer">百度官方客户端配置说明 ↗</a></section>
+<section id="workbuddy"><h2>腾讯 WorkBuddy</h2><ol><li>打开「专家 · 技能 · 连接器」，进入「连接器」，点击「自定义连接器」，再点击「添加 MCP」。</li><li>在编辑器里填入下方 JSON，将 <code>args</code> 的路径换成实际文件位置。已有连接器时，只需把 <code>cue</code> 条目合并到现有 <code>mcpServers</code> 中。</li></ol>
+<pre id="config"></pre><button data-copy="config">复制 WorkBuddy 配置</button>
+<ol start="3"><li>保存，按客户端提示确认信任并启用 CUE。WorkBuddy 会自行启动 Node 进程。</li><li>打开 CUE 的工具列表，确认能看到三个工具，再在新对话中发送测试问题。</li></ol><a href="https://docs.ardot.tencent.com/ardot-mcp/ide-integration.html" target="_blank" rel="noreferrer">腾讯官方连接器操作说明 ↗</a></section>
+<section><h2>测试连接</h2><pre id="prompt">请调用 CUE 的 hot_events 读取三个消费营销趋势，列出各自的案例和原文链接。</pre><button data-copy="prompt">复制测试问题</button>
+<p>再试一次主题检索，例如“请调用 search_articles 搜索香水联名，按日期列出案例，合并转载”。连接成功时，会话里可以看到工具调用和带网址的结果。</p>
+<details><summary>没有看到工具或连接失败</summary><p>若提示找不到 node，Windows 可运行 <code>where.exe node</code>，macOS 或 Linux 可运行 <code>command -v node</code>，将查到的绝对路径填进启动命令。若找不到脚本，请确认文件仍在设置的路径，扩展名是 .mjs。DuMate 连接失败时，请检查终端是否开启、地址是否含 /mcp，以及客户端与连接器是否运行在同一台电脑上。能列出工具但无法读取新闻时，可点下方文章 JSON 检查网络。</p></details></section>
 <section><h2>直接读取</h2><p>脚本和阅读器可匿名读取同一期公开数据。每次 GitHub 发布后更新。</p>
 <a href="articles.json">文章 JSON</a> · <a href="../pulse/events.json">热点 JSON</a> · <a href="feed.xml">RSS 订阅</a> · <a href="openapi.json">OpenAPI</a> · <a href="../llms.txt">llms.txt</a>
 <pre id="example"></pre><button data-copy="example">复制读取示例</button><p id="status" role="status"></p></section></main>
 <script>
 const here=new URL('./',location.href);
-document.getElementById('config').textContent=JSON.stringify({mcpServers:{cue:{command:'node',args:['/absolute/path/to/cue-agent.mjs']}}},null,2);
+document.getElementById('config').textContent=JSON.stringify({mcpServers:{cue:{type:'stdio',command:'node',args:['C:/CUE/cue-agent.mjs']}}},null,2);
 document.getElementById('example').textContent='curl --fail "'+new URL('articles.json',here).href+'"';
 document.querySelectorAll('[data-copy]').forEach(b=>b.onclick=async()=>{try{await navigator.clipboard.writeText(document.getElementById(b.dataset.copy).textContent);b.textContent='已复制'}catch{b.textContent='请选中上方文本复制'}});
 fetch('articles.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw Error();return r.json()}).then(d=>{document.getElementById('status').textContent='本期可读取 '+d.items.length+' 篇报道。'}).catch(()=>{document.getElementById('status').textContent='本期数据暂未读取成功。'});

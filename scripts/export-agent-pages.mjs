@@ -56,17 +56,6 @@ if(toTranslate.length){
  await writeFile(indexPath,JSON.stringify(index));
 }
 const events=await currentHotspots(()=>({items:[...list.map(r=>({...r,excerpt:r.content})),...indexed]}),localizeRows,undefined,undefined,{online:true})();
-const edition=new Map(list.map(r=>[r.url,{...r,featured:true}]));
-for(const r of indexed){
- const stamp=Date.parse(r.publishedAt);
- if(!chinese(r.title)||!(stamp<=at&&at-stamp<=30*86400000)||!consumerContent(r))continue;
- const existing=edition.get(r.url);
- if(existing){if(r.role==='official')existing.role='official';continue;}
- const category=publicationCategory(r);
- if(category==='industry'&&r.role!=='official'&&!r.industryDesk)continue;
- edition.set(r.url,{title:r.title,url:r.url,publishedAt:r.publishedAt,publisher:r.publisher||new URL(r.url).hostname,
-   role:r.role||'media',category,featured:r.role==='official'||Boolean(r.industryDesk)});
-}
 const tools=buildBrandTools(list,at);
 tools.ranking=tools.ranking.map(b=>({...b,focus:rankingFocus(b.cases),reason:b.cases[0]?.title,example:b.cases[0]?.url,logo:logos[b.name]?new URL(logos[b.name].slice(1),base).href:undefined}));
 const items=list.map(({content,source,role,...r})=>({...r,summary:content}));
@@ -85,7 +74,7 @@ const paths={};
 for(const [p,id,field] of [['/agent/articles.json','latestArticles','items'],['/pulse/events.json','hotEvents','results']]){
   paths[p]={get:{operationId:id,responses:{200:{description:'本期已发布数据，含原文链接',content:{'application/json':{schema:{type:'object',required:['generatedAt',field],properties:{generatedAt:{type:'string',format:'date-time'},[field]:{type:'array',items:{type:'object',properties:{title:{type:'string'},url:{type:'string',format:'uri'},publishedAt:{type:'string',format:'date-time'}}}}}}}}}}}};
 }
-await Promise.all([put('agent/articles.json',{generatedAt,items}),put('pulse/edition.json',{generatedAt,items:[...edition.values()].sort((a,b)=>b.publishedAt.localeCompare(a.publishedAt))}),put('pulse/events.json',{generatedAt,...events}),put('pulse/tools.json',tools),put('pulse/cases.json',{generatedAt,cases}),put('agent/feed.xml',rss),
+await Promise.all([put('agent/articles.json',{generatedAt,items}),put('pulse/events.json',{generatedAt,...events}),put('pulse/tools.json',tools),put('pulse/cases.json',{generatedAt,cases}),put('agent/feed.xml',rss),
  put('agent/openapi.json',{openapi:'3.1.0',info:{title:'CUE 公开数据',version:'1.0.0'},servers:[{url:base.replace(/\/$/,'')}],paths}),
  put('llms.txt','# CUE · 消费品牌与市场营销\n\n- [接入说明]('+base+'agent/)\n- [近 30 天报道]('+base+'agent/articles.json)\n- [热点榜与证据]('+base+'pulse/events.json)\n- [RSS]('+base+'agent/feed.xml)\n- [OpenAPI]('+base+'agent/openapi.json)\n\n数据随网站发布更新。引用报道时请保留发布方、发布日期及原文 URL。\n')]);
 // Keep the downloadable stdio connector a single file.

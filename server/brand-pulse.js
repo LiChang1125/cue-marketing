@@ -108,7 +108,7 @@ export function installBrandPulse(app,{feed,dataDir,allowed,publishHome,pollPubl
  app.get('/dispatch',(req,res)=>res.redirect(req.query.q?'/all?q='+encodeURIComponent(String(req.query.q)):'/?cueReader=pulse'));
  app.all('/api/site/feedback',(req,res)=>res.sendStatus(410));
  app.get(/^\/(starred|about|changelog|feedback)\/?$/,(req,res)=>res.redirect('/?cueReader=pulse'));
- const paths=/^\/(?:search-busy|all|hot|topics|items|story|daily|weekly|monthly|about|terms|privacy|feedback|more|starred|agent|changelog)(?:[/.]|$)|^\/(?:_\.data|_root\.data|__manifest|root\.data|manifest\.webmanifest|favicon\.ico|icon\.png|feed\.xml|llms\.txt|openapi-v1\.json|sitemap\.xml|api\/mcp)$|^\/(?:api\/site|api\/v1|feed|sitemaps|brand|media-proxy|og)\//;
+ const paths=/^\/(?:search-busy|all|hot|topics|items|story|daily|weekly|monthly|about|terms|privacy|feedback|more|starred|agent|changelog)(?:[/.]|$)|^\/(?:_\.data|_root\.data|__manifest|root\.data|cue-client-guide\.html|manifest\.webmanifest|favicon\.ico|icon\.png|feed\.xml|llms\.txt|openapi-v1\.json|sitemap\.xml|api\/mcp)$|^\/(?:api\/site|api\/v1|feed|sitemaps|brand|media-proxy|og)\//;
  app.use(async(req,res,next)=>{
   const mcp=req.method==='POST'&&req.path==='/api/mcp'&&req.is('application/json');
   if(!mcp&&!['GET','HEAD'].includes(req.method))return next();
@@ -116,7 +116,7 @@ export function installBrandPulse(app,{feed,dataDir,allowed,publishHome,pollPubl
    if(/^\/(?:brand-lab\/benefits|daily|weekly|monthly)(?:[/.]|$)/.test(req.path))return res.redirect('/hot');
    const home=req.path==='/'&&(req.query.cueReader==='pulse'||req.query.channel==='firstParty'||['collab','campaign','launch','culture','industry','opinion'].includes(req.query.category)||req.headers['sec-fetch-dest']==='iframe');
    const asset=req.path.startsWith('/assets/');
-   if(!home&&!asset&&!paths.test(req.path)&&!/^\/brand-lab\/(?:ranking|calendar)(?:\.data)?$/.test(req.path))return next();
+   if(!home&&!asset&&!paths.test(req.path)&&!/^\/brand-lab\/(?:ranking|calendar|reading)(?:\.data)?$/.test(req.path))return next();
   if(!allowed(req)){if(asset)return next();return res.status(401).send('请先登录 CUE');}
   try{
    const target=new URL(origin);target.pathname=req.path;
