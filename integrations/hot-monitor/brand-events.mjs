@@ -1,3 +1,4 @@
+import {clusterStories} from './brand-stories.mjs';
 import {marketPatterns,patternCandidate} from './market-patterns.mjs';
 import {createHash} from 'node:crypto';
 import {consumerContent} from './consumer-market.mjs';
@@ -140,35 +141,22 @@ export function currentHotspots(feed,localize,desk,archive,{online=true}={}){
       const posts=archive?.recent()||[];
       const pool=[...(desk?.items()||[]),...(desk?.globalRecent?.()||[]),...posts,...web,...trades.flat().map(r=>({...r,publisher:r.sourceName,content:r.excerpt})),...local];
       const recent=pool.filter(r=>{
-        if(now-Date.parse(r.publishedAt)>=72*3600000||!consumerContent(r)||!r.title)return false;
+        if(now-Date.parse(r.publishedAt)>=14*day||!consumerContent(r)||!r.title)return false;
         if(/standout.{0,35}campaigns|campaigns so far|weekly roundup|best campaigns|裁员|营收|\bbest\b.{0,30}\b(?:weekly|this week|releases)\b|官方入口|传闻|回顾|折扣码|订阅|球赛比分|歌曲翻唱|\bstream\b|skyscraper|tower design|best.{0,20}gifts|明星街拍|gaming monitor|holiday cover|click here/i.test(r.title))return false;
         const names=consumerBrands(r.title);
         const concrete=/联名|联乘|联动|快闪|赞助商|新品|上新|代言|首店|销量|开业|上新|开售|限定|首发|発售|コラボ|首映|event activation|capsule collection|campaign|collab|ambassador|flagship|limited.edition|brand partnership|brand identity/i;
         return concrete.test(r.title)||(names.length>0&&concrete.test(String(r.content||'').slice(0,240)));
       });
-      const events=eventCards(recent,now).flatMap(e=>{
-        const priority=(/[一-龥]/.test(e.title)&&!/[ぁ-ヿ]/.test(e.title)?4:0)+(consumerBrands(e.title).length?2:0)+(e.role==='official'?2:0)+(e.score||0)/100;
-        const origins=new Map();
-        const reports=e.reports.map(r=>{
-          const publisher=r.issuerChannel||publisherIdentity(r.url,r.attribution);
-          if(r.copyId&&!origins.has(r.copyId))origins.set(r.copyId,publisher);
-          return {...r,identity:r.copyId?origins.get(r.copyId):publisher};
-        });
-        const current=reports.filter(r=>now-Date.parse(r.publishedAt)<48*3600000);
-        if(!current.length)return [];
-        const people=[...new Map(current.map(r=>{const role=r.role||'media',author=['creator','community'].includes(role)&&r.author;
-          return [author?r.identity+'/'+author:r.identity,{name:author||r.publisher,domain:new URL(r.url).hostname,avatar:r.avatar,url:r.url,role}];})).values()];
-        const heat=heatAt(reports,now),before=heatAt(reports,now-86400000);
-        const trend=Array.from({length:24},(_,i)=>{const at=now-(23-i)*3600000;return {at,value:heatAt(reports,at)};});
-        return [{...e,priority,people,brand:consumerBrands(e.title).join(' × '),outlets:new Set(current.map(r=>r.identity)).size,heat,trend,delta:before?Math.round((heat-before)*100/before):null}];
-      }).sort((a,b)=>b.heat-a.heat||b.outlets-a.outlets||b.priority-a.priority||Number(Boolean(b.image))-Number(Boolean(a.image))||Date.parse(b.publishedAt)-Date.parse(a.publishedAt));
+      const candidates=pool.filter(r=>now-Date.parse(r.publishedAt)<14*day&&consumerContent(r)&&r.title);
+      const related=candidates.filter(r=>/测评|实测|评测|开箱|复盘|解析|探访|销量|补货|review|hands.on|sold out/i.test(r.title));
+      const events=clusterStories(eventCards([...recent,...related],now),now);
       const results=await localize(events.slice(0,16));
       const weekly=[...new Map([...pool,...(desk?.patternHistory?.()||[])].filter(r=>now-Date.parse(r.publishedAt)<7*day&&patternCandidate(r)).map(r=>[r.url,r])).values()];
       const patterns=marketPatterns(eventCards(weekly,now),now);
       const excerpts=await localize(patterns.flatMap(p=>p.examples.map(e=>({title:e.title,url:e.url}))));
       const cnTitles=new Map(excerpts.map(r=>[r.url,r.title]));
       for(const p of patterns)p.examples=p.examples.map(e=>({...e,title:cnTitles.get(e.url)})).filter(e=>e.title&&e.title!=='中文标题暂不可用');
-      const data={patterns:patterns.filter(p=>p.examples.length),results:results.filter(r=>r.title&&r.title!=='中文标题暂不可用').slice(0,10),webAvailable:available,activeSources:live.length,reportingOutlets:new Set(results.filter(r=>r.title&&r.title!=='中文标题暂不可用').slice(0,10).flatMap(r=>r.reports.map(p=>publisherIdentity(p.url,p.attribution)))).size};
+      const data={patterns:patterns.filter(p=>p.examples.length),results:results.filter(r=>r.title&&r.title!=='中文标题暂不可用').slice(0,10),webAvailable:available,activeSources:live.length,reportingOutlets:new Set(results.filter(r=>r.title&&r.title!=='中文标题暂不可用').slice(0,10).flatMap(r=>r.reports.map(p=>p.identity))).size};
       last={data,version:desk?.version(),until:now+60000};return data;
     })().finally(()=>{pending=null;});
     if(last){pending.catch(()=>{});return last.data;}

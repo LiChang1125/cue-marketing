@@ -1,3 +1,4 @@
+import {publicTopicSearch} from '../shared/public-topic-search.js';
 import {useState,useEffect} from 'react';
 const base=new URL('../',document.baseURI),cache=new Map();
 async function read(file){
@@ -7,8 +8,9 @@ async function read(file){
   cache.set(file,{at:Date.now(),promise});
   try{return await promise}catch(e){if(cache.get(file)?.promise===promise)cache.delete(file);throw e}
 }
-async function lookup(path){
+async function lookup(path,signal){
   const url=new URL(path,base),route=url.pathname.split('/').pop();
+  if(route==='story'){const id=url.searchParams.get('id');if(!/^[a-f0-9]{20}$/.test(id||''))throw Error('无效事件');return read('pulse/stories/'+id+'.json');}
   if(route==='latest')return read('agent/articles.json');
   if(route==='hot')return read('pulse/events.json');
   if(route==='tools')return read('pulse/tools.json');
@@ -16,14 +18,12 @@ async function lookup(path){
     const tools=await read('pulse/tools.json'),list=tools.ranking.find(x=>x.name===url.searchParams.get('brand'))?.cases||[];
     const page=Math.max(1,Number(url.searchParams.get('page'))||1);return {total:list.length,items:list.slice((page-1)*8,page*8)};
   }
-  const {cases}=await read('pulse/cases.json');
-  const words=(url.searchParams.get('q')||'').trim().toLowerCase().split(/\s+/).filter(Boolean);
-  const results=cases.filter(r=>words.every(w=>[r.title,r.content,...r.reports.map(s=>s.title+' '+s.publisher)].join(' ').toLowerCase().includes(w))).slice(0,10);
-  return {results,brief:{coverage:[{name:'本期公开报道',count:results.length,read:cases.length}],reach:{readArticles:cases.length}}};
+  const [published,extra]=await Promise.all([read('pulse/cases.json').catch(()=>({cases:[]})),read('pulse/source-index.json').catch(()=>({items:[],publishers:[]}))]);
+  return publicTopicSearch(url.searchParams.get('q')||'',{index:[...published.cases,...extra.items],publishers:extra.publishers,signal});
 }
 export function useBrandData(path){
   const [state,setState]=useState({}),[attempt,setAttempt]=useState(0);
-  useEffect(()=>{let active=true,pending=false;async function refresh(){if(pending)return;pending=true;try{const data=await lookup(path);if(active)setState({data,path})}catch{if(active)setState({failed:true,path})}finally{pending=false}}
-    refresh();const timer=setInterval(()=>{if(!document.hidden)refresh()},60000);return()=>{active=false;clearInterval(timer)}},[path,attempt]);
+  useEffect(()=>{let active=true,pending=false;const stop=new AbortController();async function refresh(){if(pending)return;pending=true;try{const data=await lookup(path,stop.signal);if(active)setState({data,path})}catch{if(active)setState({failed:true,path})}finally{pending=false}}
+    refresh();const timer=setInterval(()=>{if(!document.hidden)refresh()},path.includes("/search?")?300000:60000);return()=>{active=false;stop.abort();clearInterval(timer)}},[path,attempt]);
   return {...(state.path===path?state:{}),retry:()=>setAttempt(n=>n+1)};
 }

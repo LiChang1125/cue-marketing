@@ -1,9 +1,10 @@
+import {publicTopicSearch} from '../../shared/public-topic-search.js';
 import { createInterface } from 'node:readline';
 
 const site = 'https://lichang1125.github.io/cue-marketing/';
 const definitions = [
   {name:'latest_articles',description:'读取最近发布的消费品牌与营销报道。'},
-  {name:'search_articles',description:'在已发布文章中检索主题、品牌或 IP。'},
+  {name:'search_articles',description:'联网检索公开新闻和出版方来源，补充近期索引中的品牌与 IP 报道。'},
   {name:'hot_events',description:'获取当前发布的热点事件、热度指数和报道来源。'}
 ].map(tool => ({...tool,inputSchema:{type:'object',additionalProperties:false,
   properties:{limit:{type:'integer',minimum:1,maximum:20},...(tool.name==='search_articles'?{query:{type:'string',minLength:1,maxLength:100}}:{})},
@@ -27,6 +28,11 @@ async function handle(request){
   const query=typeof args.query==='string'?args.query.trim():'';
   if(name==='search_articles'&&(!query||query.length>100))throw {code:-32602,message:'请输入 1 至 100 字的主题'};
   try{
+    if(query){
+      const [snapshot,index]=await Promise.all([data('agent/articles.json').catch(()=>({items:[]})),data('pulse/source-index.json').catch(()=>({items:[]}))]);
+      const hit=await publicTopicSearch(query,{index:[...(snapshot.items||[]),...(index.items||[])],publishers:index.publishers,limit});
+      return {content:[{type:'text',text:JSON.stringify({generatedAt:new Date(),total:hit.results.length,items:hit.results,coverage:hit.brief.coverage})}]};
+    }
     const feed=await data(name==='hot_events'?'pulse/events.json':'agent/articles.json');
     const items=name==='hot_events'?feed.results:feed.items;
     const words=query.toLowerCase().split(/\s+/);

@@ -53,10 +53,16 @@ jobs:
         run: node scripts/refresh-public-data.mjs
       - name: Translate English headlines and summaries locally
         run: python scripts/localize-public-data.py
+      - uses: actions/cache@v4
+        with:
+          path: .artifacts/pages-source-cache
+          key: pulse-source-index-${{ github.run_id }}
+          restore-keys: pulse-source-index-
       - name: Build public website
         run: |
           npm run build -- --base=/cue-marketing/
           cp .artifacts/public-data/content-data.json dist/content-data.json
+          node scripts/pages-source-index.mjs
           node scripts/export-agent-pages.mjs
           cp -r .artifacts/public-articles/media dist/media
           mkdir -p dist/licenses

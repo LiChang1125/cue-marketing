@@ -31,7 +31,22 @@ export function installBrandPulse(app,{feed,dataDir,allowed,publishHome,pollPubl
  if(pollPublishers){desk.start();wire.start();}
  app.get('/api/brand-pulse/sources',async(req,res)=>{if(!allowed(req))return res.sendStatus(401);await desk.ready;res.json({sources:desk.summary(),indexedSources:desk.globalSources(),directoryFeeds:desk.directFeeds(),officialNewsrooms:desk.issuerChannels()});});
  const research=createTopicBrief(feed,localize,{publicationSearch:publications,desk,archive,dataDir});
- const hotspots=currentHotspots(feed,localize,desk,archive);
+ const collectHot=currentHotspots(feed,localize,desk,archive);
+ const stories=new Map();
+ const hotspots=async()=>{
+   const data=await collectHot();
+   const retention=Date.now()-30*86400000;
+   for(const [id,item] of stories)if(Date.parse(item.lastAt)<retention)stories.delete(id);
+   for(const item of data.results)stories.set(item.storyId,item);
+   return data;
+ };
+ app.get('/api/brand-pulse/story',async(req,res)=>{
+   if(!allowed(req))return res.sendStatus(401);
+   const id=String(req.query.id||'');
+   if(!/^[a-f0-9]{20}$/.test(id))return res.sendStatus(400);
+   try{if(!stories.has(id))await hotspots();const story=stories.get(id);return story?res.json(story):res.sendStatus(404);}
+   catch{return res.status(503).json({error:'事件档案暂不可读'});}
+ });
  const brandTools=createBrandTools(feed,desk);
  const refreshHot=()=>hotspots().catch(e=>console.error('更新事件榜',e.message));
  const hotTimer=pollPublishers?setInterval(refreshHot,60000):null;

@@ -1,3 +1,4 @@
+import {topicTerms} from '../../shared/public-topic-search.js';
 import {localizeSearchHeadlines,brokenCopy} from './search-headline.mjs';
 import {regionalTerms,searchRegionalNews} from './regional-search.mjs';
 import {subjectOf,phraseMatches,translatedSubject,probeFragments,subjectPassage} from './query-language.mjs';
@@ -53,9 +54,10 @@ const marketVocabulary=[
 ];
 export const coversTerm=phraseMatches;
 export function planTopic(query){
- const recipe=themes.find(t=>t.match.test(query));
+ const aliases=topicTerms(query);
+ const recipe=themes.find(t=>t.match.test(query))||themes.find(t=>aliases.some(a=>t.match.test(a)));
  const vocab=marketVocabulary.find(terms=>terms.some(t=>t.toLowerCase()===query.toLowerCase()));
- return recipe||{terms:vocab||[query],probes:[query+' 联名',query+' 品牌活动'],subs:['advertising','marketing'],communityTerms:[query]};
+ return recipe||{terms:vocab||aliases,probes:[query+' 联名',query+' 品牌活动'],subs:['advertising','marketing'],communityTerms:[query]};
 }
 export function qualify(row,query,plan,now=Date.now()){
  const at=Date.parse(row.publishedAt),title=row.title||'',text=[title,row.content,row.originalTitle].filter(Boolean).join(' ');

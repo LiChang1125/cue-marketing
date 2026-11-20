@@ -117,6 +117,6 @@ export function brandNewsrooms(dir){
    db.prepare('INSERT OR REPLACE INTO rotation VALUES(1,?)').run(cursor+3);
  }
  void Promise.allSettled(batch).finally(()=>{running=false;if(closed)db.close();});}
- function recent(){return db.prepare('SELECT * FROM releases WHERE at>? ORDER BY at DESC LIMIT 300').all(Date.now()-2*day).map(normalize);}
+ function recent(days=2,limit=300){return db.prepare('SELECT * FROM releases WHERE at>? ORDER BY at DESC LIMIT ?').all(Date.now()-days*day,limit).map(normalize);}
  return {page,keyword,search,recent,channels,start(){tick();timer=setInterval(tick,10*60000);timer.unref();},close(){if(closed)return;closed=true;controller.abort();clearInterval(timer);if(!running)db.close();}};
 }

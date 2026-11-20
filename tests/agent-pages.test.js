@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {spawnSync} from 'node:child_process';
 
 test('the public connector negotiates stdio, validates calls, and searches the published feed',()=>{
-  const feed={generatedAt:'2026-11-20T00:00:00Z',items:[{title:'露营品牌推出新帐篷',publisher:'测试',url:'https://example.org/camp'},{title:'咖啡快闪',url:'https://example.org/coffee'}]};
+  const feed={generatedAt:'2026-11-20T00:00:00Z',items:[{title:'露营品牌推出新帐篷',publishedAt:new Date().toISOString(),publisher:'测试',url:'https://example.org/camp'},{title:'咖啡快闪',url:'https://example.org/coffee'}]};
   const script='globalThis.fetch=async()=>Response.json('+JSON.stringify(feed)+');await import("./public/agent/cue-agent.mjs")';
   const calls=[['initialize',{protocolVersion:'2025-06-18'}],['tools/list',{}],['tools/call',{name:'search_articles',arguments:{query:'帐篷'}}],['tools/call',{name:'latest_articles',arguments:{limit:0}}]];
   const input=calls.map(([method,params],id)=>JSON.stringify({jsonrpc:'2.0',id,method,params})).join('\n')+'\n';
