@@ -1,5 +1,6 @@
 const publisherFamilies=[
  ['Industry Dive',['marketingdive.com','restaurantdive.com','fooddive.com','grocerydive.com','retaildive.com','socialmediatoday.com']],
+ ['William Reed',['foodnavigator.com','foodnavigator-asia.com','dairyreporter.com','bakeryandsnacks.com','cosmeticsdesign.com']],
  ['东方财富',['eastmoney.com']],
  ['新浪',['sina.com.cn','sina.cn']],
  ['36氪',['36kr.com','36kr.jp']],

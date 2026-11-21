@@ -11,7 +11,7 @@ test('a related event without a social link can be promoted by a dated creator m
  t.mock.method(globalThis,'fetch',async input=>{
    const u=new URL(input);
    if(u.hostname==='sspai.com'&&u.searchParams.get('tag')===term)return Response.json({error:0,data:[
-     {id:324,title:'青林「蓝雀杯」新品开箱体验',summary:'这款青林「蓝雀杯」的首发笔记获得收藏 5200 次。',released_time:Math.floor(Date.parse(date)/1000),author:{nickname:'杯具观察'}},
+     {id:324,title:'青林「蓝雀杯」新品开箱体验',summary:'这款青林「蓝雀杯」的实物已经到店。',like_count:5200,released_time:Math.floor(Date.parse(date)/1000),author:{nickname:'杯具观察'}},
      {id:325,title:'青林「银羽壶」新品线下首发',summary:'这款新品销量 9000 件。',released_time:Math.floor(Date.parse(date)/1000),author:{nickname:'零售观察'}}
    ]});
    return new Response(null,{status:503});

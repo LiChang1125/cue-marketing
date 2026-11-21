@@ -182,15 +182,23 @@ export function caseEvidence(rows){
  for(const r of rows){
    const url=urlOf(r.url);if(!url)continue;
    const publisher=r.publisher||new URL(url).hostname,raw=clear(r.content),headline=titleKey(r.title);
-   const keys=new Set(['site:'+publisherIdentity(url,r.attribution),'credit:'+norm(r.attribution||publisher)]);
+   const credit=r.attribution||raw.match(/^(?:来源|转载自|转自)[：:]\s*([^\s，。；|]{2,18})/u)?.[1]||publisher;
+   const host=new URL(url).hostname.replace(/^www\./,'');
+   const uncreditedMirror=/(^|\.)(?:msn\.com|sohu\.com|sina\.com\.cn|qq\.com|eastmoney\.com)$/i.test(host)&&(!credit||norm(credit)===host);
+   const keys=new Set(['site:'+publisherIdentity(url,credit),'credit:'+norm(credit)]);
    if(headline.length>=8)keys.add('headline:'+headline);
    if(raw.length>=60)keys.add('copy:'+titleKey(raw.slice(0,120)));
    if(r.copyId)keys.add('id:'+r.copyId);
    if(r.role==='official'||/美通社|PRNewswire|PR Newswire|Business Wire|GlobeNewswire/i.test(publisher+' '+raw.slice(0,100)))keys.add('press-release');
    const matched=groups.filter(g=>[...keys].some(k=>g.keys.has(k)));
    const group=matched.shift();
-   if(group){for(const k of keys)group.keys.add(k);for(const other of matched){for(const k of other.keys)group.keys.add(k);groups.splice(groups.indexOf(other),1);}}
-   else groups.push({keys,publisher,url});
+   if(group){
+     for(const k of keys)group.keys.add(k);
+     for(const other of matched){for(const k of other.keys)group.keys.add(k);groups.splice(groups.indexOf(other),1);}
+     const credited=matched.find(g=>!g.uncreditedMirror)||(!uncreditedMirror&&{publisher,url});
+     if(group.uncreditedMirror&&credited)Object.assign(group,{publisher:credited.publisher,url:credited.url,uncreditedMirror:false});
+   }
+   else groups.push({keys,publisher,url,uncreditedMirror});
    const pattern=/(?:点赞|获赞|收藏(?:量)?|销量|售出|卖出|浏览量|阅读量|播放量|月销|销售额|浏览|赞)\s*(?:已达|达|累计|超过|突破|超|近|约|为)?\s*([\d,]+(?:\.\d+)?)\s*([亿万千]?)(?:\s*[余多+])?\s*(?:件|套|份|次|元|双|杯)?|([\d,]+(?:\.\d+)?)\s*([亿万千]?)\s*[余多+]?\s*(?:次|个|人次)?(?:点赞|收藏|浏览|播放|获赞)/gu;
    const anchors=caseAnchors(r).names.map(norm);
    for(const line of [r.metricDisplay||'',r.title||'',...raw.split(/[。！？!?；;]/u)]){
@@ -200,13 +208,14 @@ export function caseEvidence(rows){
      if(market&&!signals.some(o=>o.url===url))signals.push({text:market[0],publisher,url});
      for(const m of line.matchAll(pattern)){
        const amount=Number((m[1]||m[3]).replaceAll(',',''))*({万:10000,亿:1e8,千:1000}[m[2]||m[4]]||1);
-       const before=line.slice(Math.max(0,m.index-22),m.index).split(/[,，。；：:]/u).at(-1);
+       const before=line.slice(Math.max(0,m.index-22),m.index).split(/[,，。；：:·]/u).at(-1);
        const text=(before+m[0]).trim();
-       if(amount>0&&!observations.some(o=>o.url===url&&o.text===text))observations.push({text,publisher,url,material:amount>=100});
+       const minimum=/浏览|阅读|播放/u.test(m[0])?10000:100;
+       if(amount>0&&!observations.some(o=>o.url===url&&o.text===text))observations.push({text,publisher,url,material:amount>=minimum});
      }
    }
  }
- const independent=groups.map(({publisher,url})=>({publisher,url}));
+ const independent=groups.filter(g=>!g.uncreditedMirror).map(({publisher,url})=>({publisher,url}));
  return {observations,signals,independent,qualified:observations.some(o=>o.material)||independent.length>=2};
 }
 const defaults=[
@@ -283,11 +292,15 @@ export async function chinesePress(term,signal,page=1,sort='time'){
  return rows.map(r=>({title:clear(r.title),content:clear(r.content),url:r.url?.replace(/^http:\/\//,'https://'),
     publisher:r.mediaName||'东方财富',attribution:r.mediaName,publishedAt:String(r.date).replace(' ','T')+'+08:00',image:r.image||undefined}));
 }
+function publicPostMetrics(post){
+ return [['点赞',post.like_count],['收藏',post.bookmark_count],['浏览量',post.view_count],['评论',post.comment_count]]
+   .filter(([,n])=>Number.isSafeInteger(n)&&n>0).map(([label,n])=>label+' '+n).join(' · ')||undefined;
+}
 async function readerSearch(term,signal){
  const u=new URL('https://public-api.wordpress.com/rest/v1.1/read/search');
  u.search=new URLSearchParams({q:term,number:'20'});
  const data=await getJson(u,signal);if(!Array.isArray(data.posts))throw Error('出版搜索暂不可用');
- return data.posts.map(p=>({url:p.URL,title:clear(p.title),content:clear(p.excerpt||p.content).slice(0,500),publishedAt:p.date,publisher:p.site_name||undefined}));
+ return data.posts.map(p=>({url:p.URL,title:clear(p.title),content:clear(p.excerpt||p.content).slice(0,500),publishedAt:p.date,publisher:p.site_name||undefined,metricDisplay:publicPostMetrics(p),channel:'公开出版物'}));
 }
 async function podcasts(term,signal){
  const u=new URL('https://itunes.apple.com/search');
@@ -299,7 +312,7 @@ async function authorNotes(term,signal){
  const u=new URL('https://sspai.com/api/v1/article/tag/page/get');u.search=new URLSearchParams({tag:term,limit:'30',offset:'0'});
  const data=await getJson(u,signal);
  if(data.error!==0||!Array.isArray(data.data))throw Error('作者专栏暂不可读');
- return data.data.filter(r=>Number.isInteger(r.id)&&r.released_time>0).map(r=>({url:'https://sspai.com/post/'+r.id,title:r.title,content:clear(r.summary),publishedAt:new Date(r.released_time*1000).toISOString(),publisher:r.author?.nickname||'少数派',role:'creator',channel:'少数派'}));
+ return data.data.filter(r=>Number.isInteger(r.id)&&r.released_time>0).map(r=>({url:'https://sspai.com/post/'+r.id,title:r.title,content:clear(r.summary),publishedAt:new Date(r.released_time*1000).toISOString(),publisher:r.author?.nickname||'少数派',role:'creator',channel:'少数派',metricDisplay:publicPostMetrics(r)}));
 }
 async function notePosts(term,signal){
  const feed='https://note.com/hashtag/'+encodeURIComponent(term)+'/rss';
