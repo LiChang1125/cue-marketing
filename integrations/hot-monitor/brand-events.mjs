@@ -1,8 +1,4 @@
 import {clusterStories} from './brand-stories.mjs';
-import {platformStoryBoards} from './platform-stories.mjs';
-import {readChartHistory} from './platform-history.mjs';
-import {fetchPlatformCharts,platformNames} from '../../shared/platform-hot.js';
-import {chinesePress,publicNews} from '../../shared/public-topic-search.js';
 import {marketPatterns,patternCandidate} from './market-patterns.mjs';
 import {createHash} from 'node:crypto';
 import {consumerContent,excludedSearchSource} from './consumer-market.mjs';
@@ -131,33 +127,14 @@ export function eventCards(rows,now=Date.now()){
   return events;
 }
 export function currentHotspots(feed,localize,desk,archive,{online=true}={}){
-  let last,pending,platformCache;
-  async function platformSources(now){
-    if(!online)return {charts:{},articles:[]};
-    if(platformCache?.until>now)return platformCache;
-    const names=Object.values(platformNames);
-    const terms=names.flatMap(name=>[name+' 品牌',name+' 品牌首发',name+' 双十一']);
-    const news=names.map(name=>publicNews(name,AbortSignal.timeout(9000),true));
-    const trade=names.map(name=>webNews([name+' 品牌联名',name+' 品牌营销',name+' 消费品牌 双十一'],[name,'品牌']));
-    const hour=Math.floor(now/3600000);
-    const [latest,history,...batches]=await Promise.all([fetchPlatformCharts().catch(()=>({})),platformCache?.hour===hour?platformCache.history:readChartHistory(now),...[...terms.map(term=>chinesePress(term)),...news,...trade].map(p=>p.catch(()=>[]))]);
-    const charts={};
-    for(const id of Object.keys(platformNames)){
-      const chart=latest[id]||platformCache?.charts[id];
-      if(chart&&now-Date.parse(chart.observedAt)<day)charts[id]=chart;
-    }
-    const leads=new Set(Object.values(charts).flatMap(chart=>chart.rows.filter(row=>row.consumer||consumerBrands(row.title).length).slice(0,3).map(row=>row.title)));
-    const followups=await Promise.all([...leads].map(term=>chinesePress(term).catch(()=>[])));
-    platformCache={until:now+600000,charts,history,hour,articles:[...batches,...followups].flat()};
-    return platformCache;
-  }
+  let last,pending;
   return async()=>{
     if(last?.until>Date.now()&&last.version===desk?.version())return last.data;
     if(pending)return last?.data||pending;
     pending=(async()=>{
       const now=Date.now(),queries=['品牌 联名 官宣','品牌 快闪 首发','IP 授权 联动','品牌 代言人 发布','新品 限定 发售'];
       let available=true;
-      const [platformInputs,[web,...trades]]=await Promise.all([platformSources(now),online?Promise.all([webNews(queries,['联名','品牌','首发','联动','营销']).catch(()=>{available=false;return [];}),...['联名','快闪','首发'].map(term=>publicMarketingPress(term,now-7*day).catch(()=>[]))]):[[]]]);
+      const [web,...trades]=online?await Promise.all([webNews(queries,['联名','品牌','首发','联动','营销']).catch(()=>{available=false;return [];}),...['联名','快闪','首发'].map(term=>publicMarketingPress(term,now-7*day).catch(()=>[]))]):[[]];
       const snapshot=feed(),local=(snapshot.items||[]).map(r=>({...r,url:originalHref(r),content:r.excerpt||r.content,source:'editorial'}));
       await desk?.ready;
       const live=desk?.summary().filter(s=>s.active)||[];
@@ -174,15 +151,12 @@ export function currentHotspots(feed,localize,desk,archive,{online=true}={}){
       const related=candidates.filter(r=>/测评|实测|评测|开箱|复盘|解析|探访|销量|补货|review|hands.on|sold out/i.test(r.title));
       const events=clusterStories(eventCards([...recent,...related],now),now,{trendsOnly:true});
       const results=await localize(events.slice(0,10));
-      const platformBoards=await platformStoryBoards([...pool,...platformInputs.articles].filter(r=>r.title&&now-Date.parse(r.publishedAt)<7*day&&consumerContent(r)),platformInputs.charts,now,eventCards,localize);
-      for(const board of Object.values(platformBoards))board.history=platformInputs.history?.[board.platform]||{};
       const weekly=[...new Map([...pool,...(desk?.patternHistory?.()||[])].filter(r=>now-Date.parse(r.publishedAt)<7*day&&patternCandidate(r)).map(r=>[r.url,r])).values()];
       const patterns=marketPatterns(eventCards(weekly,now),now);
       const excerpts=await localize(patterns.flatMap(p=>p.examples.map(e=>({title:e.title,url:e.url}))));
       const cnTitles=new Map(excerpts.map(r=>[r.url,r.title]));
       for(const p of patterns)p.examples=p.examples.map(e=>({...e,title:cnTitles.get(e.url)})).filter(e=>e.title&&e.title!=='中文标题暂不可用');
       const data={patterns:patterns.filter(p=>p.examples.length),results:results.filter(r=>r.title&&r.title!=='中文标题暂不可用').slice(0,10),webAvailable:available,activeSources:live.length,reportingOutlets:new Set(results.filter(r=>r.title&&r.title!=='中文标题暂不可用').slice(0,10).flatMap(r=>r.reports.map(p=>p.identity))).size};
-      data.platformBoards=platformBoards;
       last={data,version:desk?.version(),until:now+60000};return data;
     })().finally(()=>{pending=null;});
     if(last){pending.catch(()=>{});return last.data;}
