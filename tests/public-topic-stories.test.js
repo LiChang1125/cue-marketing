@@ -3,6 +3,37 @@ import assert from 'node:assert/strict';
 import {publicTopicSearch,describeTopic,descriptionMatches} from '../shared/public-topic-search.js';
 import {planTopic,qualify} from '../integrations/hot-monitor/topic-brief.mjs';
 import {clusterStories} from '../integrations/hot-monitor/brand-stories.mjs';
+import {load} from 'cheerio';
+import {communityNote,socialCase,issuerRelease} from '../scripts/public-case-sources.mjs';
+
+test('an indexed seed finds a different publisher by product and merges that evidence without accepting unrelated launches',async t=>{
+ const now=new Date().toISOString(),calls=[];
+ const seed={title:'山海推出「雾岭」香水',content:'这款香水在微博售罄。',url:'https://consumer.example/launch',publishedAt:now,publisher:'消费观察',brands:['山海']};
+ const date=now.slice(0,10)+' 00:00:00';
+ t.mock.method(globalThis,'fetch',async input=>{
+   const url=new URL(input);
+   if(url.hostname==='search-api-web.eastmoney.com'){
+     const p=JSON.parse(url.searchParams.get('param'));calls.push(p.keyword);
+     const rows=p.keyword==='山海'?['山海公布「雾岭」香水追加发售计划','山海咖啡新店开业'].map((title,i)=>({url:'https://wire.example/'+i,title,content:title,date,mediaName:'市场报道'})):[];
+     return new Response('cue('+JSON.stringify({code:0,result:{cmsArticleWebOld:rows}})+')');
+   }
+   return Response.json([]);
+ });
+ const result=await publicTopicSearch('微博热卖香水',{index:[seed,{...seed,title:'拾光香水在微博推出限定款',content:'品牌首发新品。',url:'https://consumer.example/different',brands:['拾光']}]});
+ assert.ok(calls.includes('山海'));assert.equal(result.results.length,1);
+ assert.deepEqual(new Set(result.results[0].reports.map(r=>r.url)),new Set([seed.url,'https://wire.example/0']));
+ assert.deepEqual(result.relatedArticles.map(r=>r.title),['拾光香水在微博推出限定款']);
+ assert.equal(descriptionMatches(describeTopic('香水联名'),{title:'户外品牌联名推出跑鞋'}),false);
+});
+
+test('public notes, media citations and issuer statements preserve their distinct authors and dates',()=>{
+ const note=communityNote(load('<script type="application/ld+json">'+JSON.stringify({'@type':'Article',url:'https://post.smzdm.com/talk/p/demo/',headline:'露营品牌睡袋实测',datePublished:'2026-11-20T10:00:00+08:00',author:{name:'户外作者'},interactionStatistic:[{interactionType:'https://schema.org/LikeAction',userInteractionCount:22}]})+'</script>'));
+ assert.equal(note.role,'creator');assert.equal(note.metricDisplay,'赞 22');assert.equal(note.publisher,'户外作者');
+ const url='https://www.xiaohongshu.com/explore/'+'a'.repeat(24);
+ const campaign=socialCase(load('<title>海风推出联名茶杯｜SocialBeta</title><p>编辑 · 2026-11-20 · <a href="'+url+'">案例原链接</a></p><div class="cont_cam"><div class="content">海风推出联名茶杯。</div></div>'),'https://socialbeta.com/campaign/12345');
+ assert.deepEqual(campaign.citation,{platform:'小红书',url});assert.equal(campaign.role,'media');
+ assert.equal(issuerRelease(load('<h1>山海推出陶瓷餐具</h1><div class="release-body"><p>山海发布新品</p></div><p>消息来源：山海</p>'),'https://www.prnasia.com/story/1-1.shtml',note.publishedAt).publisher,'山海');
+});
 
 test('descriptive searches use public query variants and require platform, category and popularity evidence',async t=>{
  const q='抖音上最近走红的咖啡',pubDate=new Date().toISOString().slice(0,19).replace('T',' ');

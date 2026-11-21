@@ -8,6 +8,7 @@ import {consumerContent,excludedSearchSource} from '../integrations/hot-monitor/
 import {listedPublishers} from '../integrations/hot-monitor/recommended-sources.mjs';
 import {publisherCatalog,publisherDesk,specialistFeeds,parsePublisher} from '../integrations/hot-monitor/publisher-desk.mjs';
 import directory from '../config/pulse-directory.json' with {type:'json'};
+import {collectPublicCases} from './public-case-sources.mjs';
 const day=86400000,now=Date.now();
 const seed=process.argv.includes('--seed'),dir=seed?'.artifacts/hot-monitor-preview':'.artifacts/pages-source-cache';
 const seedFile='config/pulse-public-index.json.gz',out=resolve(process.env.PULSE_OUTPUT||'dist/pulse');await mkdir(dir,{recursive:true});
@@ -19,7 +20,7 @@ function merge(list){for(const r of list){
  // Publish only public article metadata; operational tables and reader searches stay on their host.
  const prior=rows.get(r.url);
  const translated=r.originalTitle?r:prior?.originalTitle===r.title?prior:null;
- rows.set(r.url,{url:r.url,title:translated?.title||r.title,originalTitle:translated?.originalTitle,industryDesk:r.industryDesk||prior?.industryDesk||undefined,publishedAt:new Date(time).toISOString(),image:/^https:\/\//.test(r.image||'')?r.image:undefined,publisher:r.publisher,attribution:r.attribution,excerpt:r.content?.slice(0,300)||r.excerpt?.slice(0,300),issuerChannel:r.issuerChannel,role:r.role||'media'});
+ rows.set(r.url,{url:r.url,title:translated?.title||r.title,originalTitle:translated?.originalTitle,industryDesk:r.industryDesk||prior?.industryDesk||undefined,publishedAt:new Date(time).toISOString(),image:/^https:\/\//.test(r.image||'')?r.image:prior?.image,publisher:r.publisher||prior?.publisher,attribution:r.attribution||prior?.attribution,excerpt:r.content?.slice(0,360)||r.excerpt?.slice(0,360)||prior?.excerpt,issuerChannel:r.issuerChannel||prior?.issuerChannel,role:r.role||prior?.role||'media',citation:r.citation||prior?.citation,brands:r.brands||prior?.brands,metricDisplay:r.metricDisplay||prior?.metricDisplay,channel:r.channel||prior?.channel});
 }}
 if(!seed){
  try{merge(JSON.parse(gunzipSync(await readFile(seedFile))));}catch(e){if(e.code!=='ENOENT')throw e}
@@ -41,6 +42,16 @@ if(!seed){
  for(const r of more)if(r.status==='fulfilled')merge(r.value);
 }
 merge(index.rows(30,40000));merge(desk.items());index.close();desk.close();
+// Persist the last successful public source reads across runner locations and temporary outages.
+const evidenceCache=resolve(dir,'public-case-evidence.json');
+const evidenceByUrl=new Map();
+for(const file of ['config/public-case-evidence.json',evidenceCache]){
+ try{for(const r of JSON.parse(await readFile(file,'utf8')))if(now-Date.parse(r.publishedAt)<=30*day)evidenceByUrl.set(r.url,r);}catch(e){if(e.code!=='ENOENT')throw e;}
+}
+const brands=[...new Set([...rows.values()].slice(0,200).flatMap(r=>consumerBrands(r.title)))];
+for(const r of await collectPublicCases(brands))evidenceByUrl.set(r.url,r);
+merge(evidenceByUrl.values());
+await writeFile(evidenceCache,JSON.stringify([...evidenceByUrl.values()]));
 await Promise.all([
  visitIndustryDesks(industryPublishers,async src=>{
    try{const batch=await industryArticles(src,'',AbortSignal.timeout(10000));merge(batch.map(r=>({...r,industryDesk:src[1]})));}catch{}
