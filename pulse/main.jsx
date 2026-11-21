@@ -7,7 +7,8 @@ import BrandTools from '../integrations/aihot/overlay/apps/web/app/routes/brand-
 import ReadingSites from '../integrations/aihot/overlay/apps/web/app/routes/reading-sites';
 
 function Edition(){
-  const here=useLocation(),q=new URLSearchParams(here.search).get('q')?.trim()||'';
+  const here=useLocation(),params=new URLSearchParams(here.search),raw=params.get('q')||'',q=raw.trim().slice(0,100);
+  if(here.pathname==='/search'&&(!q||raw!==q))return <Navigate replace to={q?'/search?q='+encodeURIComponent(q):'/hot'}/>;
   const groups=[['阅读',[['/hot','热点榜',Flame]]],['品牌工具',[['/brand-lab/ranking','品牌榜',ChartColumn],['/brand-lab/calendar','营销日历',CalendarDays],['/brand-lab/reading','值得阅读',BookOpen]]]];
   const hot=here.pathname==='/hot'||here.pathname==='/search';
   if(here.pathname==='/'||here.pathname==='/all'||here.pathname==='/featured')return <Navigate replace to={q?'/search?q='+encodeURIComponent(q):'/hot'}/>;

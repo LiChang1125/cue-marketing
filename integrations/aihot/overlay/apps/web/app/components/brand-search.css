@@ -6,3 +6,8 @@
 .pulse-topic-search input:focus{outline:none}
 .pulse-topic-search button{border:0;border-radius:.42rem;background:var(--ink,#202b30);color:var(--bg,#fff);padding:.48rem .8rem;font-size:.85rem;cursor:pointer}
 @media(max-width:740px){.pulse-hot-header{flex-direction:column;gap:.85rem}.pulse-topic-search{width:100%}}
+.pulse-topic-search button[type=button]{background:transparent;color:inherit;font-size:1.15rem}
+.pulse-filters,.pulse-pages{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:.45rem}
+.pulse-filters select,.pulse-pages button{color:inherit;border:1px solid var(--line,#d6dedb);background:var(--bg,#fff);border-radius:.45rem;padding:.3rem .45rem;font-size:.82rem}
+.pulse-pages{justify-content:center;margin:1rem auto;font-size:.85rem}
+.pulse-pages button:disabled{opacity:.45}

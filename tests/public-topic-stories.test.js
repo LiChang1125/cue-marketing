@@ -1,10 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {publicTopicSearch,describeTopic,descriptionMatches} from '../shared/public-topic-search.js';
+import {publicTopicSearch,describeTopic,descriptionMatches,matchesKeywords,topicTerms} from '../shared/public-topic-search.js';
 import {planTopic,qualify} from '../integrations/hot-monitor/topic-brief.mjs';
 import {clusterStories} from '../integrations/hot-monitor/brand-stories.mjs';
 import {load} from 'cheerio';
 import {communityNote,socialCase,issuerRelease} from '../scripts/public-case-sources.mjs';
+
+test('a specific product search keeps its model identifier while a category can match its translation',()=>{
+ assert.equal(matchesKeywords('香水ZX99','香氛品牌新品',topicTerms('香水ZX99')),false);
+ assert.equal(matchesKeywords('香水','品牌发布全新 fragrance 系列',topicTerms('香水')),true);
+});
 
 test('an indexed seed finds a different publisher by product and merges that evidence without accepting unrelated launches',async t=>{
  const now=new Date().toISOString(),calls=[];

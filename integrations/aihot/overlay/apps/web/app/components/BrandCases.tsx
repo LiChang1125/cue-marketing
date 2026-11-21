@@ -1,4 +1,4 @@
-import {useEffect,useState} from "react";
+import {useEffect,useRef,useState} from "react";
 import {useLocation,useNavigate} from 'react-router';
 import "./brand-search.css";
 import BrandStory,{storyLink} from './BrandStory';
@@ -76,37 +76,51 @@ function SearchRow({item}:{item:Item}){
   </div></li>;
 }
 export default function BrandCases(props:{query?:string;compact?:boolean}){
-  const id=new URLSearchParams(useLocation().search).get('story');
-  return id&&/^[a-f0-9]{20}$/.test(id)?<BrandStory key={id} id={id}/>:<ReadingCases {...props}/>;
+  const location=useLocation();
+  const id=new URLSearchParams(location.search).get('story');
+  return id&&/^[a-f0-9]{20}$/.test(id)?<BrandStory key={id} id={id}/>:<ReadingCases key={location.key} {...props}/>;
 }
 function TopicSearch({query=""}:{query?:string}){
- const [term,setTerm]=useState(query),navigate=useNavigate();
+ const [term,setTerm]=useState(query),navigate=useNavigate(),input=useRef<HTMLInputElement>(null);
+ const location=useLocation();
+ useEffect(()=>{if(location.state?.focusTopic)input.current?.focus();},[location.key,location.state]);
  const target=import.meta.env.VITE_PUBLIC_DATA==="true"?"/search":"/all";
- return <form role="search" className="pulse-topic-search" onSubmit={e=>{e.preventDefault();if(term.trim())navigate(target+"?q="+encodeURIComponent(term.trim()));}}>
- <input type="search" maxLength={100} aria-label="搜索品牌、IP 或营销主题" placeholder="搜索品牌、IP 或营销主题" value={term} onChange={e=>setTerm(e.target.value)}/><button>搜索</button></form>;
+ function clear(){setTerm("");if(query)navigate("/hot",{state:{focusTopic:true}});else input.current?.focus();}
+ return <form role="search" className="pulse-topic-search" onSubmit={e=>{e.preventDefault();const q=term.trim();if(q)navigate(target+"?q="+encodeURIComponent(q));else clear();}}>
+ <input ref={input} type="search" maxLength={100} aria-label="搜索品牌、IP 或营销主题" placeholder="搜索品牌、IP 或营销主题" value={term} onKeyDown={e=>{if(e.key==="Escape"){e.preventDefault();clear();}}} onChange={e=>setTerm(e.target.value)}/>
+ <button type="submit">搜索</button>{(term||query)&&<button type="button" aria-label="清空搜索" onClick={clear}>×</button>}</form>;
 }
 function ReadingCases({query="",compact=false}:{query?:string;compact?:boolean}){
   const {data,failed,retry}=useBrandData<Result>(query?"/api/brand-pulse/search?q="+encodeURIComponent(query):"/api/brand-pulse/hot");
-  const [visibleRelated,setVisibleRelated]=useState(12);const [visible,setVisible]=useState(24);useEffect(()=>setVisible(24),[query]);
-  const [sort,setSort]=useState("推荐"),items=[...(data?.results||[])];
+  const [visibleRelated,setVisibleRelated]=useState(12),[requestedPage,setPage]=useState(1);
+  const [sort,setSort]=useState("推荐"),[role,setRole]=useState(""),[days,setDays]=useState("30");
+  function resetPage(){setPage(1);setVisibleRelated(12);}
+  function selectRows(rows:Item[]){
+    if(!query)return rows;
+    const cutoff=Date.now()-Number(days)*86400000;
+    const list=rows.filter(r=>(!role||(r.role||"media")===role)&&Date.parse(r.publishedAt)>=cutoff);
+    if(sort==="最新")list.sort((a,b)=>Date.parse(b.publishedAt)-Date.parse(a.publishedAt));
+    if(sort==="证据评分")list.sort((a,b)=>(b.review?.score??0)-(a.review?.score??0));
+    return list;
+  }
+  const items=selectRows(data?.results||[]),related=selectRows(data?.relatedArticles||[]);
+  const pages=Math.max(1,Math.ceil(items.length/24)),page=Math.min(requestedPage,pages);
   useEffect(()=>{
     if(query||compact||!data?.patterns?.length||!location.hash.startsWith("#trend-"))return;
     let id;try{id=decodeURIComponent(location.hash.slice(1));}catch{return;}
     const section=document.getElementById(id);
     if(section instanceof HTMLDetailsElement){section.open=true;section.scrollIntoView({block:"start"});}
   },[query,compact,data?.patterns]);
-  if(sort==="最新")items.sort((a,b)=>Date.parse(b.publishedAt)-Date.parse(a.publishedAt));
-  if(sort==="证据评分")items.sort((a,b)=>(b.review?.score??0)-(a.review?.score??0));
   return <section aria-label={query?"近期营销案例":"当前品牌热点"} className="mb-6">
     {!compact&&<header className="pulse-hot-header mb-5"><div>{!query&&<p className="mb-1 text-xs font-bold text-accent">● 动态热度</p>}<h1 className="text-3xl font-bold text-ink">{query?"主题搜索":"品牌热点榜"}</h1>{!query&&<p className="mt-2 text-sm text-ink-3">近 7 天的消费营销趋势 · 按近 48 小时报道人气排序</p>}</div><TopicSearch query={query}/></header>}
 
-    {query&&data?.brief?.reach&&<p className="mb-2 text-xs text-ink-3">{data.brief.reach.liveCases!=null?("联网找到 "+data.brief.reach.liveCases+" 个案例 · "):""}共 {items.length} 个案例{data.brief.searching?" · 正在联网检索…":""}{data.relatedArticles?.length?(" · "+data.relatedArticles.length+(data.relatedLabel?" 篇相关动态":" 篇相关报道")):""}</p>}
+    {query&&data?.brief?.reach&&<p className="mb-2 text-xs text-ink-3">{data.brief.reach.liveCases!=null?("联网找到 "+data.brief.reach.liveCases+" 个案例 · "):""}共 {items.length} 个案例{data.brief.searching?" · 正在联网检索…":""}{related.length?(" · "+related.length+(data.relatedLabel?" 篇相关动态":" 篇相关报道")):""}</p>}
     <div className="mb-2 flex items-center justify-between gap-2"><h2 className="font-semibold text-ink">{query?"近 30 天 · 品牌现场":compact?"正在发生":"本期热点"}</h2>
-    {compact?<a href={import.meta.env.VITE_PUBLIC_DATA==="true"?"#/hot":"/hot"} className="text-sm text-accent">完整榜单 ↗</a>:query?<select aria-label="事件排序" className="rounded-full bg-well px-2 py-1 text-sm" value={sort} onChange={e=>setSort(e.target.value)}>{["推荐","最新","证据评分"].map(s=><option key={s}>{s}</option>)}</select>:<small className="text-ink-4">参与者 · 24 小时走势 · 热度指数</small>}</div>
+    {compact?<a href={import.meta.env.VITE_PUBLIC_DATA==="true"?"#/hot":"/hot"} className="text-sm text-accent">完整榜单 ↗</a>:query?<div className="pulse-filters"><select aria-label="来源类型" value={role} onChange={e=>{setRole(e.target.value);resetPage();}}><option value="">全部来源</option>{Object.entries(labels).map(([key,label])=><option key={key} value={key}>{label}</option>)}</select><select aria-label="时间范围" value={days} onChange={e=>{setDays(e.target.value);resetPage();}}>{["7","14","30"].map(n=><option key={n} value={n}>近 {n} 天</option>)}</select><select aria-label="事件排序" className="rounded-full bg-well px-2 py-1 text-sm" value={sort} onChange={e=>{setSort(e.target.value);resetPage();}}>{["推荐","最新","证据评分"].map(s=><option key={s}>{s}</option>)}</select></div>:<small className="text-ink-4">参与者 · 24 小时走势 · 热度指数</small>}</div>
     {!data&&<p role="status" className="py-3 text-sm text-ink-3">{failed?<button onClick={retry}>重新加载</button>:query?"正在查找近期案例…":"正在汇集品牌报道…"}</p>}
-    {data&&<>{query?<><ol>{items.slice(0,visible).map(r=><SearchRow key={r.url} item={r}/>)}</ol>{items.length>visible&&<button className="rounded-full bg-well px-4 py-2" onClick={()=>setVisible(n=>n+24)}>更多案例（还有 {items.length-visible} 个）</button>}</>:compact?<ol>{items.slice(0,3).map((r,i)=><HeatRow key={r.storyId||r.url} item={r} index={i}/>)}</ol>:<><div className="grid gap-3 lg:grid-cols-[2fr_1fr]">{items.slice(0,3).map((r,i)=><Podium key={r.storyId||r.url} item={r} index={i}/>)}</div>{items.length>3&&<><h2 className="mb-2 mt-6 font-semibold text-ink">继续看 <span className="ml-1 text-sm font-normal text-ink-3">No.04–{items.length}</span></h2><ol start={4} className="card px-4">{items.slice(3).map((r,i)=><HeatRow key={r.storyId||r.url} item={r} index={i+3}/>)}</ol></>}</>}
-    {!items.length&&!data.relatedArticles?.length&&<p className="py-4 text-sm text-ink-3">{query?(data.brief?.coverage.some(s=>s.reason)?"部分公开来源暂未返回，本次尚未核实近期案例。":"近 30 天尚未找到可核实的案例。"):"近 48 小时暂无符合选题的事件。"}</p>}
-    {query&&Boolean(data.relatedArticles?.length)&&<section className="mt-5"><h3 className="font-semibold">{data.relatedLabel||'相关报道'}</h3><ul>{data.relatedArticles?.slice(0,visibleRelated).map(r=><SearchRow key={r.url} item={r}/>)}</ul>{(data.relatedArticles?.length||0)>visibleRelated&&<button onClick={()=>setVisibleRelated(n=>n+24)}>更多相关动态</button>}</section>}
+    {data&&<>{query?<><ol aria-label="匹配案例" start={(page-1)*24+1}>{items.slice((page-1)*24,page*24).map(r=><SearchRow key={r.url} item={r}/>)}</ol>{pages>1&&<nav aria-label="案例分页" className="pulse-pages"><button disabled={page===1} onClick={()=>setPage(page-1)}>上一页</button><span aria-live="polite">第 {page} / {pages} 页</span><button disabled={page===pages} onClick={()=>setPage(page+1)}>下一页</button></nav>}</>:compact?<ol>{items.slice(0,3).map((r,i)=><HeatRow key={r.storyId||r.url} item={r} index={i}/>)}</ol>:<><div className="grid gap-3 lg:grid-cols-[2fr_1fr]">{items.slice(0,3).map((r,i)=><Podium key={r.storyId||r.url} item={r} index={i}/>)}</div>{items.length>3&&<><h2 className="mb-2 mt-6 font-semibold text-ink">继续看 <span className="ml-1 text-sm font-normal text-ink-3">No.04–{items.length}</span></h2><ol start={4} className="card px-4">{items.slice(3).map((r,i)=><HeatRow key={r.storyId||r.url} item={r} index={i+3}/>)}</ol></>}</>}
+    {!items.length&&!related.length&&!data.brief?.searching&&<p className="py-4 text-sm text-ink-3">{query?(role||days!=="30"?"当前筛选条件下没有匹配案例。":data.brief?.coverage.some(s=>s.reason)?"部分公开来源暂未返回，本次尚未核实近期案例。":"近 30 天尚未找到可核实的案例。"):"近 48 小时暂无符合选题的事件。"}</p>}
+    {query&&Boolean(related.length)&&<section className="mt-5"><h3 className="font-semibold">{data.relatedLabel||'相关报道'}</h3><ul>{related.slice(0,visibleRelated).map(r=><SearchRow key={r.url} item={r}/>)}</ul>{related.length>visibleRelated&&<button onClick={()=>setVisibleRelated(n=>n+24)}>更多相关动态</button>}</section>}
     {query&&data.brief&&<details className="py-2 text-xs text-ink-4"><summary>检索与证据</summary>{data.brief.coverage.map(s=><p key={s.name}>{s.name} · {s.count?s.count+" 条相关案例":s.reason||("已读取 "+s.read+" 条，未命中")}</p>)}<p className="mt-2">可展开各条报道查看评分依据与原文。</p></details>}
     {!query&&!compact&&<details className="py-2 text-xs text-ink-4"><summary>指数依据 · 本榜涉及 {data.reportingOutlets} 个报道来源</summary><p className="mt-2">每个趋势汇集近 7 天的多个案例，近 48 小时至少有两个独立来源报道，同一事件的转载归并，已识别的同集团分站合并。每个来源按最近一篇计 10 分，每过 24 小时减半。曲线按已获取原文的发布时间回算，涨跌与 24 小时前相比。</p></details>}</>}
     {!query&&!compact&&Boolean(data?.patterns?.length)&&<section aria-label="跨品牌动向" className="mb-6"><h2 className="mb-2 font-semibold">跨品牌动向 <span className="text-xs font-normal text-ink-3">近 7 天</span></h2><div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{data?.patterns?.map(p=><details id={"trend-"+p.label} key={p.label} className="card p-3"><summary className="cursor-pointer text-sm font-semibold">{p.label}<span className="mt-1 block text-xs font-normal text-ink-3">{p.count} 个事件 · {p.brands.length} 个品牌或 IP · {p.origins} 个来源</span></summary><p className="mt-2 text-xs text-ink-3">{p.brands.slice(0,8).join("、")}</p>{p.examples.map(e=><a className="mt-2 block text-xs text-accent" key={e.url} href={e.url} target="_blank" rel="noreferrer">{e.title} ↗</a>)}</details>)}</div></section>}

@@ -14,6 +14,23 @@ const action=/首发|宣布|签约|上新|预售|启幕|上市|首店|開售|開
 const noise=/停止开展|全保护区|封山|禁止露营|关闭通告|应急部门|硬科技|飞猪|新发展理念|加快建设|政府工作|调研座谈|产业协同新图景|产业规模创新高|示范单位|长征路|示范区|贯彻|贯彻落实|促进经济|提振消费举措|新能源汽车下乡|无人机|科创板|大疆|芯片|智能戒指|智能硬件|机器人|千问|经验交流会|干部|招商引资|行业大会召开|国民经济|股民|炒作|芯片|半导体|算力|行业研报|股票|涨停|股价|概念板块|个股|券商|盘前|基金净值|上市公司公告|AI硬件|智能硬件|大盘|AI漫剧|AI模型|大模型|概念股|科技公司|电竞显卡|political campaign|beginner.s guide|优惠攻略|是什么意思|百科|游戏下载|免费下载|金融产品|大疆.{0,12}涨价|军事|政党|电竞鼠标|OpenAI|科技股|炒股|点此购买|优惠券|coupon code|election campaign/i;
 const clear=t=>String(t||'').replace(/<[^>]*>/g,' ').replace(/&amp;/g,'&').replace(/&#0?39;|&#8217;|&rsquo;/g,'’').replace(/&#8211;/g,'–').replace(/&quot;/g,'"').replace(/&nbsp;/g,' ').replace(/\s+/g,' ').trim();
 const norm=t=>clear(t).normalize('NFKC').toLowerCase();
+export function searchableText(row){
+ return [row.title,row.originalTitle,row.content,row.summary,row.excerpt,row.brand,row.brands,row.tags,row.channel,row.publisher,row.author,row.category].flat().filter(Boolean).join(' ');
+}
+export function matchesKeywords(query,text,aliases=[]){
+ const words=norm(query).split(/\s+/u).filter(Boolean),haystack=norm(text);
+ if(!words.length)return false;
+ if(words.length===1){
+   if(haystack.includes(words[0]))return true;
+   return aliases.some(alias=>{
+     const term=norm(alias);
+     if(!term||!haystack.includes(term))return false;
+     const group=vocabulary.find(g=>g.some(w=>norm(w)===term));
+     return !group||group.some(w=>norm(w)===words[0]);
+   });
+ }
+ return words.every(word=>haystack.includes(word)||vocabulary.some(group=>group.map(norm).includes(word)&&group.some(term=>haystack.includes(norm(term)))));
+}
 function urlOf(raw){
  try{let u=new URL(raw);if(u.hostname.endsWith('.bing.com')&&u.pathname==='/news/apiclick.aspx')u=new URL(u.searchParams.get('url'));
  if(!/^https?:$/.test(u.protocol)||u.username||u.password||u.pathname==='/')return;
@@ -269,19 +286,20 @@ async function translate(text,to,signal){
  const result=await getJson(backup,signal);return Number(result.responseStatus)===200?clear(result.responseData?.translatedText):'';
 }
 export async function publicTopicSearch(q,{index=[],publishers=[],signal,limit=Infinity,onProgress,supplement}={}){
- q=q.trim().slice(0,100);if(!q)throw Error('请输入主题');
+ q=q.normalize('NFKC').trim().slice(0,100);if(!q)throw Error('请输入主题');
+ if(!/[\p{L}\p{N}]/u.test(q)||/[<>]/u.test(q))return {results:[],relatedArticles:[],brief:{searching:false,coverage:[],reach:{readOrigins:0,readArticles:0,liveCases:0}}};
  const description=describeTopic(q);
  const terms=description?[...new Set([q,...description.platforms.flatMap(c=>c.names),...description.facets.flat()])]:topicTerms(q),now=Date.now(),coverage=[],found=new Map(),inspected=new Set(),origins=new Set();
  const indexByUrl=new Map(index.map(r=>[r.url,r]));
  const supporting=new Map(),related=new Map();
  const relevant=(r)=>{
    if(description)return descriptionMatches(description,r);
-   let text=norm([r.title,r.originalTitle,r.content].join(' '));
+   let text=norm(searchableText(r));
    // Some flower and fruit cultivar names contain the fragrance keyword but refer to crops.
    if(terms.includes('perfume')&&!/百合|柠檬|檸檬|椰|月季|菠萝|菠蘿/.test(q)){
      text=text.replace(/香水(?:百合|[柠檸][檬檸]|椰[子青]?|月季|菠[萝蘿])/gu,' ');
    }
-   return terms.some(t=>text.includes(norm(t)));
+   return matchesKeywords(q,text,terms);
  };
  function accept(rows,name,live,seeds=[]){
    let count=0;const previousRelated=related.size;
@@ -291,7 +309,7 @@ export async function publicTopicSearch(q,{index=[],publishers=[],signal,limit=I
      if(row.indexedDate){const dated=indexByUrl.get(url);if(!dated)continue;row.publishedAt=dated.publishedAt;}
      const at=Date.parse(row.publishedAt);if(!url||clear(row.title).length<7||!(at<=now&&now-at<=30*day))continue;
      const publisher=row.publisher||new URL(url).hostname.replace(/^www\./,'');inspected.add(url);origins.add(row.issuerChannel||new URL(url).hostname.replace(/^www\./,''));
-     const titleHit=relevant({...row,content:''});
+     const titleHit=relevant({...row,content:'',summary:'',excerpt:''});
      const passages=clear(row.content).split(/[。！？!?]|(?<=\.)\s+/u);
      if(!consumerContent(row)||excludedTopic(row.title)||noise.test(row.title)||/招商项目|生态红利|客商打造.{0,8}美好生活|发展大会召开/.test(row.title))continue;
      if(!relevant(row)){
