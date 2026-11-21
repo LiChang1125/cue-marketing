@@ -14,6 +14,8 @@ const action=/首发|宣布|签约|上新|预售|启幕|上市|首店|開售|開
 const noise=/停止开展|全保护区|封山|禁止露营|关闭通告|应急部门|硬科技|飞猪|新发展理念|加快建设|政府工作|调研座谈|产业协同新图景|产业规模创新高|示范单位|长征路|示范区|贯彻|贯彻落实|促进经济|提振消费举措|新能源汽车下乡|无人机|科创板|大疆|芯片|智能戒指|智能硬件|机器人|千问|经验交流会|干部|招商引资|行业大会召开|国民经济|股民|炒作|芯片|半导体|算力|行业研报|股票|涨停|股价|概念板块|个股|券商|盘前|基金净值|上市公司公告|AI硬件|智能硬件|大盘|AI漫剧|AI模型|大模型|概念股|科技公司|电竞显卡|political campaign|beginner.s guide|优惠攻略|是什么意思|百科|游戏下载|免费下载|金融产品|大疆.{0,12}涨价|军事|政党|电竞鼠标|OpenAI|科技股|炒股|点此购买|优惠券|coupon code|election campaign/i;
 const clear=t=>String(t||'').replace(/<[^>]*>/g,' ').replace(/&amp;/g,'&').replace(/&#0?39;|&#8217;|&rsquo;/g,'’').replace(/&#8211;/g,'–').replace(/&quot;/g,'"').replace(/&nbsp;/g,' ').replace(/\s+/g,' ').trim();
 const norm=t=>clear(t).normalize('NFKC').toLowerCase();
+const hardwareProduct=/固[态態]硬[盘碟]|内存条|記憶體模組|solid.state drive|\bNVMe\s+SSD\b|グラフィックカード/iu;
+const industryQuestion=/还有哪些机会|还有什么机会|生意.{0,10}机会|下一个风口|商机在哪里|如何打造爆款|how to (?:spot|build) a viral/iu;
 export function searchableText(row){
  return [row.title,row.originalTitle,row.content,row.summary,row.excerpt,row.brand,row.brands,row.tags,row.channel,row.publisher,row.author,row.category].flat().filter(Boolean).join(' ');
 }
@@ -311,7 +313,11 @@ export async function publicTopicSearch(q,{index=[],publishers=[],signal,limit=I
      const publisher=row.publisher||new URL(url).hostname.replace(/^www\./,'');inspected.add(url);origins.add(row.issuerChannel||new URL(url).hostname.replace(/^www\./,''));
      const titleHit=relevant({...row,content:'',summary:'',excerpt:''});
      const passages=clear(row.content).split(/[。！？!?]|(?<=\.)\s+/u);
-     if(!consumerContent(row)||excludedTopic(row.title)||noise.test(row.title)||/招商项目|生态红利|客商打造.{0,8}美好生活|发展大会召开/.test(row.title))continue;
+     if(!consumerContent(row)||excludedTopic(row.title)||hardwareProduct.test([row.title,row.originalTitle].join(' '))||noise.test(row.title)||/招商项目|生态红利|客商打造.{0,8}美好生活|发展大会召开/.test(row.title))continue;
+     if(description?.popular&&industryQuestion.test(row.title)&&relevant(row)&&!concreteAction.test(row.title)){
+       related.set(url,{...row,url,publisher,live,publishedAt:new Date(at).toISOString(),reports:[]});
+       continue;
+     }
      if(!relevant(row)){
        const parent=seeds.find(s=>s.url!==url&&sameCase(s,row));
        if(parent){
@@ -430,7 +436,7 @@ export async function publicTopicSearch(q,{index=[],publishers=[],signal,limit=I
  }
  const picked=[...grouped.values()].slice(0,limit*2);
  if(final)await visitIndustryDesks(picked.filter(r=>!han.test(r.title)||/[ぁ-ヿ]/.test(r.title)),async r=>{try{const title=await translate(r.title,'zh-CN',signal);if(han.test(title)){r.originalTitle=r.title;r.title=title;}}catch{}if(!han.test(r.content))r.content='';},signal);
- const results=picked.filter(r=>han.test(r.title)&&!/[ぁ-ヿ]/u.test(r.title)).slice(0,limit);
+ const results=picked.filter(r=>han.test(r.title)&&!/[ぁ-ヿ]/u.test(r.title)&&!hardwareProduct.test(r.title)&&!excludedTopic(r.title)).slice(0,limit);
  for(const r of results){
    const sources=new Set(r.reports.map(x=>new URL(x.url).hostname)).size;
    const grounds=['可回到原文','有明确发布日期',...(r.live?['本次联网命中']:[]),...(sources>1?['有其他报道可对读']:[])];

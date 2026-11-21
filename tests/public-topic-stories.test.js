@@ -6,6 +6,18 @@ import {clusterStories} from '../integrations/hot-monitor/brand-stories.mjs';
 import {load} from 'cheerio';
 import {communityNote,socialCase,issuerRelease} from '../scripts/public-case-sources.mjs';
 
+test('an industry discussion and a computer component do not count as confirmed consumer hits',async t=>{
+ t.mock.method(globalThis,'fetch',async()=>new Response(null,{status:503}));
+ const record={content:'消费品牌在小红书推出限定新品并售罄。',publishedAt:new Date().toISOString(),publisher:'独立出版物'};
+ const {results,relatedArticles}=await publicTopicSearch('小红书爆款',{index:[
+  {...record,title:'小红书里的手作生意还有哪些机会？',url:'https://podcast.example/one'},
+  {...record,title:'固态硬盘联名推出小红书爆款礼盒',url:'https://computer.example/two'},
+  {...record,title:'晴野服装在小红书推出限定款后售罄',url:'https://fashion.example/three'}
+ ]});
+ assert.deepEqual(results.map(r=>r.url),['https://fashion.example/three']);
+ assert.deepEqual(relatedArticles.map(r=>r.url),['https://podcast.example/one']);
+});
+
 test('a specific product search keeps its model identifier while a category can match its translation',()=>{
  assert.equal(matchesKeywords('香水ZX99','香氛品牌新品',topicTerms('香水ZX99')),false);
  assert.equal(matchesKeywords('香水','品牌发布全新 fragrance 系列',topicTerms('香水')),true);
