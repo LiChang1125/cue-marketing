@@ -4,15 +4,17 @@ const market=/hotel|resort|hospitality|lager|beer|brewing|sporting goods|sports 
 // Direct evidence of a retail launch, consumer promotion or in-store activation can
 // establish the market without a predefined list of brands or product categories.
 export const retailActivation=/期间限定店|限时门店|开放预售|全(?:国|渠道)发售|指定零售商|线下首店|期間限定(?:ショップ|メニュー|販売)|公式オンライン(?:ストア|ショップ)|全国の.{0,10}店舗|店頭販売|店頭にて|予約販売|宿泊プラン|available (?:now )?(?:in stores|at (?:select|participating) retailers)|at retail locations|in-store (?:activation|launch|experience)|limited[- ]edition (?:collection|release)|flagship (?:store|opening)|consumer-facing campaign/iu;
+function companySubject(head){
+ return head.replace(/\bapple(?= (?:pie|cider|juice|cinnamon|tart|butter|fritter|flavou?r)\b)/gi,'fruit').replace(/(?:在|通过|登陆|入驻|借助|通过其)\s*(?:小红书|抖音|哔哩哔哩|京东|天猫|淘宝|美团|Instagram|TikTok|Amazon)(?=上|平台|渠道|发布|营销|上架|开售|发售|推出|活动)/gi,'在平台');
+}
 export function consumerContent(r){
  const title=String(r.title||''),original=String(r.originalTitle||'');
  const head=title+' '+original;
- const subject=head.replace(/\bapple(?= (?:pie|cider|juice|cinnamon|tart|butter|fritter|flavou?r)\b)/gi,'fruit').replace(/(?:在|通过|登陆|入驻|借助|通过其)\s*(?:小红书|抖音|哔哩哔哩|京东|天猫|淘宝|美团|Instagram|TikTok|Amazon)(?=上|平台|渠道|发布|营销|上架|开售|发售|推出|活动)/gi,'在平台');
- if(tech.test(subject)||irrelevant.test(head)||/\bWATCH (?:Ultimate|GT|Series|Fit)\s*\d|\b(?:smartwatch|smartphone|gaming keyboard|wireless earbuds)\b|智能手表|蓝牙耳机|电竞鼠标|手机评测/i.test(head))return false;
+ if(tech.test(companySubject(head))||irrelevant.test(head)||/\bWATCH (?:Ultimate|GT|Series|Fit)\s*\d|\b(?:smartwatch|smartphone|gaming keyboard|wireless earbuds)\b|智能手表|蓝牙耳机|电竞鼠标|手机评测/i.test(head))return false;
  const text=head+' '+String(r.content||r.excerpt||'').slice(0,700);
  return market.test(text)||retailActivation.test(text);
 }
-export function excludedTopic(topic){return tech.test(topic)||/^(苹果|小米|三星|索尼|科技|互联网|AI|Kimi|Meta|腾讯|百度|美团|阿里巴巴|亚马逊|谷歌|英伟达|微软|字节跳动)$/i.test(topic);}
+export function excludedTopic(topic){return tech.test(companySubject(String(topic)))||/^(苹果|小米|三星|索尼|科技|互联网|AI|Kimi|Meta|腾讯|百度|美团|阿里巴巴|亚马逊|谷歌|英伟达|微软|字节跳动)$/i.test(topic);}
 
 export function excludedSearchSource(row){
  const credits=[row.publisher,row.sourceName,row.attribution,row.author,row.publisherId,row.source];

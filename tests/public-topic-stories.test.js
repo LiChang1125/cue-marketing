@@ -1,7 +1,41 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {publicTopicSearch} from '../shared/public-topic-search.js';
+import {publicTopicSearch,describeTopic,descriptionMatches} from '../shared/public-topic-search.js';
+import {planTopic,qualify} from '../integrations/hot-monitor/topic-brief.mjs';
 import {clusterStories} from '../integrations/hot-monitor/brand-stories.mjs';
+
+test('descriptive searches use public query variants and require platform, category and popularity evidence',async t=>{
+ const q='抖音上最近走红的咖啡',pubDate=new Date().toISOString().slice(0,19).replace('T',' ');
+ const titles=['山海咖啡在抖音推出限定套装，首批售罄','山海咖啡在小红书推出限定套装，首批售罄','山海香水在抖音推出限定套装，首批售罄','山海咖啡在抖音推出限定套装','抖音发布咖啡爆款算法'];
+ const items=titles.map((title,i)=>({title,description:title,pubDate,link:'https://consumer.example/report/'+i}));
+ const calls=[];
+ t.mock.method(globalThis,'fetch',async input=>{
+   const url=new URL(input);
+   if(url.hostname==='api.rss2json.com'){
+     const term=new URL(url.searchParams.get('rss_url')).searchParams.get('q');calls.push(term);
+     if(term==='抖音 咖啡 售罄')return Response.json({status:'ok',items});
+   }
+   return Response.json([]);
+ });
+ const {results}=await publicTopicSearch(q);
+ assert.ok(calls.includes('抖音 咖啡 售罄'));assert.deepEqual(results.map(r=>r.title),[titles[0]]);
+ const native=planTopic(q);
+ for(const [i,title] of titles.entries())assert.equal(Boolean(qualify({title,content:title,publishedAt:new Date().toISOString(),source:'editorial',url:items[i].link},q,native)),i===0);
+});
+
+test('platform trend evidence can come from a dated report excerpt or original post',()=>{
+ const plan=describeTopic('小红书爆款');
+ const title='香氛品牌推出秋季限定礼盒';
+ assert.ok(descriptionMatches(plan,{title,content:'小紅書相关话题已有十二款新品售罄。'}));
+ assert.ok(descriptionMatches(plan,{title,summary:'RedNote 上已有 12 万次浏览。'}));
+ assert.ok(descriptionMatches(plan,{title,content:'首批售罄。',url:'https://www.xiaohongshu.com/explore/one'}));
+ assert.ok(!descriptionMatches(plan,{title,content:'在小红书上架。抖音首批售罄。'}));
+ assert.ok(!descriptionMatches(plan,{title,content:'品牌希望成为小红书热词，力争打造爆款。'}));
+ assert.ok(!descriptionMatches(plan,{title,content:'首批售罄。',url:'https://xiaohongshu.com.example.org/post'}));
+ const category=describeTopic('最近热卖的陶瓷餐具');
+ assert.ok(descriptionMatches(category,{title:'陶瓷餐具限定系列售罄'}));
+ assert.ok(!descriptionMatches(category,{title:'联名陶瓷花瓶售罄'}));
+});
 
 test('a new topic retrieves a recent public article even with an empty local index',async t=>{
   const now=new Date(),title='乌龙茶品牌推出春季茶香快闪';

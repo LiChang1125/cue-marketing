@@ -1,4 +1,4 @@
-import {topicTerms,searchIndustryArticles} from '../../shared/public-topic-search.js';
+import {topicTerms,searchIndustryArticles,describeTopic,descriptionMatches} from '../../shared/public-topic-search.js';
 import {localizeSearchHeadlines,brokenCopy} from './search-headline.mjs';
 import {regionalTerms,searchRegionalNews} from './regional-search.mjs';
 import {subjectOf,phraseMatches,translatedSubject,probeFragments,subjectPassage} from './query-language.mjs';
@@ -54,13 +54,15 @@ const marketVocabulary=[
 ];
 export const coversTerm=phraseMatches;
 export function planTopic(query){
+ const description=describeTopic(query);
+ if(description)return {description,terms:[...new Set([query,...description.facets.flat(),...description.platforms.flatMap(p=>p.names)])],probes:description.probes,subs:['advertising','marketing'],communityTerms:[description.base||query]};
  const aliases=topicTerms(query);
  const recipe=themes.find(t=>t.match.test(query))||themes.find(t=>aliases.some(a=>t.match.test(a)));
  const vocab=marketVocabulary.find(terms=>terms.some(t=>t.toLowerCase()===query.toLowerCase()));
  return recipe||{terms:vocab||aliases,probes:[query+' 联名',query+' 品牌活动'],subs:['advertising','marketing'],communityTerms:[query]};
 }
 export function qualify(row,query,plan,now=Date.now()){
- if(excludedSearchSource(row))return null;
+ if(excludedSearchSource(row)||!descriptionMatches(plan.description,row))return null;
  const at=Date.parse(row.publishedAt),title=row.title||'',text=[title,row.content,row.originalTitle].filter(Boolean).join(' ');
  const specialist=editorialBeat(query,row);
  if(excludedTopic(query)||excludedTopic(title)||excludedTopic(row.originalTitle||'')||(!specialist&&!consumerContent(row))||!(at<=now&&at>=now-30*day)||noise.test(title)||noise.test(row.originalTitle||'')||!/^https?:\/\//.test(row.url||''))return null;
@@ -82,18 +84,18 @@ export function qualify(row,query,plan,now=Date.now()){
  const topic=plan.terms.some(t=>coversTerm(topicText,t)||row.originalRead&&subjectPassage(String(row.content||'').slice(0,900),t))||(namedQuery&&coversTerm(topicText,namedQuery.replaceAll('-',' ')))
    ||(plan.terms.includes('亚文化')&&ipContext.test(text));
  const scoped=specialist||row.source==='reddit'&&(plan.curated||themes.includes(plan))&&plan.subs.some(s=>s.toLowerCase()===row.community?.toLowerCase());
- if(!topic&&!scoped)return null;
+ if(!topic&&!scoped&&!plan.description)return null;
  const actionText=text.replace(/(?:并非|未曾|否认|并未|没有)(?:与|和)?.{0,40}?(?:合作|联动|联名)/g,'');
- const signal=actions.find(([,re])=>re.test(title)&&actionText.includes(title))||actions.find(([,re])=>re.test(actionText.slice(0,650)));
+ const signal=actions.find(([,re])=>re.test(title)&&actionText.includes(title))||actions.find(([,re])=>re.test(actionText.slice(0,650)))||(plan.description?.popular&&['消费关注',/爆款|刷屏|热搜|走红|出圈|浏览量|讨论量|断货/iu]);
  if(!signal)return null;
  // An amenity in a list cannot substantiate a campaign about that amenity.
  // Use the original headline, since a localized excerpt may have become the card title.
- if(row.originalRead&&!scoped&&!plan.terms.some(t=>coversTerm(row.originalTitle||title,t))){
+ if(row.originalRead&&!scoped&&!plan.description&&!plan.terms.some(t=>coversTerm(row.originalTitle||title,t))){
    const sentences=String(row.content||'').split(/(?<=[。！？!?])|(?<=\.)\s+|\n/u);
    const connected=sentences.some(s=>plan.terms.some(t=>subjectPassage(s,t))&&actions.some(([,re])=>re.test(s)));
    if(!connected)return null;
  }
- if(/[抱爆]款/.test(query)&&!/(?:周边|谷子|商店|商品|限定|门店|餐饮|销量|售罄|快闪|联名|联乘|联动|手办|立牌|徽章|盲盒|グッズ|フィギュア|コラボ|merch|collectible|figurine|sold out|collab|pop.up|retail)/i.test(text))return null;
+ if(!plan.description&&/[抱爆]款/.test(query)&&!/(?:周边|谷子|商店|商品|限定|门店|餐饮|销量|售罄|快闪|联名|联乘|联动|手办|立牌|徽章|盲盒|グッズ|フィギュア|コラボ|merch|collectible|figurine|sold out|collab|pop.up|retail)/i.test(text))return null;
  if(/グラビア|胸元|美ボディ|水着姿|美脚|ショーパン|ミニスカ|かわいすぎる|肌見せ|脚線美|大反響|セクシー|プロポーション|プレイバック|ポージングにこだわり/i.test(title)&&!/(?:コラボキャンペーン|ブランド大使|公式アンバサダー)/.test(text))return null;
  if(/回顾|プレイバック|政治問題|外交|セクシー|かわいすぎる|称賛の嵐|軟体アイドル|コスプレ失敗|官宣离婚/.test(title))return null;
  const parties=text.match(entities)||[];
@@ -199,7 +201,7 @@ export function createTopicBrief(feed,localize,{publicationSearch,desk,archive,d
    for(const r of rows){if(r.url)examined.add(r.url);const id=originOf(r);if(id)readOrigins.add(id);}
    for(const r of rows){
      const date=Date.parse(r.publishedAt),headline=r.originalTitle||r.title||'';
-     if(excludedTopic(query)||!consumerContent(r)||noise.test(headline)||!/^https:\/\//.test(r.url||'')||!(date<=now&&date>=now-30*day))continue;
+     if(!descriptionMatches(plan.description,r)||excludedTopic(query)||!consumerContent(r)||noise.test(headline)||!/^https:\/\//.test(r.url||'')||!(date<=now&&date>=now-30*day))continue;
      if(r.source==='editorial'&&plan.terms.some(t=>coversTerm(headline,t)||(r.originalRead||r.firstPartyFeed)&&subjectPassage(r.content,t)))reading.set(r.url,r);
    }
    const hits=rows.map(r=>{
@@ -413,7 +415,7 @@ export function createTopicBrief(feed,localize,{publicationSearch,desk,archive,d
  }
  return async(query,searchWeb)=>{
   query=subjectOf(topicKey(query));
-  const key=query.toLowerCase(),dir=resolve(dataDir,'topic-results'),path=resolve(dir,createHash('sha256').update(key).digest('hex')+'.json');
+  const key=(describeTopic(query)?'description-v1:':'')+query.toLowerCase(),dir=resolve(dataDir,'topic-results'),path=resolve(dir,createHash('sha256').update(key).digest('hex')+'.json');
   let old=cache.get(key);
   if(!old){
    const saved=await readFile(path,'utf8').then(JSON.parse).catch(()=>null);

@@ -23,6 +23,56 @@ export function topicTerms(q){
  const text=norm(q),groups=vocabulary.filter(g=>g.some(w=>text.includes(w.toLowerCase())));
  return [...new Set([text,...groups.flat()])];
 }
+const channels=[
+ {names:['小红书','小紅書','rednote','xiaohongshu'],hosts:['xiaohongshu.com','xhslink.com']},
+ {names:['抖音','douyin'],hosts:['douyin.com']},
+ {names:['哔哩哔哩','哔哩','b站','bilibili'],hosts:['bilibili.com']},
+ {names:['微博','weibo'],hosts:['weibo.com','weibo.cn']},
+ {names:['instagram'],hosts:['instagram.com']},
+ {names:['tiktok'],hosts:['tiktok.com']}
+];
+const trendRequest=/爆款|爆品|热卖|热销|卖爆|走红|出圈|热门|人气|受欢迎|火爆|爆火|最火|很火|火了|viral/giu;
+const traction=/爆款|爆品|热卖|热销|卖爆|走红|出圈|刷屏|爆单|售罄|售空|断货|卖断|疯抢|热搜|热议|人气飙升|登顶|冲上.{0,8}榜|销量.{0,8}(?:增长|翻倍|突破|过万)|[\d.]+\s*[万亿千百][+余多]?\s*(?:次?(?:浏览|点赞|收藏|播放)|条(?:讨论|笔记)|件售出)|(?:售出|卖出).{0,8}[万亿]|went viral|sold out|best.sell(?:er|ing)/iu;
+export function describeTopic(query){
+ const raw=norm(query),platforms=channels.filter(c=>c.names.some(n=>raw.includes(n)));
+ const popular=Boolean(raw.match(trendRequest));
+ if(!platforms.length&&!popular)return null;
+ let subject=raw.replace(trendRequest,' ');
+ for(const platform of platforms)for(const name of platform.names)subject=subject.replaceAll(name,' ');
+ subject=subject.replace(/请(?:帮我)?|帮我|看看|查一下|搜索|最近|近期|有哪些|有什么|哪些|关于|平台上?|上面|品牌案例|营销案例|品牌动态|的(?:品牌|产品|商品|案例)(?=$|[？?\s])|^[\s上的]+|[\s的？?。]+$/gu,' ').trim();
+ const subjects=subject.split(/\s+/u).map(w=>w.replace(/^的|的$/gu,'')).filter(w=>w&&!/^(?:在|上|的|品牌|商品|产品|案例|什么|比较|最)$/u.test(w));
+ const facets=[];
+ for(let word of subjects){
+   for(const group of vocabulary){
+     const alias=group.filter(t=>word.includes(norm(t))).sort((a,b)=>b.length-a.length)[0];
+     if(alias){facets.push(group);word=word.replace(norm(alias),'');}
+   }
+   if(word)facets.push([word]);
+ }
+ const base=[...platforms.map(c=>c.names[0]),...subjects].join(' ');
+ const probes=[...new Set((popular?['爆款','种草','售罄']:['品牌','新品']).map(w=>(base+' '+w).trim()))];
+ return {platforms,facets,popular,probes,base};
+}
+export function descriptionMatches(plan,row){
+ if(!plan)return true;
+ const title=norm([row.title,row.originalTitle].join(' ')),body=norm(row.content||row.summary||row.excerpt);
+ let host='';
+ try{host=new URL(row.url).hostname;}catch{}
+ // Headlines supply context for excerpts. Keep distant, unrelated body mentions apart.
+ const sentences=body.split(/[。！？!?]|(?<=\.)\s+/u);
+ const onPlatform=c=>c.hosts.some(h=>host===h||host.endsWith('.'+h));
+ const positiveSignal=text=>traction.test(text.replace(/(?:如何|怎样|有望|有潜力|力争|争取|希望|尚未|并未|目标是)(?:做出|打造|成为|实现)?(?:一款|下一个)?(?:爆款|爆品|走红|出圈|售罄)/gu,''));
+ return sentences.some((sentence,i)=>{
+   const passage=title+' '+sentence+' '+(sentences[i+1]||'');
+   if(!plan.facets.every(f=>f.some(term=>passage.includes(norm(term)))))return false;
+   if(!plan.popular)return plan.platforms.every(c=>onPlatform(c)||c.names.some(n=>passage.includes(n)));
+   if(!positiveSignal(passage))return false;
+   return plan.platforms.every(c=>onPlatform(c)||[sentence,sentences[i+1]||''].some(line=>{
+     const evidence=title+' '+line;
+     return c.names.some(n=>evidence.includes(n))&&positiveSignal(evidence);
+   }));
+ });
+}
 function campaignLeads(title){
  const partners=[...title.matchAll(/([A-Za-z][A-Za-z0-9.'’ -]{1,22}?)\s+(?:x|×|✕)\s+([A-Za-z][A-Za-z0-9'.’-]{2,22})/gi)].flatMap(m=>[m[2],m[1].trim()]);
  const quoted=[...title.matchAll(/[《「“]([^》」”]{2,18})[》」”]/gu)].map(m=>m[1]);
@@ -90,9 +140,9 @@ export async function searchIndustryArticles(query,terms,english){
  if(!answered)throw Error('行业出版方暂不可读');
  return rows;
 }
-export async function chinesePress(term,signal,page=1){
+export async function chinesePress(term,signal,page=1,sort='time'){
  const kind='cmsArticleWebOld',param={uid:'',keyword:term,type:[kind],client:'web',clientType:'web',clientVersion:'curr',
-   param:{[kind]:{searchScope:'default',sort:'time',pageIndex:page,pageSize:50,preTag:'',postTag:''}}};
+   param:{[kind]:{searchScope:'default',sort,pageIndex:page,pageSize:50,preTag:'',postTag:''}}};
  const url=new URL('https://search-api-web.eastmoney.com/search/jsonp');
  url.search=new URLSearchParams({cb:'cue',param:JSON.stringify(param)});
  const response=await fetch(url,{credentials:'omit',signal:AbortSignal.any([AbortSignal.timeout(12000),...(signal?[signal]:[])])});
@@ -147,9 +197,11 @@ async function translate(text,to,signal){
 }
 export async function publicTopicSearch(q,{index=[],publishers=[],signal,limit=Infinity,onProgress,supplement}={}){
  q=q.trim().slice(0,100);if(!q)throw Error('请输入主题');
- const terms=topicTerms(q),now=Date.now(),coverage=[],found=new Map(),inspected=new Set(),origins=new Set();
+ const description=describeTopic(q);
+ const terms=description?[...new Set([q,...description.platforms.flatMap(c=>c.names),...description.facets.flat()])]:topicTerms(q),now=Date.now(),coverage=[],found=new Map(),inspected=new Set(),origins=new Set();
  const indexByUrl=new Map(index.map(r=>[r.url,r]));
  const relevant=(r)=>{
+   if(description)return descriptionMatches(description,r);
    let text=norm([r.title,r.originalTitle,r.content].join(' '));
    // Some flower and fruit cultivar names contain the fragrance keyword but refer to crops.
    if(terms.includes('perfume')&&!/百合|柠檬|檸檬|椰|月季|菠萝|菠蘿/.test(q)){
@@ -167,11 +219,14 @@ export async function publicTopicSearch(q,{index=[],publishers=[],signal,limit=I
      const publisher=row.publisher||new URL(url).hostname.replace(/^www\./,'');inspected.add(url);origins.add(row.issuerChannel||new URL(url).hostname.replace(/^www\./,''));
      const titleHit=relevant({...row,content:''});
      const passages=clear(row.content).split(/[。！？!?]|(?<=\.)\s+/u);
-     if(!relevant(row)||!consumerContent(row)||excludedTopic(row.title)||noise.test(row.title)||!action.test([row.title,row.content].join(' ')))continue;
-     if(!titleHit&&!live&&row.source==='editorial'&&!row.originalTitle)continue;
-     if(!titleHit&&!concreteAction.test(row.title)&&!campaignLeads(row.title).length)continue;
-     if(!titleHit&&!concreteAction.test(row.title)&&!passages.some(line=>relevant({title:line})&&concreteAction.test(line)))continue;
-     if(!titleHit&&!passages.some(line=>relevant({title:line})&&action.test(line)))continue;
+     if(!relevant(row)||!consumerContent(row)||excludedTopic(row.title)||noise.test(row.title))continue;
+     if(!action.test([row.title,row.content].join(' '))&&!(description?.popular&&traction.test([row.title,row.content].join(' '))))continue;
+     if(!titleHit&&!description){
+       if(!live&&row.source==='editorial'&&!row.originalTitle)continue;
+       if(!concreteAction.test(row.title)&&!campaignLeads(row.title).length)continue;
+       if(!concreteAction.test(row.title)&&!passages.some(line=>relevant({title:line})&&concreteAction.test(line)))continue;
+       if(!passages.some(line=>relevant({title:line})&&action.test(line)))continue;
+     }
      count++;const old=found.get(url);if(!old||live&&!old.live)found.set(url,{...row,url,publisher,source:'editorial',live,publishedAt:new Date(at).toISOString()});
    }
    coverage.push({name,read:rows.length,count,status:live?'本次联网':'近期索引'});
@@ -180,9 +235,13 @@ export async function publicTopicSearch(q,{index=[],publishers=[],signal,limit=I
  const lane=async(name,task)=>{try{accept(await task,name,true)}catch(e){if(signal?.aborted)return;coverage.push({name,read:0,count:0,status:'暂不可用',reason:e.message||'连接失败'})}};
  const groups=terms.filter(t=>t!==norm(q)),cn=groups.filter(t=>han.test(t));
  const focus=cn.find(x=>norm(x)!==norm(q)&&/漫|露營|香氛/.test(x))||cn[0]||q;
- const probes=[q,q+' 联名',q+' 新品',focus+' 品牌',...(cn.length?[cn[0]+' 联名']:[])];
+ const probes=description?[q,...description.probes]:[q,q+' 联名',q+' 新品',focus+' 品牌',...(cn.length?[cn[0]+' 联名']:[])];
  const tasks=[lane('近期新闻 · '+q,publicNews(q,signal,true)),lane('独立作者与出版物',readerSearch(q,signal)),lane('播客公开访谈',podcasts(q,signal))];
- const pressTerms=[...new Set([q,...cn.filter(t=>q.includes(t)&&t!==q)])].slice(0,3);
+ const pressTerms=description?[...new Set([q,...description.probes])]:[...new Set([q,...cn.filter(t=>q.includes(t)&&t!==q)])].slice(0,3);
+ if(description?.popular){
+   const signalTerm=(description.base+' 浏览量').trim();
+   tasks.push(lane('中文媒体相关报道 · '+signalTerm,chinesePress(signalTerm,signal,1,'default')));
+ }
  for(const term of pressTerms)tasks.push(lane('中文媒体 · '+term,(async()=>{
    const first=await chinesePress(term,signal);
    const last=Date.parse(first.at(-1)?.publishedAt);
@@ -190,7 +249,7 @@ export async function publicTopicSearch(q,{index=[],publishers=[],signal,limit=I
  })()));
  const newsQueries=[...new Set(probes.slice(1).reverse())];
  tasks.push((async()=>{for(const t of newsQueries){if(signal?.aborted)break;await lane('公开新闻 · '+t,publicNews(t,signal));}})());
- let en=terms.find(x=>/^[a-z][a-z '’-]*$/i.test(x));
+ let en=description?undefined:terms.find(x=>/^[a-z][a-z '’-]*$/i.test(x));
  if(!en&&han.test(q)){try{en=await translate(q,'en',signal);if(en)terms.push(en);}catch{}}
  if(en&&han.test(q))tasks.push(lane('海外独立出版',readerSearch(en,signal)));
  if(en&&han.test(q))tasks.push(lane('海外新闻 · '+en,publicNews(en+' collaboration',signal)));
