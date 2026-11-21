@@ -23,6 +23,16 @@ test('a specific product search keeps its model identifier while a category can 
  assert.equal(matchesKeywords('香水','品牌发布全新 fragrance 系列',topicTerms('香水')),true);
 });
 
+test('a consumer category mentioned in the name of industrial equipment does not establish relevance',async t=>{
+ t.mock.method(globalThis,'fetch',async()=>new Response(null,{status:503}));
+ const record={content:'品牌宣布新品上市。',publishedAt:new Date().toISOString(),publisher:'公开资讯'};
+ const {results}=await publicTopicSearch('巧克力',{index:[
+  {...record,title:'电池企业推出巧克力电池管家，换电站加速落地',url:'https://energy.example/system'},
+  {...record,title:'烘焙品牌发布双拼巧克力曲奇礼盒',url:'https://bakery.example/box'}
+ ]});
+ assert.deepEqual(results.map(r=>r.url),['https://bakery.example/box']);
+});
+
 test('an indexed seed finds a different publisher by product and merges that evidence without accepting unrelated launches',async t=>{
  const now=new Date().toISOString(),calls=[];
  const seed={title:'山海推出「雾岭」香水',content:'这款香水在微博售罄。',url:'https://consumer.example/launch',publishedAt:now,publisher:'消费观察',brands:['山海']};
