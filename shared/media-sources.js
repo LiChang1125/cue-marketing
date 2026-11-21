@@ -47,6 +47,8 @@ const rows=[
  ['marketingdive','Marketing Dive','https://www.marketingdive.com/','https://www.marketingdive.com/feeds/news/',true,true],
  ['iimedia','艾媒网','https://www.iimedia.cn/',null,false,true],
  ['tmtpost','钛媒体','https://www.tmtpost.com/','https://www.tmtpost.com/rss.xml',false,true],
+ ['luxe','华丽志','https://luxe.co/','https://luxe.co/feed',true,true],
+ ['modernretail','Modern Retail','https://www.modernretail.co/','https://www.modernretail.co/feed/',true,true],
 ];
 const entries={
  campaignbrief:['https://campaignbrief.com/feed/?paged=2','https://campaignbrief.com/feed/?paged=3'],

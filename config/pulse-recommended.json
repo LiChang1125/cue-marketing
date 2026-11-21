@@ -108,7 +108,8 @@
   {
    "name": "华丽志",
    "group": "国内营销垂直",
-   "url": "https://luxe.co"
+   "url": "https://luxe.co",
+   "feed": "https://luxe.co/feed"
   },
   {
    "name": "中国品牌网",
@@ -782,12 +783,14 @@
   {
    "name": "WWD",
    "group": "海外品牌 & 广告营销",
-   "url": "https://wwd.com"
+   "url": "https://wwd.com",
+   "feed": "https://wwd.com/feed/"
   },
   {
    "name": "AdExchanger",
    "group": "海外品牌 & 广告营销",
-   "url": "https://adexchanger.com"
+   "url": "https://adexchanger.com",
+   "feed": "https://www.adexchanger.com/feed/"
   },
   {
    "name": "CXL",
@@ -807,7 +810,8 @@
   {
    "name": "Retail Dive",
    "group": "海外零售 & 电商资讯",
-   "url": "https://retaildive.com"
+   "url": "https://retaildive.com",
+   "feed": "https://www.retaildive.com/feeds/news/"
   },
   {
    "name": "Digital Commerce 360",
@@ -817,7 +821,8 @@
   {
    "name": "Modern Retail",
    "group": "海外零售 & 电商资讯",
-   "url": "https://www.modernretail.co"
+   "url": "https://www.modernretail.co",
+   "feed": "https://www.modernretail.co/feed/"
   },
   {
    "name": "Retail TouchPoints",
@@ -997,7 +1002,8 @@
   {
    "name": "The Economist",
    "group": "海外商业 & 消费者智库",
-   "url": "https://www.economist.com"
+   "url": "https://www.economist.com",
+   "feed": "https://www.economist.com/business/rss.xml"
   },
   {
    "name": "Bloomberg",
@@ -1257,6 +1263,375 @@
    "name": "Marketing Examples",
    "group": "新闻聚合器、热点追踪与营销网址导航",
    "url": "https://marketingexamples.com/"
+  },
+  {
+   "name": "TLDR Marketing",
+   "group": "精选营销 Newsletter 与独立专栏",
+   "url": "https://tldr.tech/marketing"
+  },
+  {
+   "name": "The Marketing Millennials",
+   "group": "精选营销 Newsletter 与独立专栏",
+   "url": "https://themarketingmillennials.com",
+   "feed": "https://themarketingmillennials.com/feed/"
+  },
+  {
+   "name": "Link in Bio",
+   "group": "精选营销 Newsletter 与独立专栏",
+   "url": "https://www.linkinbio.news/",
+   "feed": "https://www.linkinbio.news/feed",
+   "role": "creator"
+  },
+  {
+   "name": "Why We Buy",
+   "group": "精选营销 Newsletter 与独立专栏",
+   "url": "https://customercamp.co/author/katelyn/",
+   "role": "creator"
+  },
+  {
+   "name": "Sunday Branding Newsletter",
+   "group": "精选营销 Newsletter 与独立专栏",
+   "url": "https://www.niksharma.co/",
+   "role": "creator"
+  },
+  {
+   "name": "Everyone Hates Marketers",
+   "group": "精选营销 Newsletter 与独立专栏",
+   "url": "https://www.everyonehatesmarketers.com/",
+   "role": "creator"
+  },
+  {
+   "name": "MKT1 Newsletter",
+   "group": "精选营销 Newsletter 与独立专栏",
+   "url": "https://newsletter.mkt1.co/",
+   "feed": "https://newsletter.mkt1.co/feed",
+   "role": "creator"
+  },
+  {
+   "name": "Future Commerce",
+   "group": "精选营销 Newsletter 与独立专栏",
+   "url": "https://www.futurecommerce.com/"
+  },
+  {
+   "name": "The Daily Carnage",
+   "group": "精选营销 Newsletter 与独立专栏",
+   "url": "https://carney.co/daily-carnage/"
+  },
+  {
+   "name": "Swipe Files",
+   "group": "精选营销 Newsletter 与独立专栏",
+   "url": "https://www.swipefiles.com/"
+  },
+  {
+   "name": "GTM Strategist",
+   "group": "精选营销 Newsletter 与独立专栏",
+   "url": "https://gtmstrategist.com/",
+   "role": "creator"
+  },
+  {
+   "name": "Growth Unhinged",
+   "group": "精选营销 Newsletter 与独立专栏",
+   "url": "https://www.growthunhinged.com/",
+   "role": "creator"
+  },
+  {
+   "name": "Creator Science",
+   "group": "精选营销 Newsletter 与独立专栏",
+   "url": "https://creatorscience.com/",
+   "feed": "https://creatorscience.com/rss/",
+   "role": "creator"
+  },
+  {
+   "name": "ICYMI",
+   "group": "精选营销 Newsletter 与独立专栏",
+   "url": "https://liahaberman.substack.com/",
+   "feed": "https://liahaberman.substack.com/feed",
+   "role": "creator"
+  },
+  {
+   "name": "Geekout",
+   "group": "精选营销 Newsletter 与独立专栏",
+   "url": "https://geekout.mattnavarra.com/archives",
+   "role": "creator"
+  },
+  {
+   "name": "Exit Five",
+   "group": "精选营销 Newsletter 与独立专栏",
+   "url": "https://exitfive.com/",
+   "feed": "https://exitfive.com/feed/"
+  },
+  {
+   "name": "The AI Marketing Generalist",
+   "group": "精选营销 Newsletter 与独立专栏",
+   "url": "https://www.kieranflanagan.io/",
+   "feed": "https://www.kieranflanagan.io/feed",
+   "role": "creator"
+  },
+  {
+   "name": "Considered Chaos",
+   "group": "精选营销 Newsletter 与独立专栏",
+   "url": "https://eugenehealey.substack.com/",
+   "feed": "https://eugenehealey.substack.com/feed",
+   "role": "creator"
+  },
+  {
+   "name": "Deez Links",
+   "group": "精选营销 Newsletter 与独立专栏",
+   "url": "https://www.deezlinks.com/",
+   "feed": "https://www.deezlinks.com/feed",
+   "role": "creator"
+  },
+  {
+   "name": "Behance",
+   "group": "品牌视觉、包装与创意设计灵感库",
+   "url": "https://behance.net"
+  },
+  {
+   "name": "Dribbble",
+   "group": "品牌视觉、包装与创意设计灵感库",
+   "url": "https://dribbble.com"
+  },
+  {
+   "name": "Awwwards",
+   "group": "品牌视觉、包装与创意设计灵感库",
+   "url": "https://awwwards.com"
+  },
+  {
+   "name": "The Dieline",
+   "group": "品牌视觉、包装与创意设计灵感库",
+   "url": "https://thedieline.com/",
+   "feed": "https://thedieline.com/feed/"
+  },
+  {
+   "name": "Packaging of the World",
+   "group": "品牌视觉、包装与创意设计灵感库",
+   "url": "https://packagingoftheworld.com/"
+  },
+  {
+   "name": "Dezeen",
+   "group": "品牌视觉、包装与创意设计灵感库",
+   "url": "https://dezeen.com",
+   "feed": "https://www.dezeen.com/feed/"
+  },
+  {
+   "name": "Frame",
+   "group": "品牌视觉、包装与创意设计灵感库",
+   "url": "https://frameweb.com/"
+  },
+  {
+   "name": "Abduzeedo",
+   "group": "品牌视觉、包装与创意设计灵感库",
+   "url": "https://abduzeedo.com",
+   "feed": "https://abduzeedo.com/rss.xml"
+  },
+  {
+   "name": "Muzli",
+   "group": "品牌视觉、包装与创意设计灵感库",
+   "url": "https://muz.li/blog/"
+  },
+  {
+   "name": "BP&O - Brand, Packaging & Opinion",
+   "group": "品牌视觉、包装与创意设计灵感库",
+   "url": "https://bpando.org",
+   "feed": "https://bpando.org/feed/",
+   "role": "creator"
+  },
+  {
+   "name": "Fonts In Use",
+   "group": "品牌视觉、包装与创意设计灵感库",
+   "url": "https://fontsinuse.com"
+  },
+  {
+   "name": "站酷 ZCOOL",
+   "group": "品牌视觉、包装与创意设计灵感库",
+   "url": "https://zcool.com.cn"
+  },
+  {
+   "name": "古田路9号",
+   "group": "品牌视觉、包装与创意设计灵感库",
+   "url": "https://gtn9.com"
+  },
+  {
+   "name": "视觉同盟",
+   "group": "品牌视觉、包装与创意设计灵感库",
+   "url": "https://visionunion.com"
+  },
+  {
+   "name": "BoF - The Business of Fashion",
+   "group": "消费、零售、美妆、快消与出海垂直媒体",
+   "url": "https://www.businessoffashion.com"
+  },
+  {
+   "name": "Glossy",
+   "group": "消费、零售、美妆、快消与出海垂直媒体",
+   "url": "https://www.glossy.co/",
+   "feed": "https://www.glossy.co/feed/"
+  },
+  {
+   "name": "Food Dive",
+   "group": "消费、零售、美妆、快消与出海垂直媒体",
+   "url": "https://www.fooddive.com/",
+   "feed": "https://www.fooddive.com/feeds/news/"
+  },
+  {
+   "name": "BeverageDaily",
+   "group": "消费、零售、美妆、快消与出海垂直媒体",
+   "url": "https://www.beveragedaily.com/",
+   "feed": "https://www.beveragedaily.com/arc/outboundfeeds/rss/"
+  },
+  {
+   "name": "FashionNetwork",
+   "group": "消费、零售、美妆、快消与出海垂直媒体",
+   "url": "https://ww.fashionnetwork.com/"
+  },
+  {
+   "name": "FBIF 食品饮料创新",
+   "group": "消费、零售、美妆、快消与出海垂直媒体",
+   "url": "https://www.foodtalks.cn/"
+  },
+  {
+   "name": "青眼",
+   "group": "消费、零售、美妆、快消与出海垂直媒体",
+   "url": "https://www.iqingyan.cn/"
+  },
+  {
+   "name": "懒熊体育",
+   "group": "消费、零售、美妆、快消与出海垂直媒体",
+   "url": "https://www.lanxiongsports.com"
+  },
+  {
+   "name": "体育大生意",
+   "group": "消费、零售、美妆、快消与出海垂直媒体",
+   "url": "https://www.sportsmoney.cn/"
+  },
+  {
+   "name": "白鲸出海",
+   "group": "消费、零售、美妆、快消与出海垂直媒体",
+   "url": "https://www.baijing.cn/",
+   "feed": "https://www.baijing.cn/feed"
+  },
+  {
+   "name": "雨果网",
+   "group": "消费、零售、美妆、快消与出海垂直媒体",
+   "url": "https://www.cifnews.com/"
+  },
+  {
+   "name": "品牌方舟 BrandArk",
+   "group": "消费、零售、美妆、快消与出海垂直媒体",
+   "url": "https://www.brandark.com/"
+  },
+  {
+   "name": "卖家之家",
+   "group": "消费、零售、美妆、快消与出海垂直媒体",
+   "url": "https://mjzj.com/"
+  },
+  {
+   "name": "赢商网",
+   "group": "消费、零售、美妆、快消与出海垂直媒体",
+   "url": "https://news.winshang.com/"
+  },
+  {
+   "name": "AdMonsters",
+   "group": "广告投放与效果增长",
+   "url": "https://www.admonsters.com/"
+  },
+  {
+   "name": "ChiefMartec",
+   "group": "广告投放与效果增长",
+   "url": "https://chiefmartec.com/",
+   "role": "creator"
+  },
+  {
+   "name": "WordStream Blog",
+   "group": "广告投放与效果增长",
+   "url": "https://wordstream.com/blog",
+   "feed": "https://www.wordstream.com/feed"
+  },
+  {
+   "name": "KlientBoost Blog",
+   "group": "广告投放与效果增长",
+   "url": "https://klientboost.com/blog"
+  },
+  {
+   "name": "Optimonk Blog",
+   "group": "广告投放与效果增长",
+   "url": "https://www.optimonk.com/blog"
+  },
+  {
+   "name": "VWO Blog",
+   "group": "广告投放与效果增长",
+   "url": "https://wingify.com/blog/",
+   "feed": "https://wingify.com/feed/"
+  },
+  {
+   "name": "Hotjar Blog",
+   "group": "广告投放与效果增长",
+   "url": "https://contentsquare.com/blog/"
+  },
+  {
+   "name": "Segment Blog",
+   "group": "广告投放与效果增长",
+   "url": "https://www.twilio.com/en-us/blog"
+  },
+  {
+   "name": "Braze Blog",
+   "group": "广告投放与效果增长",
+   "url": "https://www.braze.com/resources"
+  },
+  {
+   "name": "Klaviyo Blog",
+   "group": "广告投放与效果增长",
+   "url": "https://www.klaviyo.com/blog"
+  },
+  {
+   "name": "Sensor Tower（含原 data.ai）",
+   "group": "广告投放与效果增长",
+   "url": "https://sensortower.com/blog"
+  },
+  {
+   "name": "Financial Times",
+   "group": "商业财经、文化观察与社会心理资讯",
+   "url": "https://www.ft.com/retail-consumer",
+   "feed": "https://www.ft.com/retail-consumer?format=rss"
+  },
+  {
+   "name": "Wired 连线",
+   "group": "商业财经、文化观察与社会心理资讯",
+   "url": "https://wired.com",
+   "feed": "https://www.wired.com/feed/rss"
+  },
+  {
+   "name": "Quartz",
+   "group": "商业财经、文化观察与社会心理资讯",
+   "url": "https://qz.com"
+  },
+  {
+   "name": "Nautilus",
+   "group": "商业财经、文化观察与社会心理资讯",
+   "url": "https://nautil.us/",
+   "feed": "https://nautil.us/feed"
+  },
+  {
+   "name": "PsyPost",
+   "group": "商业财经、文化观察与社会心理资讯",
+   "url": "https://www.psypost.org/",
+   "feed": "https://www.psypost.org/feed/"
+  },
+  {
+   "name": "Similarweb Blog / Insights",
+   "group": "广告库、竞品追踪、数据图表与导航工具",
+   "url": "https://www.similarweb.com/blog/"
+  },
+  {
+   "name": "Our World in Data",
+   "group": "广告库、竞品追踪、数据图表与导航工具",
+   "url": "https://ourworldindata.org/",
+   "feed": "https://ourworldindata.org/atom.xml"
+  },
+  {
+   "name": "Chartr",
+   "group": "广告库、竞品追踪、数据图表与导航工具",
+   "url": "https://sherwood.news/chartr/newsletters/"
   }
  ],
  "bylines": [
@@ -1361,7 +1736,8 @@
   "营销智库",
   "市场部网",
   "全球HAOAD",
-  "浪潮新消费"
+  "浪潮新消费",
+  "跨通社"
  ],
  "references": [
   {
@@ -1443,6 +1819,91 @@
    "name": "创造狮导航",
    "url": "https://chuangzaoshi.com/",
    "kind": "网址导航"
+  },
+  {
+   "name": "SiteInspire",
+   "url": "https://siteinspire.com",
+   "kind": "网站设计案例库"
+  },
+  {
+   "name": "Typewolf",
+   "url": "https://typewolf.com",
+   "kind": "字体搭配资料库"
+  },
+  {
+   "name": "Pinterest",
+   "url": "https://pinterest.com",
+   "kind": "视觉资料库"
+  },
+  {
+   "name": "店小秘",
+   "url": "https://www.dianxiaomi.com/",
+   "kind": "跨境电商工具"
+  },
+  {
+   "name": "广大大",
+   "url": "https://www.socialpeta.com/",
+   "kind": "广告投放情报"
+  },
+  {
+   "name": "AppGrowing",
+   "url": "https://appgrowing.cn/",
+   "kind": "广告投放情报"
+  },
+  {
+   "name": "知乎",
+   "url": "https://zhihu.com",
+   "kind": "问答社区"
+  },
+  {
+   "name": "豆瓣",
+   "url": "https://douban.com",
+   "kind": "兴趣社区"
+  },
+  {
+   "name": "小红书商业动态 / 官方营销号",
+   "url": "https://e.xiaohongshu.com",
+   "kind": "官方营销平台"
+  },
+  {
+   "name": "B站商业观察 / 创作者中心",
+   "url": "https://member.bilibili.com",
+   "kind": "创作者平台"
+  },
+  {
+   "name": "Meta Ad Library",
+   "url": "https://facebook.com/ads/library",
+   "kind": "广告素材库"
+  },
+  {
+   "name": "TikTok Creative Center",
+   "url": "https://ads.tiktok.com/business/creativecenter",
+   "kind": "广告创意与趋势工具"
+  },
+  {
+   "name": "Google Ads Transparency Center",
+   "url": "https://adstransparency.google.com",
+   "kind": "广告透明度工具"
+  },
+  {
+   "name": "LinkedIn Ad Library",
+   "url": "https://www.linkedin.com/ad-library",
+   "kind": "广告素材库"
+  },
+  {
+   "name": "Statista",
+   "url": "https://statista.com",
+   "kind": "统计数据库"
+  },
+  {
+   "name": "Substack",
+   "url": "https://substack.com",
+   "kind": "订阅出版平台"
+  },
+  {
+   "name": "Product Hunt",
+   "url": "https://producthunt.com",
+   "kind": "产品发现平台"
   }
  ]
 }
