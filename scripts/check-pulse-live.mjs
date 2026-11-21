@@ -21,6 +21,8 @@ async function worker(){
    await page.waitForFunction(()=>[...document.querySelectorAll('main p')].some(p=>/共 \d+ 个案例/.test(p.textContent)&&!p.textContent.includes('正在联网检索')),null,{timeout:270000});
    const region=page.getByLabel('近期营销案例');
    row.summary=await region.locator('p').filter({hasText:/共 \d+ 个案例/}).first().innerText();
+   row.followup=Number(await region.locator('[data-followup-count]').getAttribute('data-followup-count'));
+   row.evidence=await region.locator('ol .case-interest').evaluateAll(items=>items.map(item=>({title:item.closest('li').querySelector('h3').textContent,reason:item.innerText,links:[...item.querySelectorAll('a')].map(a=>a.href)})));
    row.examples=await region.locator('ol li').evaluateAll(items=>items.slice(0,8).map(item=>({title:item.querySelector('h3 a').textContent,original:item.querySelector('h3 a').href,sources:[...item.querySelectorAll('details a')].map(a=>a.href)})));
    row.externalResponses=[...hosts].sort();
    if(!row.examples.length||!row.externalResponses.length)row.errors.push('未验证到案例或外部响应');

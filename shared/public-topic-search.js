@@ -1,4 +1,5 @@
 import {consumerContent,excludedTopic,excludedSearchSource} from '../integrations/hot-monitor/consumer-market.mjs';
+import {publisherIdentity} from '../integrations/hot-monitor/publisher-identity.mjs';
 // Public GET endpoints only. The same transport runs in browsers and in the Agent connector.
 const day=86400000;
 const vocabulary=[
@@ -113,7 +114,9 @@ export function caseAnchors(row){
  const partners=text.match(/^([^，：｜]{2,18}?)\s*[×✕]\s*([A-Za-z0-9. -]{2,22}|[\p{Script=Han}]{2,8}?(?=推出|发布|联名|系列|打造|$))/u);
  const account=snippet.match(/(?:^|[，。；、\s])([\p{Script=Han}A-Za-z·]{2,10})官方(?:小红书|微博|抖音|账号)/u)?.[1];
  const brands=[...new Set([...credited,launch,account,...(row.role==='official'?[row.publisher]:[]),...(partners?partners.slice(1,3):[])].filter(Boolean).map(w=>w.trim()).filter(w=>w.length>=2&&!/^(?:品牌|小红书|抖音|微博|如何|近日|今日|今年)/.test(w)))];
- const names=[...new Set([...brands,...product,...campaignLeads(text)])].filter(t=>t.length>=2&&t.length<=40&&!noise.test(t));
+ const endorsement=text.match(/^(.{2,9}?)成为(.{2,14}?)(?:品牌|全球|首位)?(?:代言人|大使)/u);
+ if(endorsement)brands.push(endorsement[2]);
+ const names=[...new Set([...brands,...product,...campaignLeads(text),...(endorsement?[endorsement[1]]:[])])].filter(t=>t.length>=2&&t.length<=40&&!noise.test(t));
  return {brands,products:product,names};
 }
 function sameCase(a,b){
@@ -132,6 +135,16 @@ function sameCase(a,b){
  const bi=s=>new Set(Array.from(s.slice(1),(_,i)=>s.slice(i,i+2)));
  const x=bi(t),y=bi(u),overlap=[...x].filter(n=>y.has(n)).length;
  if(overlap>=10&&overlap/(x.size+y.size-overlap)>=0.66)return true;
+ // A named campaign with the same specific measured figure can have unrelated-looking headlines.
+ if(a.content&&b.content){
+   const signature=r=>new Set((r.title+' '+r.content).match(/\d{2,}(?:\.\d+)?\s*[万亿]/gu)||[]);
+   const left=signature(a),right=signature(b);
+   if([...left].some(n=>right.has(n))){
+     const named=s=>s.match(/\b[A-Z]{2,}[A-Z\d]*\b|[《「“]([^》」”]{3,18})[》」”]/gu)||[];
+     const names=named(a.title).filter(n=>named(b.title).includes(n)&&!/^(IP|CEO|TOP|GMV|ROI|VIP)$/u.test(n));
+     if(names.length&&/联[名动]|合作|限定/.test(t)&&/联[名动]|合作|限定/.test(u))return true;
+   }
+ }
  const wordsA=eventWords(a.title),wordsB=eventWords(b.title);
  const common=wordsA.filter(w=>wordsB.includes(w));
  if(common.length>=3&&common.length>=Math.min(wordsA.length,wordsB.length)*0.6)return true;
@@ -160,6 +173,42 @@ function eventWords(title){
  if(headlineWords.size>=1500)headlineWords.clear();headlineWords.set(title,words);return words;
 }
 function titleKey(t){return norm(t).replace(/(?:\s*[|｜]\s*[^|｜]{2,20})$/u,'').replace(/[^\p{L}\p{N}]/gu,'');}
+function evidenceRow(row){
+ return {url:row.url,title:row.title,publisher:row.publisher,publishedAt:row.publishedAt,content:clear(row.content||row.excerpt).slice(0,900),metricDisplay:row.metricDisplay,attribution:row.attribution,role:row.role,copyId:row.copyId,live:row.live};
+}
+// A URL is an evidence link, not necessarily a second editorial voice.
+export function caseEvidence(rows){
+ const groups=[],observations=[],signals=[];
+ for(const r of rows){
+   const url=urlOf(r.url);if(!url)continue;
+   const publisher=r.publisher||new URL(url).hostname,raw=clear(r.content),headline=titleKey(r.title);
+   const keys=new Set(['site:'+publisherIdentity(url,r.attribution),'credit:'+norm(r.attribution||publisher)]);
+   if(headline.length>=8)keys.add('headline:'+headline);
+   if(raw.length>=60)keys.add('copy:'+titleKey(raw.slice(0,120)));
+   if(r.copyId)keys.add('id:'+r.copyId);
+   if(r.role==='official'||/美通社|PRNewswire|PR Newswire|Business Wire|GlobeNewswire/i.test(publisher+' '+raw.slice(0,100)))keys.add('press-release');
+   const matched=groups.filter(g=>[...keys].some(k=>g.keys.has(k)));
+   const group=matched.shift();
+   if(group){for(const k of keys)group.keys.add(k);for(const other of matched){for(const k of other.keys)group.keys.add(k);groups.splice(groups.indexOf(other),1);}}
+   else groups.push({keys,publisher,url});
+   const pattern=/(?:点赞|获赞|收藏(?:量)?|销量|售出|卖出|浏览量|阅读量|播放量|月销|销售额|浏览|赞)\s*(?:已达|达|累计|超过|突破|超|近|约|为)?\s*([\d,]+(?:\.\d+)?)\s*([亿万千]?)(?:\s*[余多+])?\s*(?:件|套|份|次|元|双|杯)?|([\d,]+(?:\.\d+)?)\s*([亿万千]?)\s*[余多+]?\s*(?:次|个|人次)?(?:点赞|收藏|浏览|播放|获赞)/gu;
+   const anchors=caseAnchors(r).names.map(norm);
+   for(const line of [r.metricDisplay||'',r.title||'',...raw.split(/[。！？!?；;]/u)]){
+     if(!line||/预计|预期|力争|目标|预测|计划达到|去年同期|去年销量|尚未|并未/.test(line))continue;
+     if(raw.length>240&&line!==r.title&&line!==r.metricDisplay&&!anchors.some(n=>norm(line).includes(n)))continue;
+     const market=line.match(/[^，,：。]{0,24}(?:售罄|断货|卖断货|售空|追加生产|开启补货|登上热搜)[^，,。]{0,15}/u);
+     if(market&&!signals.some(o=>o.url===url))signals.push({text:market[0],publisher,url});
+     for(const m of line.matchAll(pattern)){
+       const amount=Number((m[1]||m[3]).replaceAll(',',''))*({万:10000,亿:1e8,千:1000}[m[2]||m[4]]||1);
+       const before=line.slice(Math.max(0,m.index-22),m.index).split(/[,，。；：:]/u).at(-1);
+       const text=(before+m[0]).trim();
+       if(amount>0&&!observations.some(o=>o.url===url&&o.text===text))observations.push({text,publisher,url,material:amount>=100});
+     }
+   }
+ }
+ const independent=groups.map(({publisher,url})=>({publisher,url}));
+ return {observations,signals,independent,qualified:observations.some(o=>o.material)||independent.length>=2};
+}
 const defaults=[
  ['户外生活 OutSiDers','https://www.outsiders.com.tw','zh'],['电影与文化 Hypesphere','https://hypesphere.com','zh'],
  ['风格志 Style Master','https://www.stylemaster.com.tw','zh'],['明周时尚','https://www.mings.hk','zh'],
@@ -294,6 +343,7 @@ export async function publicTopicSearch(q,{index=[],publishers=[],signal,limit=I
  const terms=description?[...new Set([q,...description.platforms.flatMap(c=>c.names),...description.facets.flat()])]:topicTerms(q),now=Date.now(),coverage=[],found=new Map(),inspected=new Set(),origins=new Set();
  const indexByUrl=new Map(index.map(r=>[r.url,r]));
  const supporting=new Map(),related=new Map();
+ let leadsSearched=0;
  const relevant=(r)=>{
    if(description)return descriptionMatches(description,r);
    let text=norm(searchableText(r));
@@ -304,7 +354,7 @@ export async function publicTopicSearch(q,{index=[],publishers=[],signal,limit=I
    return matchesKeywords(q,text,terms);
  };
  function accept(rows,name,live,seeds=[]){
-   let count=0;const previousRelated=related.size;
+   let count=0;const previousRelated=related.size,previousFound=found.size;
    for(const row of rows){
      if(excludedSearchSource(row))continue;
      const url=urlOf(row.url);
@@ -313,17 +363,19 @@ export async function publicTopicSearch(q,{index=[],publishers=[],signal,limit=I
      const publisher=row.publisher||new URL(url).hostname.replace(/^www\./,'');inspected.add(url);origins.add(row.issuerChannel||new URL(url).hostname.replace(/^www\./,''));
      const titleHit=relevant({...row,content:'',summary:'',excerpt:''});
      const passages=clear(row.content).split(/[。！？!?]|(?<=\.)\s+/u);
-     if(!consumerContent(row)||excludedTopic(row.title)||hardwareProduct.test([row.title,row.originalTitle].join(' '))||noise.test(row.title)||/招商项目|生态红利|客商打造.{0,8}美好生活|发展大会召开/.test(row.title))continue;
+     const parent=seeds.find(s=>s.url!==url&&sameCase(s,row));
+     const context=parent?{...row,content:(row.content||'')+' '+parent.title+' '+(parent.content||'')}:row;
+     if(!consumerContent(context)||excludedTopic(row.title)||hardwareProduct.test([row.title,row.originalTitle].join(' '))||noise.test(row.title)||/招商项目|生态红利|客商打造.{0,8}美好生活|发展大会召开/.test(row.title))continue;
+     if(parent){
+       if(!supporting.has(parent.url))supporting.set(parent.url,new Map());
+       supporting.get(parent.url).set(url,evidenceRow({...row,url,publisher,live}));
+     }
      if(description?.popular&&industryQuestion.test(row.title)&&relevant(row)&&!concreteAction.test(row.title)){
        related.set(url,{...row,url,publisher,live,publishedAt:new Date(at).toISOString(),reports:[]});
        continue;
      }
      if(!relevant(row)){
-       const parent=seeds.find(s=>s.url!==url&&sameCase(s,row));
-       if(parent){
-         if(!supporting.has(parent.url))supporting.set(parent.url,new Map());
-         supporting.get(parent.url).set(url,{url,title:row.title,publisher,publishedAt:new Date(at).toISOString()});
-       }else if(description?.popular&&action.test(row.title+' '+(row.content||''))){
+       if(!parent&&description?.popular&&action.test(row.title+' '+(row.content||''))){
          const relaxed={...description,popular:false};
          const actualChannel=description.platforms.some(c=>c.names.includes(row.citation?.platform));
          if((description.platforms.length||description.facets.length)&&descriptionMatches(relaxed,{...row,content:(row.content||'')+(actualChannel?' '+row.citation.platform:'')})){
@@ -336,6 +388,8 @@ export async function publicTopicSearch(q,{index=[],publishers=[],signal,limit=I
        (row.brands?.length||caseAnchors(row).names.length||/系列|型号|配色|限定|品牌|[a-z]{2,}\s?\d{2,}/iu.test(row.title));
      if(!action.test([row.title,row.content].join(' '))&&!description?.popular&&!experience)continue;
      if(!titleHit&&!description){
+       const lead=passages.slice(0,2).join(' ').slice(0,190);
+       if(!relevant({title:lead})&&!caseAnchors(row).names.some(n=>passages.some(p=>norm(p).includes(norm(n))&&relevant({title:p})&&concreteAction.test(p))))continue;
        if(!live&&row.source==='editorial'&&!row.originalTitle)continue;
        if(!concreteAction.test(row.title)&&!campaignLeads(row.title).length)continue;
        if(!concreteAction.test(row.title)&&!passages.some(line=>relevant({title:line})&&concreteAction.test(line)))continue;
@@ -344,7 +398,7 @@ export async function publicTopicSearch(q,{index=[],publishers=[],signal,limit=I
      count++;const old=found.get(url);if(!old||live&&!old.live)found.set(url,{...row,url,publisher,source:'editorial',live,publishedAt:new Date(at).toISOString()});
    }
    coverage.push({name,read:rows.length,count,status:live?'本次联网':'近期索引'});
-   if(onProgress&&(count||related.size>previousRelated)&&!signal?.aborted)void compose(false).then(onProgress);
+   if(onProgress&&(found.size>previousFound||related.size>previousRelated)&&!signal?.aborted)void compose(false).then(onProgress);
  }
  const lane=async(name,task,seeds)=>{try{accept(await task,name,true,seeds)}catch(e){if(signal?.aborted)return;coverage.push({name,read:0,count:0,status:'暂不可用',reason:e.message||'连接失败'})}};
  const groups=terms.filter(t=>t!==norm(q)),cn=groups.filter(t=>han.test(t));
@@ -411,15 +465,48 @@ export async function publicTopicSearch(q,{index=[],publishers=[],signal,limit=I
  addIndex(index);
  if(supplement)tasks.push(supplement.then(async extra=>{if(signal?.aborted)return;addIndex(extra.items||[]);await Promise.all(searchPublishers(extra.publishers,6));}));
  await Promise.all(tasks);signal?.throwIfAborted();
- const seeds=[...found.values(),...Array.from(related.values()).filter(r=>r.citation||r.role==='official')];
- const candidateNames=seeds.map(r=>caseAnchors(r).names);
- const leads=[...new Set([...(candidateNames.map(names=>names[0]).filter(Boolean)),...candidateNames.flat()].filter(t=>!terms.map(norm).includes(norm(t))))].slice(0,6);
- await visitIndustryDesks(leads,async n=>{
-   const parents=seeds.filter(s=>caseAnchors(s).names.includes(n));
-   const archived=[...indexByUrl.values()].filter(r=>norm(r.title+' '+(r.excerpt||r.content||'')).includes(norm(n)));
-   accept(archived.map(r=>({...r,content:r.content||r.excerpt})),'关联原文 · '+n,false,parents);
-   await Promise.all([lane('品牌与产品 · '+n,chinesePress(n,signal,1,'default'),parents),lane('作者追踪 · '+n,podcasts(n,signal),parents),lane('活动后续 · '+n,publicNews(n+' '+subject,signal),parents)]);
- },signal);
+ const leads=new Map(),queryTerms=new Set(terms.map(norm));
+ const candidates=[...related.values(),...found.values()];
+ for(const row of candidates){
+   if(industryQuestion.test(row.title))continue;
+   const a=caseAnchors(row),parts=a.names.filter(n=>!queryTerms.has(norm(n)));
+   const fallback=eventWords(row.title).filter(w=>!queryTerms.has(w)).slice(0,3).join(' ');
+   const term=a.products.find(n=>!queryTerms.has(norm(n)))||parts[0]||fallback;
+   if(!term)continue;
+   if(!leads.has(term))leads.set(term,[]);
+   leads.get(term).push(row);
+ }
+ // Examine the complete public edition for every identified event, including leads beyond the live time budget.
+ const corpus=[...indexByUrl.values()].map(row=>({row,text:norm(row.title+' '+(row.content||row.excerpt||'').slice(0,300))}));
+ for(const [term,parents] of leads){
+   const words=norm(term).split(/\s+/u);
+   const matches=corpus.filter(x=>words.every(w=>x.text.includes(w))).map(x=>({...x.row,content:x.row.content||x.row.excerpt}));
+   if(matches.length)accept(matches,'关联原文 · '+term,false,parents);
+ }
+ const clock=AbortSignal.timeout(45000),followSignal=signal?AbortSignal.any([signal,clock]):clock;
+ const lanes=[...leads];
+ await visitIndustryDesks(lanes,async ([term,parents])=>{
+   leadsSearched++;
+   const a=caseAnchors(parents[0]),brand=a.brands[0];
+   const focus=brand&&term!==brand?brand+' '+term:term;
+   await Promise.all([
+     lane('品牌与产品 · '+term,chinesePress(term,followSignal,1,'default'),parents),
+     lane('作者追踪 · '+term,podcasts(term,followSignal),parents),
+     lane('公开笔记 · '+term,notePosts(term,followSignal),parents),
+     lane('作者专栏 · '+term,authorNotes(term,followSignal),parents),
+     lane('社区笔记与体验 · '+term,publicNews(focus+' (site:xiaohongshu.com/explore OR site:post.smzdm.com OR site:bilibili.com)',followSignal),parents),
+     ...(brand&&brand!==term?[lane('品牌动态 · '+brand,chinesePress(brand,followSignal,1,'default'),parents)]:[]),
+     lane('活动后续 · '+term,publicNews(focus,followSignal),parents),
+     lane('品牌发布 · '+term,publicNews(focus+' (site:prnasia.com OR site:prnewswire.com OR newsroom)',followSignal),parents)
+   ]);
+ },followSignal);
+ signal?.throwIfAborted();
+ for(const row of related.values()){
+   if(industryQuestion.test(row.title))continue;
+   const reports=[evidenceRow(row),...(supporting.get(row.url)?.values()||[])];
+   const eventSpecific=concreteAction.test(row.title)||row.citation||row.role==='official'||row.role==='creator'||reports.length>1;
+   if(eventSpecific&&!found.has(row.url)&&caseEvidence(reports).qualified)found.set(row.url,{...row,corroborated:true,live:row.live||reports.some(r=>r.live)});
+ }
  return compose(true);
  async function compose(final){
  const caseWeight=r=>(relevant({...r,content:''})?4:0)+(action.test(r.title)?4:0)+(r.live?3:0)+(r.content?1:0);
@@ -428,7 +515,7 @@ export async function publicTopicSearch(q,{index=[],publishers=[],signal,limit=I
  for(const hit of ranked){
    const archived=indexByUrl.get(hit.url);
    const row=hit.live&&archived?.originalTitle===hit.title&&han.test(archived.title)?{...hit,originalTitle:hit.title,title:archived.title}:hit;
-   const k=titleKey(row.originalTitle||row.title);if(!k)continue;const r={title:row.title,url:row.url,publisher:row.publisher,publishedAt:row.publishedAt};
+   const k=titleKey(row.originalTitle||row.title);if(!k)continue;const r=evidenceRow(row);
    const match=grouped.get(k)||[...grouped.values()].find(v=>sameCase(v,row));
    const evidence=[r,...(row.reports||[]).filter(report=>urlOf(report.url)&&!excludedSearchSource(report)),...(supporting.get(row.url)?.values()||[])];
    if(match){match.reports=[...new Map([...match.reports,...evidence].map(report=>[report.url,report])).values()];match.citation??=row.citation;}
@@ -438,7 +525,8 @@ export async function publicTopicSearch(q,{index=[],publishers=[],signal,limit=I
  if(final)await visitIndustryDesks(picked.filter(r=>!han.test(r.title)||/[ぁ-ヿ]/.test(r.title)),async r=>{try{const title=await translate(r.title,'zh-CN',signal);if(han.test(title)){r.originalTitle=r.title;r.title=title;}}catch{}if(!han.test(r.content))r.content='';},signal);
  const results=picked.filter(r=>han.test(r.title)&&!/[ぁ-ヿ]/u.test(r.title)&&!hardwareProduct.test(r.title)&&!excludedTopic(r.title)).slice(0,limit);
  for(const r of results){
-   const sources=new Set(r.reports.map(x=>new URL(x.url).hostname)).size;
+   const proof=caseEvidence(r.reports),sources=proof.independent.length;
+   r.interest={observations:[...proof.observations,...proof.signals].slice(0,4),sources:proof.independent};
    const grounds=['可回到原文','有明确发布日期',...(r.live?['本次联网命中']:[]),...(sources>1?['有其他报道可对读']:[])];
    r.review={score:Math.min(95,55+(r.live?10:0)+(r.content?8:0)+Math.min(3,sources)*5),grounds,accepted:true};
  }
@@ -447,6 +535,6 @@ export async function publicTopicSearch(q,{index=[],publishers=[],signal,limit=I
    if(!han.test(r.title)||/[ぁ-ヿ]/u.test(r.title)||[...grouped.values(),...relatedArticles].some(hit=>sameCase(hit,r)||hit.reports.some(p=>p.url===r.url)))continue;
    relatedArticles.push(r);if(relatedArticles.length>=limit)break;
  }
- return {results,relatedArticles,relatedLabel:'相关品牌动态 · 热度待核实',brief:{searching:!final,coverage:[...coverage],reach:{readOrigins:origins.size,readArticles:inspected.size,liveCases:results.filter(r=>r.live).length}}};
+ return {results,relatedArticles,relatedLabel:'相关品牌动态 · 热度待核实',brief:{searching:!final,coverage:[...coverage],reach:{readOrigins:origins.size,readArticles:inspected.size,liveCases:results.filter(r=>r.live).length,leadsSearched,promotedCases:results.filter(r=>r.corroborated).length}}};
 }
 }

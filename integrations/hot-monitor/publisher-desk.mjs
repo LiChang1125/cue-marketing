@@ -16,6 +16,13 @@ const clear=s=>String(s||'').replace(/\s+/g,' ').trim();
 const plain=s=>clear(load(String(s||''),null,false).text());
 // Public feeds issued by brands themselves and independent specialist publications.
 export const specialistFeeds=[
+ ['https://believeintherun.com/feed/','creator'],['https://www.thetoyinsider.com/feed/','media'],
+ ['https://www.foodnavigator.com/arc/outboundfeeds/rss/','media'],['https://hypebeast.com/zh/feed','media'],
+ ['https://www.franchisetimes.com/search/?f=rss','media'],['https://newsroom.alaskaair.com/feed/','official'],
+ ['https://www.mashed.com/feed/','media'],
+ ['https://bikerumor.com/feed/','media'],['https://www.beautifulwithbrains.com/feed/','creator'],
+ ['https://www.dairyreporter.com/arc/outboundfeeds/rss/','media'],['https://www.bakeryandsnacks.com/arc/outboundfeeds/rss/','media'],
+ ['https://www.prnewswire.com/rss/consumer-products-retail-latest-news/consumer-products-retail-latest-news-list.rss','official'],
  ['https://stories.hilton.com/feed','official'],['https://newsroom.hyatt.com/news-releases?pagetemplate=rss','official'],
  ['https://newsroom.chipotle.com/press-releases?pagetemplate=rss','official'],['https://newsroom.subway.com/Press-Releases?pagetemplate=rss','official'],
  ['https://www.snaxshot.com/feed','creator'],['https://www.magasin.ltd/feed','creator'],['https://www.blackbirdspyplane.com/feed','creator'],

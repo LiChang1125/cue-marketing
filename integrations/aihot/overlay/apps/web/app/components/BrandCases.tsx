@@ -7,11 +7,12 @@ import {useBrandData} from "../lib/use-brand-data";
 type Report={publisher:string;url:string;title:string;publishedAt:string};
 type Person={name:string;domain:string;avatar?:string;role:string;url:string};
 type Point={at:number;value:number};
-type Item={channel?:string;citation?:{url:string;platform:string};storyId?:string;url:string;title:string;content?:string;source:string;publisher?:string;brand?:string;author?:string;role?:string;image?:string;imageLocal?:string;people?:Person[];trend?:Point[];delta?:number|null;angle?:string;parties?:string[];reports:Report[];outlets:number;heat:number;score:number|null;metricDisplay?:string;publishedAt:string;review?:{score:number;grounds:string[];accepted:boolean}};
+type Evidence={text:string;publisher:string;url:string};
+type Item={interest?:{observations:Evidence[];sources:{publisher:string;url:string}[]};coverArticle?:{title:string;url:string};channel?:string;citation?:{url:string;platform:string};storyId?:string;url:string;title:string;content?:string;source:string;publisher?:string;brand?:string;author?:string;role?:string;image?:string;imageLocal?:string;people?:Person[];trend?:Point[];delta?:number|null;angle?:string;parties?:string[];reports:Report[];outlets:number;heat:number;score:number|null;metricDisplay?:string;publishedAt:string;review?:{score:number;grounds:string[];accepted:boolean}};
 type Coverage={name:string;count:number;read:number;status:string;reason?:string};
 const coverUrl=import.meta.env.VITE_PUBLIC_DATA==="true"?"../covers/brand.png":"/covers/brand.png";
 type Pattern={label:string;count:number;origins:number;brands:string[];examples:{title:string;url:string;brand:string}[]};
-type Result={relatedArticles?:Item[];relatedLabel?:string;patterns?:Pattern[];results:Item[];reportingOutlets?:number;brief?:{searching?:boolean;reach?:{liveCases?:number;readOrigins:number;matchedOrigins:number;readArticles:number;displayedOrigins:number};coverage:Coverage[]}};
+type Result={relatedArticles?:Item[];relatedLabel?:string;patterns?:Pattern[];results:Item[];reportingOutlets?:number;brief?:{searching?:boolean;reach?:{promotedCases?:number;liveCases?:number;readOrigins:number;matchedOrigins:number;readArticles:number;displayedOrigins:number};coverage:Coverage[]}};
 const labels:Record<string,string>={media:"媒体",official:"品牌官方",creator:"创作者",community:"社区"};
 const day=(s:string)=>new Intl.DateTimeFormat("zh-CN",{month:"numeric",day:"numeric",timeZone:"Asia/Shanghai"}).format(new Date(s));
 function picture(url?:string){
@@ -31,6 +32,13 @@ function Avatar({person}:{person:Person}){
   const [loaded,setLoaded]=useState(false),url=picture(person.avatar)||picture("https://"+person.domain+"/favicon.ico");
   return <span title={person.name} className="relative inline-flex size-7 items-center justify-center overflow-hidden rounded-full bg-well text-[10px] font-bold text-ink-2 ring-2 ring-bg">{person.name.slice(0,2)}{url&&<img loading="lazy" src={url} alt="" onLoad={()=>setLoaded(true)} onError={()=>setLoaded(false)} referrerPolicy="no-referrer" className={"absolute inset-0 size-full rounded-full bg-well object-contain p-1 "+(loaded?"opacity-100":"opacity-0")}/>}</span>;
 }
+function NewsCover({item}:{item:Item}){
+  const [failed,setFailed]=useState<string[]>([]);
+  const local=picture(item.imageLocal),remote=picture(item.image);
+  const source=[local&&import.meta.env.VITE_PUBLIC_DATA==="true"?".."+local:local,remote].find(s=>s&&!failed.includes(s));
+  if(!source||!item.coverArticle)return null;
+  return <a className="block aspect-[4/3] overflow-hidden rounded-tile" href={item.coverArticle.url} target="_blank" rel="noreferrer"><img loading="lazy" referrerPolicy="no-referrer" className="h-full w-full object-cover" src={source} alt={item.coverArticle.title} onError={()=>setFailed(old=>[...old,source])}/></a>;
+}
 function Curve({points}:{points:Point[]}){
   const [active,setActive]=useState<number|null>(null),point=active===null?null:points[active];
   return <div className="relative min-w-0 px-1" tabIndex={0} role="slider" aria-label="逐小时热度" aria-valuemin={0} aria-valuemax={23} aria-valuenow={active??23} aria-valuetext={point?String(point.value):String(points.at(-1)?.value)} onBlur={()=>setActive(null)}
@@ -43,8 +51,8 @@ function Curve({points}:{points:Point[]}){
 function HeatRow({item,index}:{item:Item;index:number}){
   const people=item.people||[];
   return <li className="border-t border-line-soft py-4">
-    <div className="grid grid-cols-[82px_minmax(0,1fr)] gap-3 sm:grid-cols-[110px_minmax(0,1fr)] lg:grid-cols-[112px_minmax(0,1fr)_minmax(230px,31%)] lg:items-center">
-      <div className="grid aspect-[4/3]"><Cover item={item}/></div>
+    <div className={item.coverArticle?"grid grid-cols-[82px_minmax(0,1fr)] gap-3 sm:grid-cols-[110px_minmax(0,1fr)] lg:grid-cols-[112px_minmax(0,1fr)_minmax(230px,31%)] lg:items-center":"grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(230px,31%)]"}>
+      {item.coverArticle&&<NewsCover item={item}/>}
       <div className="min-w-0"><p className="mb-1 text-xs font-semibold text-accent">{String(index+1).padStart(2,"0")}　{item.brand}</p><h3 className="line-clamp-2 font-semibold leading-snug text-ink"><a href={item.storyId?storyLink(item.storyId):item.url} target={item.storyId?undefined:"_blank"} rel="noreferrer">{item.title}</a></h3>{item.content&&<p className="mt-1.5 line-clamp-2 text-sm text-ink-3">{item.content}</p>}</div>
       <div className="col-span-2 grid grid-cols-[1fr_1.1fr_52px] items-center gap-3 lg:col-span-1">
         <div className="flex items-center -space-x-2">{people.slice(0,3).map(p=><Avatar key={p.url} person={p}/>)}{people.length>3&&<span className="relative rounded-full bg-well px-1.5 py-1 text-xs text-ink-3">+{people.length-3}</span>}</div>
@@ -59,7 +67,7 @@ function Podium({item,index}:{item:Item;index:number}){
   const progress=item.reports.filter(r=>r.url!==item.url&&/[一-龥]/.test(r.title)&&!/[ぁ-ヿ]/.test(r.title)).sort((a,b)=>b.publishedAt.localeCompare(a.publishedAt))[0];
   return <article className={"card flex min-w-0 flex-col justify-between p-5 "+(lead?"lg:row-span-2 lg:p-7":"lg:p-5")}>
     <div className="mb-4 flex items-center justify-between"><span className="mono text-xs font-bold tracking-widest text-accent">NO.{String(index+1).padStart(2,"0")}</span><small className="rounded-full bg-well px-2 py-1 text-ink-3">{item.delta==null?"新上榜":item.delta===0?"持平":(item.delta>0?"↑ ":"↓ ")+Math.abs(item.delta)+"%"}</small></div>
-    <div className={lead?"grid items-start gap-4 sm:grid-cols-[1.3fr_1fr]":""}><div><h3 className={lead?"text-2xl font-bold leading-tight text-accent lg:text-3xl":"text-lg font-semibold leading-snug text-ink"}><a href={item.storyId?storyLink(item.storyId):item.url} target={item.storyId?undefined:"_blank"} rel="noreferrer">{item.title}</a></h3>{item.content&&item.content!==item.title&&<p className={"mt-2 text-sm leading-relaxed text-ink-3 "+(lead?"line-clamp-4":"line-clamp-2")}>{item.content}</p>}</div>{lead&&<div className="grid aspect-[4/3] overflow-hidden rounded-tile"><Cover item={item}/></div>}</div>
+    <div className={item.coverArticle?(lead?"grid items-start gap-4 sm:grid-cols-[1.3fr_1fr]":"grid grid-cols-[1fr_28%] gap-3"):""}><div><h3 className={lead?"text-2xl font-bold leading-tight text-accent lg:text-3xl":"text-lg font-semibold leading-snug text-ink"}><a href={item.storyId?storyLink(item.storyId):item.url} target={item.storyId?undefined:"_blank"} rel="noreferrer">{item.title}</a></h3>{item.content&&item.content!==item.title&&<p className={"mt-2 text-sm leading-relaxed text-ink-3 "+(lead?"line-clamp-4":"line-clamp-2")}>{item.content}</p>}</div>{item.coverArticle&&<NewsCover item={item}/>}</div>
     {lead&&progress&&<p className="mt-4 line-clamp-2 text-sm"><strong className="mr-2 text-accent">最新进展</strong><a href={progress.url} target="_blank" rel="noreferrer">{progress.title}</a></p>}
     <div className="mt-4 flex flex-wrap items-end justify-between gap-2"><details className="min-w-0 text-xs text-ink-3"><summary className="cursor-pointer"><span className="mb-1 flex items-center -space-x-2">{people.slice(0,4).map(p=><Avatar key={p.url} person={p}/>)}{people.length>4&&<span className="rounded-full bg-well p-1">+{people.length-4}</span>}</span>{item.outlets} 个来源 · {people.length} 位报道参与者</summary>{people.map(p=><a key={p.url} className="mt-1 block text-accent" href={p.url} target="_blank" rel="noreferrer">{p.name} ↗</a>)}</details>
     <div className="flex items-end gap-2"><div className={lead?"w-24 lg:w-32":"w-16"}>{item.trend&&<Curve points={item.trend}/>}</div><strong className={lead?"num text-4xl":"num text-2xl"}>{item.heat}</strong></div></div>
@@ -71,6 +79,10 @@ function SearchRow({item}:{item:Item}){
     <h3 className="font-semibold text-ink"><a href={item.storyId?storyLink(item.storyId):item.url} target={item.storyId?undefined:"_blank"} rel="noreferrer">{item.title} ↗</a></h3>
     {item.content&&<p className="mt-1 line-clamp-2 text-sm text-ink-3">{item.content}</p>}
     {item.metricDisplay&&<p className="mt-2 text-xs text-ink-3">{item.metricDisplay}</p>}
+    {item.interest&&(item.interest.observations.length>0||item.interest.sources.length>1)&&<div className="case-interest"><strong>为何受关注</strong>
+      {item.interest.observations.slice(0,2).map(o=><p key={o.url+o.text}>{o.text} · <a href={o.url} target="_blank" rel="noreferrer">{o.publisher} ↗</a></p>)}
+      {item.interest.sources.length>1&&<p>{item.interest.sources.length} 个独立来源报道这项活动 · {item.interest.sources.slice(0,2).map(s=><a key={s.url} href={s.url} target="_blank" rel="noreferrer">{s.publisher} ↗ </a>)}</p>}
+    </div>}
     {item.citation&&<a className="mt-2 inline-block text-xs text-accent" href={item.citation.url} target="_blank" rel="noreferrer">{item.citation.platform}原帖（报道引用） ↗</a>}
     {item.review&&<details className="mt-2 text-xs text-ink-3"><summary>证据评分 {item.review.score}{item.reports.length>1?" · "+item.reports.length+" 篇出处":""}</summary><p className="mt-1">{item.review.grounds.join(" · ")}</p>{item.reports.map(r=><a className="mr-2 text-accent" key={r.url} href={r.url} target="_blank" rel="noreferrer">{r.publisher} ↗</a>)}</details>}
   </div></li>;
@@ -114,7 +126,7 @@ function ReadingCases({query="",compact=false}:{query?:string;compact?:boolean})
   return <section aria-label={query?"近期营销案例":"当前品牌热点"} className="mb-6">
     {!compact&&<header className="pulse-hot-header mb-5"><div>{!query&&<p className="mb-1 text-xs font-bold text-accent">● 动态热度</p>}<h1 className="text-3xl font-bold text-ink">{query?"主题搜索":"品牌热点榜"}</h1>{!query&&<p className="mt-2 text-sm text-ink-3">近 7 天的消费营销趋势 · 按近 48 小时报道人气排序</p>}</div><TopicSearch query={query}/></header>}
 
-    {query&&data?.brief?.reach&&<p className="mb-2 text-xs text-ink-3">{data.brief.reach.liveCases!=null?("联网找到 "+data.brief.reach.liveCases+" 个案例 · "):""}共 {items.length} 个案例{data.brief.searching?" · 正在联网检索…":""}{related.length?(" · "+related.length+(data.relatedLabel?" 篇相关动态":" 篇相关报道")):""}</p>}
+    {query&&data?.brief?.reach&&<p data-followup-count={data.brief.reach.promotedCases} className="mb-2 text-xs text-ink-3">{data.brief.reach.liveCases!=null?("联网找到 "+data.brief.reach.liveCases+" 个案例 · "):""}共 {items.length} 个案例{data.brief.searching?" · 正在联网检索…":""}{related.length?(" · "+related.length+(data.relatedLabel?" 篇相关动态":" 篇相关报道")):""}</p>}
     <div className="mb-2 flex items-center justify-between gap-2"><h2 className="font-semibold text-ink">{query?"近 30 天 · 品牌现场":compact?"正在发生":"本期热点"}</h2>
     {compact?<a href={import.meta.env.VITE_PUBLIC_DATA==="true"?"#/hot":"/hot"} className="text-sm text-accent">完整榜单 ↗</a>:query?<div className="pulse-filters"><select aria-label="来源类型" value={role} onChange={e=>{setRole(e.target.value);resetPage();}}><option value="">全部来源</option>{Object.entries(labels).map(([key,label])=><option key={key} value={key}>{label}</option>)}</select><select aria-label="时间范围" value={days} onChange={e=>{setDays(e.target.value);resetPage();}}>{["7","14","30"].map(n=><option key={n} value={n}>近 {n} 天</option>)}</select><select aria-label="事件排序" className="rounded-full bg-well px-2 py-1 text-sm" value={sort} onChange={e=>{setSort(e.target.value);resetPage();}}>{["推荐","最新","证据评分"].map(s=><option key={s}>{s}</option>)}</select></div>:<small className="text-ink-4">参与者 · 24 小时走势 · 热度指数</small>}</div>
     {!data&&<p role="status" className="py-3 text-sm text-ink-3">{failed?<button onClick={retry}>重新加载</button>:query?"正在查找近期案例…":"正在汇集品牌报道…"}</p>}

@@ -23,6 +23,9 @@ async function lookup(path,signal,onProgress){
 export function useBrandData(path){
   const [state,setState]=useState({}),[attempt,setAttempt]=useState(0);
   useEffect(()=>{let active=true,pending=false;const stop=new AbortController();async function refresh(){if(pending)return;pending=true;try{const data=await lookup(path,stop.signal,data=>{if(active)setState({data,path})});if(active)setState({data,path})}catch{if(active)setState({failed:true,path})}finally{pending=false}}
-    refresh();const timer=setInterval(()=>{if(!document.hidden)refresh()},path.includes("/search?")?300000:60000);return()=>{active=false;stop.abort();clearInterval(timer)}},[path,attempt]);
+    refresh();const timer=setInterval(()=>{if(!document.hidden)refresh()},path.includes("/search?")?300000:60000);
+    const resume=()=>{if(!document.hidden&&path.endsWith('/hot'))refresh();};
+    document.addEventListener('visibilitychange',resume);
+    return()=>{active=false;stop.abort();clearInterval(timer);document.removeEventListener('visibilitychange',resume)}},[path,attempt]);
   return {...(state.path===path?state:{}),retry:()=>setAttempt(n=>n+1)};
 }

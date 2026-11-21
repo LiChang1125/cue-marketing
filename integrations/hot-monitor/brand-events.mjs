@@ -114,7 +114,7 @@ export function eventCards(rows,now=Date.now()){
     if(!event.image&&row.image)event.image=row.image;
     const copy=String(row.content||row.excerpt||'').normalize('NFKC').replace(/<[^>]*>/g,'').replace(/\s+/g,' ').trim().slice(0,240);
     const copyId=copy.length>=80?createHash('sha256').update(copy).digest('hex').slice(0,24):null;
-    event.reports.push({publisher,copyId,issuerChannel:row.issuerChannel,author:row.author,role:row.role,avatar:row.avatar,attribution:row.attribution,url:url.href,title:row.title,publishedAt:row.publishedAt});
+    event.reports.push({publisher,copyId,issuerChannel:row.issuerChannel,author:row.author,role:row.role,avatar:row.avatar,attribution:row.attribution,url:url.href,title:row.title,publishedAt:row.publishedAt,image:row.image});
     event.parties=[...new Set([...event.parties,...participants(row)])];
   }
   for(const e of events){

@@ -67,7 +67,8 @@ function describe(group,now){
  const trend=Array.from({length:24},(_,i)=>{const at=now-(23-i)*3600000;return {at,value:heatAt(reports,at)}});
  const storyId=id(group.key),kind=group.theme?'专题趋势':'事件追踪',title=group.theme||lead.title;
  const brands=[...new Set(group.events.flatMap(e=>consumerBrands(e.title)))];
- return {...lead,storyId,kind,title,reports,people,outlets:sources.size,heat,trend,delta:prior?Math.round((heat-prior)*100/prior):null,
+ const illustrated=reports.findLast(r=>/^https:\/\//.test(r.image||'')&&!/favicon|logo|placeholder|default[_-]img|\/covers\//i.test(r.image));
+ return {...lead,image:illustrated?.image,imageLocal:undefined,coverArticle:illustrated&&{url:illustrated.url,title:illustrated.title},storyId,kind,title,reports,people,outlets:sources.size,heat,trend,delta:prior?Math.round((heat-prior)*100/prior):null,
    brand:brands.slice(0,3).join(' × '),firstAt:reports[0].publishedAt,lastAt:reports.at(-1).publishedAt,
    content:group.theme?brands.slice(0,5).join('、')+'等品牌有 '+group.events.length+' 项相关动作，'+sources.size+' 个独立来源提供报道。':lead.content,
    eventCount:group.events.length,publishedAt:reports.at(-1).publishedAt};

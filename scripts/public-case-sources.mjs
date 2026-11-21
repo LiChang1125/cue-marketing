@@ -16,7 +16,8 @@ export function communityNote($){
    let item;try{item=JSON.parse($(node).text());}catch{continue;}
    if(item['@type']!=='Article'||!/^https:\/\/post\.smzdm\.com\/(?:talk\/)?p\/\w+\/$/.test(item.url||''))continue;
    const counts=(item.interactionStatistic||[]).filter(c=>Number.isSafeInteger(c.userInteractionCount)).flatMap(c=>{
-     const label=({LikeAction:'赞',CommentAction:'评论'})[c.interactionType?.split('/').pop()];
+     const action=typeof c.interactionType==='string'?c.interactionType:c.interactionType?.['@type'];
+     const label=({LikeAction:'赞',BookmarkAction:'收藏',CommentAction:'评论'})[action?.split('/').pop()];
      return label?[label+' '+c.userInteractionCount]:[];
    });
    return {url:item.url,title:item.headline,content:clean(item.description),publishedAt:item.datePublished,publisher:item.author?.name||'什么值得买社区',role:'creator',channel:'什么值得买',metricDisplay:counts.join(' · ')};

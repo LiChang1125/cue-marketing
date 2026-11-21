@@ -1,10 +1,36 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {publicTopicSearch,describeTopic,descriptionMatches,matchesKeywords,topicTerms} from '../shared/public-topic-search.js';
+import {publicTopicSearch,describeTopic,descriptionMatches,matchesKeywords,topicTerms,caseEvidence} from '../shared/public-topic-search.js';
 import {planTopic,qualify} from '../integrations/hot-monitor/topic-brief.mjs';
 import {clusterStories} from '../integrations/hot-monitor/brand-stories.mjs';
 import {load} from 'cheerio';
 import {communityNote,socialCase,issuerRelease} from '../scripts/public-case-sources.mjs';
+
+test('a related event without a social link can be promoted by a dated creator measurement for the same product',async t=>{
+ const date=new Date(Date.now()-3600000).toISOString(),term='蓝雀杯';
+ t.mock.method(globalThis,'fetch',async input=>{
+   const u=new URL(input);
+   if(u.hostname==='sspai.com'&&u.searchParams.get('tag')===term)return Response.json({error:0,data:[
+     {id:324,title:'青林「蓝雀杯」新品开箱体验',summary:'这款青林「蓝雀杯」的首发笔记获得收藏 5200 次。',released_time:Math.floor(Date.parse(date)/1000),author:{nickname:'杯具观察'}},
+     {id:325,title:'青林「银羽壶」新品线下首发',summary:'这款新品销量 9000 件。',released_time:Math.floor(Date.parse(date)/1000),author:{nickname:'零售观察'}}
+   ]});
+   return new Response(null,{status:503});
+ });
+ const {results,relatedArticles}=await publicTopicSearch('微博热卖',{index:[{url:'https://ceramics.example/launch',title:'青林推出「蓝雀杯」限定系列',content:'青林品牌官方在微博首发蓝雀杯，线下首店开放预售。',publisher:'家居刊物',brands:['青林'],publishedAt:date}]});
+ assert.equal(results.length,1);assert.ok(results[0].corroborated);assert.equal(relatedArticles.length,0);
+ assert.ok(results[0].interest.observations.some(o=>o.text.includes('5200')&&o.url==='https://sspai.com/post/324'));
+ assert.ok(!results[0].reports.some(r=>r.url.endsWith('325')));
+});
+
+test('syndication, shared publisher groups and aspirational metrics do not confirm interest',()=>{
+ const row={url:'https://www.fooddive.com/a',publisher:'Food Dive',title:'新茶饮推出限定樱花杯及配套礼盒',content:'预计销量突破 3000 件。'};
+ const sameGroup={...row,url:'https://www.retaildive.com/b',publisher:'Retail Dive',title:'到店体验春日花杯'};
+ const syndicated={...row,url:'https://mirror.example/news',publisher:'转载站'};
+ const proof=caseEvidence([row,sameGroup,syndicated]);
+ assert.equal(proof.independent.length,1);assert.equal(proof.qualified,false);
+ const original={url:'https://review.example/spring',publisher:'独立观察',title:'探访花杯首发现场，门店加开体验场'};
+ assert.equal(caseEvidence([row,original]).independent.length,2);assert.equal(caseEvidence([row,original]).qualified,true);
+});
 
 test('an industry discussion and a computer component do not count as confirmed consumer hits',async t=>{
  t.mock.method(globalThis,'fetch',async()=>new Response(null,{status:503}));
@@ -151,7 +177,9 @@ test('the trend leaderboard needs different campaigns and independent reporting'
  const one=item('a.example','麦当劳联名迪士尼推出限定套餐'),mirror=item('c.example',one.title);
  assert.deepEqual(clusterStories([one,mirror],now,{trendsOnly:true}),[]);
  const another=item('b.example','瑞幸联名宝可梦推出限定咖啡');
+ another.reports[0].image='https://b.example/img/coffee.jpg';
  const trends=clusterStories([one,mirror,another],now,{trendsOnly:true});
  assert.ok(trends.some(r=>r.title==='品牌与 IP 的联名合作'&&r.outlets===2));
  assert.ok(trends.every(r=>r.kind==='专题趋势'&&r.eventCount===r.cases.length&&r.eventCount>=2));
+ assert.ok(trends.every(r=>r.image===another.reports[0].image&&r.coverArticle.url===another.url));
 });

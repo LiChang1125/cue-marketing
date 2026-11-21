@@ -11,3 +11,5 @@
 .pulse-filters select,.pulse-pages button{color:inherit;border:1px solid var(--line,#d6dedb);background:var(--bg,#fff);border-radius:.45rem;padding:.3rem .45rem;font-size:.82rem}
 .pulse-pages{justify-content:center;margin:1rem auto;font-size:.85rem}
 .pulse-pages button:disabled{opacity:.45}
+.case-interest{margin:.55rem 0;padding-left:.7rem;border-left:2px solid var(--accent,#176a70);font-size:.8rem;line-height:1.6}
+.case-interest a{color:var(--accent,#176a70)}

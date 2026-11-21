@@ -4,6 +4,7 @@ import {tmpdir} from 'node:os';
 import {mkdtemp,rm} from 'node:fs/promises';
 import {join,resolve} from 'node:path';
 import {originalHref} from '../shared/original.js';
+import {createArticleService} from '../server/articles.js';
 import {consumerContent,excludedSearchSource,publicationCategory} from '../integrations/hot-monitor/consumer-market.mjs';
 import {currentHotspots,eventCards} from '../integrations/hot-monitor/brand-events.mjs';
 import {buildBrandTools,rankingFocus} from '../integrations/hot-monitor/brand-tools.mjs';
@@ -56,6 +57,23 @@ if(toTranslate.length){
  await writeFile(indexPath,JSON.stringify(index));
 }
 const events=await currentHotspots(()=>({items:[...list.map(r=>({...r,excerpt:r.content})),...indexed]}),localizeRows,undefined,undefined,{online:true})();
+// Only an image obtained from an article in this story can illustrate its ranking card.
+const pictures=createArticleService('.artifacts/public-articles');
+const usedPictures=new Set();
+await Promise.all(events.results.map(async story=>{
+ const reports=[...story.reports].reverse().sort((a,b)=>Number(Boolean(b.image))-Number(Boolean(a.image)));
+ story.image=undefined;story.imageLocal=undefined;story.coverArticle=undefined;
+ let alternate;
+ for(const report of reports.slice(0,6)){
+   const image=/^https:\/\//.test(report.image||'')&&!/logo|avatar|default[_-]img|placeholder|\/covers\//i.test(report.image)?report.image:undefined;
+   const asset=await pictures.enrich({url:report.url,image}).catch(()=>null);
+   if(!asset?.imageLocal||!asset.image)continue;
+   if(usedPictures.has(asset.imageLocal)){alternate??={image:asset.image,imageLocal:asset.imageLocal,coverArticle:{url:report.url,title:report.title}};continue;}
+   usedPictures.add(asset.imageLocal);story.image=asset.image;story.imageLocal=asset.imageLocal;
+   story.coverArticle={url:report.url,title:report.title};break;
+ }
+ if(!story.coverArticle&&alternate)Object.assign(story,alternate);
+}));
 const tools=buildBrandTools(list,at);
 tools.ranking=tools.ranking.map(b=>({...b,focus:rankingFocus(b.cases),reason:b.cases[0]?.title,example:b.cases[0]?.url,logo:logos[b.name]?new URL(logos[b.name].slice(1),base).href:undefined}));
 const items=list.map(({content,source,role,...r})=>({...r,summary:content}));
@@ -74,12 +92,13 @@ const paths={};
 for(const [p,id,field] of [['/agent/articles.json','latestArticles','items'],['/pulse/events.json','hotEvents','results']]){
   paths[p]={get:{operationId:id,responses:{200:{description:'本期已发布数据，含原文链接',content:{'application/json':{schema:{type:'object',required:['generatedAt',field],properties:{generatedAt:{type:'string',format:'date-time'},[field]:{type:'array',items:{type:'object',properties:{title:{type:'string'},url:{type:'string',format:'uri'},publishedAt:{type:'string',format:'date-time'}}}}}}}}}}}};
 }
-await Promise.all([put('agent/articles.json',{generatedAt,items}),put('pulse/events.json',{generatedAt,...events}),put('pulse/tools.json',tools),put('pulse/cases.json',{generatedAt,cases}),put('agent/feed.xml',rss),
+await Promise.all([put('agent/articles.json',{generatedAt,items}),put('pulse/events.json',{generatedAt:new Date(at).toISOString(),...events}),put('pulse/tools.json',tools),put('pulse/cases.json',{generatedAt,cases}),put('agent/feed.xml',rss),
  put('agent/openapi.json',{openapi:'3.1.0',info:{title:'CUE 公开数据',version:'1.0.0'},servers:[{url:base.replace(/\/$/,'')}],paths}),
  put('llms.txt','# CUE · 消费品牌与市场营销\n\n- [接入说明]('+base+'agent/)\n- [近 30 天报道]('+base+'agent/articles.json)\n- [热点榜与证据]('+base+'pulse/events.json)\n- [RSS]('+base+'agent/feed.xml)\n- [OpenAPI]('+base+'agent/openapi.json)\n\n数据随网站发布更新。引用报道时请保留发布方、发布日期及原文 URL。\n')]);
 // Keep the downloadable stdio connector a single file.
 const marketRules=await readFile('integrations/hot-monitor/consumer-market.mjs','utf8');
-const sharedSearch=(await readFile('shared/public-topic-search.js','utf8')).replace("import {consumerContent,excludedTopic,excludedSearchSource} from '../integrations/hot-monitor/consumer-market.mjs';",()=>marketRules);
+const identityRules=await readFile('integrations/hot-monitor/publisher-identity.mjs','utf8');
+const sharedSearch=(await readFile('shared/public-topic-search.js','utf8')).replace("import {consumerContent,excludedTopic,excludedSearchSource} from '../integrations/hot-monitor/consumer-market.mjs';",()=>marketRules).replace("import {publisherIdentity} from '../integrations/hot-monitor/publisher-identity.mjs';",()=>identityRules);
 const connector=(await readFile('public/agent/cue-agent.mjs','utf8')).replace("import {publicTopicSearch} from '../../shared/public-topic-search.js';",()=>sharedSearch);
 await put('agent/cue-agent.mjs',connector);
 console.log('公开文章',items.length,'热点',events.results.length,'品牌',tools.ranking.length);
