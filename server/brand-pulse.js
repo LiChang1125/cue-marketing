@@ -48,7 +48,7 @@ export function installBrandPulse(app,{feed,dataDir,allowed,publishHome,pollPubl
    const data=await collectHot();
    const retention=Date.now()-30*86400000;
    for(const [id,item] of stories)if(Date.parse(item.lastAt)<retention)stories.delete(id);
-   for(const item of data.results)stories.set(item.storyId,item);
+   for(const item of [...data.results,...Object.values(data.platformBoards).flatMap(board=>board.results)])stories.set(item.storyId,item);
    return data;
  };
  app.get('/api/brand-pulse/story',async(req,res)=>{
@@ -94,7 +94,11 @@ export function installBrandPulse(app,{feed,dataDir,allowed,publishHome,pollPubl
  });
  app.get('/api/brand-pulse/hot',async(req,res)=>{
    if(!allowed(req))return res.sendStatus(401);
-   try{res.json(await hotspots());}catch{res.status(503).json({error:'热点数据暂不可用'});}
+   try{
+     const data=await hotspots(),platform=req.query.platform;
+     if(platform&&!Object.hasOwn(data.platformBoards,platform))return res.sendStatus(400);
+     res.json(platform?data.platformBoards[platform]:data);
+   }catch{res.status(503).json({error:'热点数据暂不可用'});}
  });
  app.get('/api/brand-pulse/search',async(req,res)=>{
   const q=typeof req.query.q==='string'?req.query.q.trim():'';

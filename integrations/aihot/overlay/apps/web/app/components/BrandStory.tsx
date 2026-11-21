@@ -1,15 +1,18 @@
+import {useLocation} from 'react-router';
 import {useRef,useState} from 'react';
 import {useBrandData} from '../lib/use-brand-data';
 type Report={url:string;title:string;publisher:string;publishedAt:string;identity:string;stage:string;role?:string};
-type Story={storyId:string;kind:string;title:string;content?:string;outlets:number;heat:number;eventCount:number;cases?:Pick<Report,"url"|"title"|"publishedAt"|"publisher">[];firstAt:string;lastAt:string;reports:Report[];trend:{at:number;value:number}[]};
+type Story={platform?:string;storyId:string;kind:string;title:string;content?:string;outlets:number;heat:number;eventCount:number;cases?:Pick<Report,"url"|"title"|"publishedAt"|"publisher">[];firstAt:string;lastAt:string;reports:Report[];trend:{at:number;value:number}[]};
 const fmt=(s:string|number)=>new Intl.DateTimeFormat('zh-CN',{timeZone:'Asia/Shanghai',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(s));
-export const storyLink=(id:string)=> (import.meta.env.VITE_PUBLIC_DATA==='true'?'#/hot':'/hot')+'?story='+encodeURIComponent(id);
+export const storyLink=(id:string,platform?:string)=> (import.meta.env.VITE_PUBLIC_DATA==='true'?'#/hot':'/hot')+'?story='+encodeURIComponent(id)+(platform?'&platform='+encodeURIComponent(platform):'');
 export default function BrandStory({id}:{id:string}){
  const {data,failed,retry}=useBrandData<Story>('/api/brand-pulse/story?id='+encodeURIComponent(id));
  const [tab,setTab]=useState('事件概览'),[filter,setFilter]=useState('全部'),[hour,setHour]=useState(23);
  const sections=useRef<Record<string,HTMLElement|null>>({});
  const jump=(name:string)=>{setTab(name);sections.current[name]?.scrollIntoView({block:'start',behavior:'instant'});};
- const back=import.meta.env.VITE_PUBLIC_DATA==='true'?'#/hot':'/hot';
+ const platform=data?.platform||new URLSearchParams(useLocation().search).get('platform');
+ const scoped=platform==='douyin'||platform==='xiaohongshu';
+ const back=(import.meta.env.VITE_PUBLIC_DATA==='true'?'#/hot':'/hot')+(scoped?'?platform='+platform:'');
  if(!data)return <section><a href={back}>← 热点榜</a><p role="status">{failed?'这份事件档案暂不可读。':'正在读取事件档案…'}</p>{failed&&<button onClick={retry}>重新读取</button>}</section>;
  const reports=[...data.reports].sort((a,b)=>b.publishedAt.localeCompare(a.publishedAt)),latest=reports[0]!;
  const tabs=['事件概览','报道时间线','热度走势'];const stages=[...new Set(reports.map(r=>r.stage))];
@@ -19,7 +22,7 @@ export default function BrandStory({id}:{id:string}){
  const independent=[...new Map(reports.map(r=>[r.identity,r])).values()];
  const officials=reports.filter(r=>r.role==='official');
  const panel='card scroll-mt-4 p-4 sm:p-6';
- return <article className="mx-auto max-w-6xl pb-12"><a href={back} className="text-sm text-accent">← 品牌热点榜</a>
+ return <article className="mx-auto max-w-6xl pb-12"><a href={back} className="text-sm text-accent">← {platform==="douyin"?"抖音热点榜":platform==="xiaohongshu"?"小红书热点榜":"品牌热点榜"}</a>
  <header className="mt-5 border-b border-line-soft pb-5"><p className="text-sm font-semibold text-accent">{data.kind}</p><h1 className="my-3 text-3xl font-bold leading-tight lg:text-4xl">{data.title}</h1>
  <p className="text-sm text-ink-3">{reports.length} 篇报道 · {data.outlets} 个独立来源 · 首报 {fmt(data.firstAt)} · 最近进展 {fmt(data.lastAt)}</p></header>
  <nav className="my-4 flex flex-wrap gap-2" aria-label="事件详情">{tabs.map(t=><button key={t} aria-pressed={tab===t} onClick={()=>jump(t)} className={'rounded-full px-3 py-2 text-sm '+(tab===t?'bg-ink text-bg':'bg-well text-ink')}>{t}</button>)}</nav>

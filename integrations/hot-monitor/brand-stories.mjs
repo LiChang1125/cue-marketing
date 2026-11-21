@@ -72,7 +72,7 @@ function describe(group,now){
    content:group.theme?brands.slice(0,5).join('、')+'等品牌有 '+group.events.length+' 项相关动作，'+sources.size+' 个独立来源提供报道。':lead.content,
    eventCount:group.events.length,publishedAt:reports.at(-1).publishedAt};
 }
-export function clusterStories(events,now=Date.now(),{trendsOnly=false}={}){
+export function clusterStories(events,now=Date.now(),{trendsOnly=false,extraPatterns=[]}={}){
  const anchorMap=new Map(),byUrl=new Map(),groups=[];
  const active=events.filter(e=>now-Date.parse(e.publishedAt)<14*day).sort((a,b)=>a.publishedAt.localeCompare(b.publishedAt));
  for(const e of active){
@@ -83,7 +83,7 @@ export function clusterStories(events,now=Date.now(),{trendsOnly=false}={}){
  }
  const singles=trendsOnly?[]:groups.map(g=>describe(g,now)).filter(Boolean).sort((a,b)=>b.heat-a.heat||b.outlets-a.outlets);
  const themes=[];
- for(const [theme,action,sector] of patterns){
+ for(const [theme,action,sector] of [...patterns,...extraPatterns]){
    const members=[];
    for(const g of groups){
      const selected=g.events.filter(e=>{

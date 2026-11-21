@@ -64,7 +64,8 @@ await Promise.all(['agent','pulse'].map(d=>mkdir(resolve(out,d),{recursive:true}
 await mkdir(resolve(out,'pulse/stories'),{recursive:true});
 let previous=[];
 try{const response=await fetch(new URL('pulse/story-archive.json',base),{signal:AbortSignal.timeout(7500)});if(response.ok)previous=await response.json();}catch{}
-const archive=new Map([...events.results,...previous].filter(s=>/^[0-9a-f]{20}$/.test(s.storyId)&&at-Date.parse(s.lastAt)<30*86400000).reverse().map(s=>[s.storyId,s]));
+const platformStories=Object.values(events.platformBoards).flatMap(board=>board.results);
+const archive=new Map([...events.results,...platformStories,...previous].filter(s=>/^[0-9a-f]{20}$/.test(s.storyId)&&at-Date.parse(s.lastAt)<30*86400000).reverse().map(s=>[s.storyId,s]));
 await writeFile(resolve(out,'pulse/story-archive.json'),JSON.stringify([...archive.values()]));
 await Promise.all([...archive.values()].map(s=>writeFile(resolve(out,'pulse/stories',s.storyId+'.json'),JSON.stringify(s))));
 const put=(name,value)=>writeFile(resolve(out,name),typeof value==='string'?value:JSON.stringify(value));

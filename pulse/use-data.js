@@ -1,4 +1,5 @@
 import {publicTopicSearch} from '../shared/public-topic-search.js';
+import {fetchPlatformCharts,platformNames} from '../shared/platform-hot.js';
 import {useState,useEffect} from 'react';
 const base=new URL('../',document.baseURI),cache=new Map();
 async function read(file){
@@ -11,7 +12,16 @@ async function read(file){
 async function lookup(path,signal,onProgress){
   const url=new URL(path,base),route=url.pathname.split('/').pop();
   if(route==='story'){const id=url.searchParams.get('id');if(!/^[a-f0-9]{20}$/.test(id||''))throw Error('无效事件');return read('pulse/stories/'+id+'.json');}
-  if(route==='hot')return read('pulse/events.json');
+  if(route==='hot'){
+    const platform=url.searchParams.get('platform');
+    if(!platform)return read('pulse/events.json');
+    if(!Object.hasOwn(platformNames,platform))throw Error('未知榜单');
+    const [edition,charts]=await Promise.all([read('pulse/events.json'),fetchPlatformCharts(AbortSignal.any([signal,AbortSignal.timeout(6000)])).catch(()=>({}))]);
+    const board=edition.platformBoards?.[platform];
+    if(!board)throw Error('平台榜单未发布');
+    const chart=[charts[platform],board.chart].filter(v=>v&&Date.now()-Date.parse(v.observedAt)<86400000).sort((a,b)=>b.observedAt.localeCompare(a.observedAt))[0]||null;
+    return {...board,chart};
+  }
   if(route==='tools')return read('pulse/tools.json');
   if(route==='brand-cases'){
     const tools=await read('pulse/tools.json'),list=tools.ranking.find(x=>x.name===url.searchParams.get('brand'))?.cases||[];
