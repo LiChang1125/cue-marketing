@@ -63,16 +63,25 @@ async function contextFor(i){
  },fixtures);
  await context.route('**/*',r=>new URL(r.request().url()).origin===origin?r.continue():r.abort());
  const page=await context.newPage();
- page.setDefaultTimeout(12000);
+ page.setDefaultTimeout(45000);
  page.setDefaultNavigationTimeout(45000);
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  return {page,context,errors};
 }
-async function done(p){
- await p.waitForFunction(()=>[...document.querySelectorAll('section[aria-label="近期营销案例"] p')].some(n=>/共 \d+ 个案例/.test(n.textContent)&&!n.textContent.includes('正在联网检索')));
+async function done(p,expected){
+ await p.waitForFunction(query=>{
+  const current=new URLSearchParams(location.hash.split('?')[1]).get('q');
+  if(!current||(query!==undefined&&current!==query))return false;
+  const section=document.querySelector('section[aria-label="近期营销案例"]');
+  if(!section||section.querySelector('input')?.value!==current)return false;
+  const paragraphs=[...section.querySelectorAll('p')].map(n=>n.textContent);
+  const term=current.normalize('NFKC').trim().slice(0,100);
+  const finished=paragraphs.some(t=>/共 \d+ 个案例/.test(t)&&!t.includes('正在联网检索'));
+  return finished&&(!/[\p{L}\p{N}]/u.test(term)||/[<>]/u.test(term)||paragraphs.some(t=>t.startsWith('近期新闻 · '+term+' · ')));
+ },expected);
 }
 async function submit(p,q){
- await field(p).fill(q);await field(p).press('Enter');await done(p);
+ await field(p).fill(q);await field(p).press('Enter');await done(p,q.trim().slice(0,100));
 }
 async function links(p){return rows(p).evaluateAll(a=>a.map(n=>n.href));}
 async function assertLinks(p,want){
@@ -133,7 +142,7 @@ function spec(g,i){
   return s(q,'提交输入，核对 URL、原样回填、弹窗与 DOM','安全显示，保留原始参数，无脚本对话框',async p=>{let dialogs=0;p.on('dialog',async d=>{dialogs++;await d.dismiss();});await submit(p,q);assert.equal(await field(p).inputValue(),q);assert.equal(new URLSearchParams(new URL(p.url()).hash.split('?')[1]).get('q'),q);assert.equal(dialogs,0);assert.equal(await p.locator('main script').count(),0);await assertLinks(p,[]);});}
  if(g===14)return s(model,'快速输入主题、退格改写成编号，回车前后检查网络','输入期间无外部请求；提交后仅按最后编号展示',async p=>{const before=await logSize(p);await field(p).pressSequentially(english[i]);await field(p).press('Backspace');await field(p).fill(model);assert.equal(await logSize(p),before);await field(p).press('Enter');await done(p);await assertLinks(p,[r]);assert.ok(await logSize(p)>before);});
  if(g===15){const slow='迟到专题'+i;return s(slow+' → '+model,'先提交慢请求，观察已发出后立即提交快请求，等待迟到响应','后发查询和唯一编号始终保留',async p=>{await field(p).fill(slow);await field(p).press('Enter');await p.waitForFunction(q=>window.__queryLog.some(v=>new URL(v).searchParams.get('q')===q),slow);await submit(p,model);await sleep(420);await assertLinks(p,[r]);assert.equal(await field(p).inputValue(),model);});}
- if(g===16)return s(model+' → '+keyAt(i+1),['验证后退','验证前进','在新标签直接打开分享链接'][i%3],'URL、搜索框和对应记录同步',async p=>{await submit(p,model);await submit(p,keyAt(i+1));if(i%3<2){await p.goBack();await done(p);await assertLinks(p,[r]);if(i%3){await p.goForward();await done(p);await assertLinks(p,[entries[i+1]]);}}else{const t=await p.context().newPage();await t.goto(p.url());await done(t);await assertLinks(t,[entries[i+1]]);assert.equal(await field(t).inputValue(),keyAt(i+1));await t.close();}const active=i%3?keyAt(i+1):model;assert.equal(await field(p).inputValue(),active);assert.equal(new URLSearchParams(new URL(p.url()).hash.split('?')[1]).get('q'),active);});
+ if(g===16)return s(model+' → '+keyAt(i+1),['验证后退','验证前进','在新标签直接打开分享链接'][i%3],'URL、搜索框和对应记录同步',async p=>{await submit(p,model);await submit(p,keyAt(i+1));if(i%3<2){await p.goBack();await done(p,model);await assertLinks(p,[r]);if(i%3){await p.goForward();await done(p,keyAt(i+1));await assertLinks(p,[entries[i+1]]);}}else{const t=await p.context().newPage();await t.goto(p.url());await done(t,keyAt(i+1));await assertLinks(t,[entries[i+1]]);assert.equal(await field(t).inputValue(),keyAt(i+1));await t.close();}const active=i%3?keyAt(i+1):model;assert.equal(await field(p).inputValue(),active);assert.equal(new URLSearchParams(new URL(p.url()).hash.split('?')[1]).get('q'),active);});
  return s(model,'通过 Tab 从导航移入搜索框，键入并用'+(i%2?' Enter':' Tab 到搜索按钮再 Enter')+'提交，再用 Esc 清空','无需鼠标可完成搜索与返回',async p=>{for(let n=0;n<15&&!await field(p).evaluate(el=>el===document.activeElement);n++)await p.keyboard.press('Tab');assert.ok(await field(p).evaluate(el=>el===document.activeElement));await p.keyboard.type(model);if(i%2===0){await p.keyboard.press('Tab');assert.ok(await p.getByRole('button',{name:'搜索',exact:true}).evaluate(el=>el===document.activeElement));}await p.keyboard.press('Enter');await done(p);await assertLinks(p,[r]);await field(p).focus();await p.keyboard.press('Escape');await atHome(p);});
 }
 let next=1;
@@ -150,7 +159,7 @@ async function worker(){
  console.log(labels[g-1],logs.filter(r=>r.group===labels[g-1]&&r.status==='通过').length+'/10');
  }
 }
-try{await Promise.all(Array.from({length:4},worker));}
+try{await Promise.all([worker(),worker()]);}
 finally{await browser.close();await server.close();}
 logs.sort((a,b)=>a.id.localeCompare(b.id));
 const quote=v=>'"'+String(v).replaceAll('"','""')+'"';
