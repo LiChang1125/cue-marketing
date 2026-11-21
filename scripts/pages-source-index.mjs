@@ -4,7 +4,8 @@ import {resolve} from 'node:path';
 import {chinesePress,publicNews,visitIndustryDesks,industryArticles,industryPublishers} from '../shared/public-topic-search.js';
 import {consumerBrands} from '../integrations/hot-monitor/brand-attention.mjs';
 import {pressIndex} from '../integrations/hot-monitor/press-index.mjs';
-import {excludedSearchSource} from '../integrations/hot-monitor/consumer-market.mjs';
+import {consumerContent,excludedSearchSource} from '../integrations/hot-monitor/consumer-market.mjs';
+import {listedPublishers} from '../integrations/hot-monitor/recommended-sources.mjs';
 import {publisherCatalog,publisherDesk,specialistFeeds,parsePublisher} from '../integrations/hot-monitor/publisher-desk.mjs';
 import directory from '../config/pulse-directory.json' with {type:'json'};
 const day=86400000,now=Date.now();
@@ -44,9 +45,10 @@ await Promise.all([
  visitIndustryDesks(industryPublishers,async src=>{
    try{const batch=await industryArticles(src,'',AbortSignal.timeout(10000));merge(batch.map(r=>({...r,industryDesk:src[1]})));}catch{}
  }),
- visitIndustryDesks(specialistFeeds,async src=>{
+ visitIndustryDesks([...new Map([...specialistFeeds,...listedPublishers().filter(s=>s.format==='rss')].map(s=>[s.url,s])).values()],async src=>{
    try{const response=await fetch(src.url,{signal:AbortSignal.timeout(12000)});if(!response.ok){await response.body?.cancel();return;}
-     merge(parsePublisher(await response.text(),src,now).map(r=>({...r,industryDesk:src.id})));}catch{}
+     const articles=parsePublisher(await response.text(),src,now);
+     merge((src.name?articles.filter(consumerContent):articles).map(r=>({...r,industryDesk:src.id})));}catch{}
  })
 ]);
 const items=[...rows.values()].sort((a,b)=>b.publishedAt.localeCompare(a.publishedAt));

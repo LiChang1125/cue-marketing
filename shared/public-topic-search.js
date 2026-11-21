@@ -52,7 +52,9 @@ const specialistDesks=[
  [/运动|運動|跑步|跑鞋|球鞋|户外|戶外|露营|足球|篮球|网球|匹克球|体育|运动员|sneaker|sport|outdoor|camping|running/i,[
   ['勘履者 KENLU','www.kenlu.net','tw'],['运动社区 Fitz','fitz.hk','tw'],['Sneaker News','sneakernews.com'],['SportsPro','www.sportspro.com'],['运动用品行业 SGB','sgbonline.com'],['球鞋文化 Modern Notoriety','modernnotoriety.com']]],
  [/食品|饮[料品]|咖啡|茶饮|茶|乳品|零食|巧克力|烘焙|啤酒|餐饮|coffee|snack|food|drink|beer/i,[
-  ['咖啡独立媒体 Sprudge','sprudge.com'],['消费品行业 FMCG CEO','www.fmcgceo.co.uk']]],
+  ['小食代','www.foodinc.com.cn','cn'],['咖啡独立媒体 Sprudge','sprudge.com'],['消费品行业 FMCG CEO','www.fmcgceo.co.uk']]],
+ [/营销|投放|社媒|内容策略|广告|消费者洞察|marketing|brand strategy|advertising|social media/i,[
+  ['Digiday','digiday.com'],['赛斯·高汀','seths.blog'],['MarTech','martech.org'],['Hootsuite Blog','blog.hootsuite.com'],['Search Engine Journal','www.searchenginejournal.com']]],
  [/潮玩|二次元|动漫|动画|谷子|玩具|授权|联名|角色扮演|漫画|游戏|IP|cosplay|anime|toy|comic|licensing/i,[
   ['流行文化 Bleeding Cool','bleedingcool.com'],['球鞋文化 Modern Notoriety','modernnotoriety.com']]],
  [null,[['世界品牌论坛','brandingforum.org'],['广告周刊 Adweek','www.adweek.com'],['广告营销 B&T','www.bandt.com.au'],['亚洲零售观察','insideretail.asia'],['美国零售观察','insideretail.us'],['英国零售公报','www.retailgazette.co.uk']]]

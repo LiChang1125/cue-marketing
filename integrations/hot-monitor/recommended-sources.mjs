@@ -11,7 +11,9 @@ export function listedPublishers(){
  const rows=[];
  for(const site of catalog.sites){if(!site.url)continue;
   const url=new URL(site.url);if(url.protocol!=='https:'||url.hostname==='shturl.cc')continue;
-  rows.push({id:host(url),url:url.href,role:'media',format:'discover',name:site.name});
+  const feed=site.feed?new URL(site.feed):null;
+  const useFeed=feed?.protocol==='https:'&&host(feed)===host(url);
+  rows.push({id:host(url),url:useFeed?feed.href:url.href,role:site.role||'media',format:useFeed?'rss':'discover',name:site.name});
  }
  return rows;
 }

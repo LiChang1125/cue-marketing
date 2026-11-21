@@ -35,7 +35,10 @@ export async function publisherCatalog(){
     if(!unique.has(id)&&source.specialized&&source.key!=='adobe99u')unique.set(id,{id,url:source.url,role:'media',format:'cue',key:source.key});
   }
   for(const s of specialistFeeds)unique.set(s.id,s);
-  for(const s of listedPublishers())if(!unique.has(s.id))unique.set(s.id,s);
+  for(const s of listedPublishers()){
+    const existing=unique.get(s.id);
+    if(!existing||s.format==='rss'&&existing.format==='rss')unique.set(s.id,s);
+  }
   return [...unique.values()];
 }
 function absolute(value,base){

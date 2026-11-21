@@ -43,6 +43,10 @@ const rows=[
  ['niaogebiji','鸟哥笔记','https://www.niaogebiji.com/'],
  ['36kr','36氪','https://36kr.com/','https://36kr.com/feed',false],
  ['yuansugu','元素谷','https://www.osogoo.com/'],
+ ['foodinc','小食代','https://www.foodinc.com.cn/','https://www.foodinc.com.cn/feed/',true,true],
+ ['marketingdive','Marketing Dive','https://www.marketingdive.com/','https://www.marketingdive.com/feeds/news/',true,true],
+ ['iimedia','艾媒网','https://www.iimedia.cn/',null,false,true],
+ ['tmtpost','钛媒体','https://www.tmtpost.com/','https://www.tmtpost.com/rss.xml',false,true],
 ];
 const entries={
  campaignbrief:['https://campaignbrief.com/feed/?paged=2','https://campaignbrief.com/feed/?paged=3'],
@@ -61,6 +65,6 @@ const entries={
  socialmediatoday:['https://www.socialmediatoday.com/topic/content-marketing/'],
  prnasia:['https://www.prnasia.com/releases/all/listpage-all-all-RETAIL.shtml'],
 };
-export const mediaSources=rows.map(([key,name,url,feed,specialized=true])=>({id:['socialbeta','brandstar'].includes(key)?key:'media-'+key,key,name,url,feed,specialized,entries:entries[key]||[]}));
+export const mediaSources=rows.map(([key,name,url,feed,specialized=true,consumerOnly=false])=>({id:['socialbeta','brandstar'].includes(key)?key:'media-'+key,key,name,url,feed,specialized,consumerOnly,entries:entries[key]||[]}));
 export const mediaIds=new Set(mediaSources.map(s=>s.id));
 export const mediaSource=id=>mediaSources.find(s=>s.id===id);

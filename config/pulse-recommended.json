@@ -728,12 +728,14 @@
   {
    "name": "Marketing Dive",
    "group": "海外品牌 & 广告营销",
-   "url": "https://www.marketingdive.com"
+   "url": "https://www.marketingdive.com",
+   "feed": "https://www.marketingdive.com/feeds/news/"
   },
   {
    "name": "Digiday",
    "group": "海外品牌 & 广告营销",
-   "url": "https://digiday.com"
+   "url": "https://digiday.com",
+   "feed": "https://digiday.com/feed/"
   },
   {
    "name": "Content Marketing Institute",
@@ -743,12 +745,13 @@
   {
    "name": "HubSpot Blog",
    "group": "海外品牌 & 广告营销",
-   "url": "https://blog.hubspot.com"
+   "url": "https://blog.hubspot.com/marketing"
   },
   {
    "name": "Social Media Examiner",
    "group": "海外品牌 & 广告营销",
-   "url": "https://socialmediaexaminer.com"
+   "url": "https://socialmediaexaminer.com",
+   "feed": "https://www.socialmediaexaminer.com/feed/"
   },
   {
    "name": "The Branding Journal",
@@ -763,7 +766,8 @@
   {
    "name": "MarTech",
    "group": "海外品牌 & 广告营销",
-   "url": "https://martech.org"
+   "url": "https://martech.org",
+   "feed": "https://martech.org/feed/"
   },
   {
    "name": "DMNews",
@@ -903,7 +907,7 @@
   {
    "name": "McKinsey 中国 & 零售洞察",
    "group": "海外商业 & 消费者智库",
-   "url": "https://www.mckinsey.com"
+   "url": "https://www.mckinsey.com/industries/consumer-packaged-goods/our-insights"
   },
   {
    "name": "BCG 波士顿咨询",
@@ -999,6 +1003,260 @@
    "name": "Bloomberg",
    "group": "海外商业 & 消费者智库",
    "url": "https://www.bloomberg.com"
+  },
+  {
+   "name": "TOPYS 顶尖文案",
+   "group": "国内创意广告与营销案例库",
+   "url": "https://topys.cn"
+  },
+  {
+   "name": "胖鲸智库",
+   "group": "国内创意广告与营销案例库",
+   "url": "https://socialone.com.cn/"
+  },
+  {
+   "name": "ADGuider",
+   "group": "国内创意广告与营销案例库",
+   "url": "https://www.adguider.com/"
+  },
+  {
+   "name": "网络广告人社区",
+   "group": "国内创意广告与营销案例库",
+   "url": "https://iwebad.com/"
+  },
+  {
+   "name": "PITCHINA 大创意",
+   "group": "国内创意广告与营销案例库",
+   "url": "https://www.pitchina.com.cn/"
+  },
+  {
+   "name": "VOICER",
+   "group": "国内创意广告与营销案例库",
+   "url": "https://www.voicer.me/"
+  },
+  {
+   "name": "Ads of the World",
+   "group": "国际顶尖广告与品牌权威媒体",
+   "url": "https://adsoftheworld.com"
+  },
+  {
+   "name": "Contagious",
+   "group": "国际顶尖广告与品牌权威媒体",
+   "url": "https://www.contagious.com/en/news-and-views"
+  },
+  {
+   "name": "Brandchannel",
+   "group": "国际顶尖广告与品牌权威媒体",
+   "url": "https://brandchannel.com"
+  },
+  {
+   "name": "D&AD",
+   "group": "国际顶尖广告与品牌权威媒体",
+   "url": "https://dandad.org"
+  },
+  {
+   "name": "Cannes Lions / The Work",
+   "group": "国际顶尖广告与品牌权威媒体",
+   "url": "https://www.lovethework.com/"
+  },
+  {
+   "name": "Communication Arts",
+   "group": "国际顶尖广告与品牌权威媒体",
+   "url": "https://www.commarts.com/",
+   "feed": "https://www.commarts.com/feed/"
+  },
+  {
+   "name": "Seth Godin's Blog",
+   "group": "营销大师与权威实战博客",
+   "url": "https://seths.blog/",
+   "feed": "https://seths.blog/feed/",
+   "role": "creator"
+  },
+  {
+   "name": "Neil Patel Blog",
+   "group": "营销大师与权威实战博客",
+   "url": "https://neilpatel.com/blog",
+   "role": "creator"
+  },
+  {
+   "name": "Econsultancy",
+   "group": "营销大师与权威实战博客",
+   "url": "https://econsultancy.com"
+  },
+  {
+   "name": "Moz Blog",
+   "group": "营销大师与权威实战博客",
+   "url": "https://moz.com/blog",
+   "feed": "https://moz.com/feeds/blog.rss"
+  },
+  {
+   "name": "Ahrefs Blog",
+   "group": "营销大师与权威实战博客",
+   "url": "https://ahrefs.com/blog",
+   "feed": "https://ahrefs.com/blog/feed/"
+  },
+  {
+   "name": "Backlinko",
+   "group": "营销大师与权威实战博客",
+   "url": "https://backlinko.com"
+  },
+  {
+   "name": "Search Engine Journal",
+   "group": "营销大师与权威实战博客",
+   "url": "https://www.searchenginejournal.com/",
+   "feed": "https://www.searchenginejournal.com/feed/"
+  },
+  {
+   "name": "Social Media Today",
+   "group": "营销大师与权威实战博客",
+   "url": "https://www.socialmediatoday.com/",
+   "feed": "https://www.socialmediatoday.com/feeds/news/"
+  },
+  {
+   "name": "First Round Review",
+   "group": "营销大师与权威实战博客",
+   "url": "https://review.firstround.com/"
+  },
+  {
+   "name": "Buffer Blog",
+   "group": "增长黑客、社媒与转化率优化博客",
+   "url": "https://buffer.com/resources",
+   "feed": "https://buffer.com/resources/rss/"
+  },
+  {
+   "name": "Sprout Social Insights",
+   "group": "增长黑客、社媒与转化率优化博客",
+   "url": "https://sproutsocial.com/insights",
+   "feed": "https://sproutsocial.com/insights/feed/"
+  },
+  {
+   "name": "Hootsuite Blog",
+   "group": "增长黑客、社媒与转化率优化博客",
+   "url": "https://blog.hootsuite.com/",
+   "feed": "https://blog.hootsuite.com/feed/"
+  },
+  {
+   "name": "SparkToro Blog",
+   "group": "增长黑客、社媒与转化率优化博客",
+   "url": "https://sparktoro.com/blog",
+   "role": "creator"
+  },
+  {
+   "name": "Unbounce Blog",
+   "group": "增长黑客、社媒与转化率优化博客",
+   "url": "https://unbounce.com/blog"
+  },
+  {
+   "name": "GrowthHackers",
+   "group": "增长黑客、社媒与转化率优化博客",
+   "url": "https://growthhackers.com"
+  },
+  {
+   "name": "Mailchimp Resources",
+   "group": "增长黑客、社媒与转化率优化博客",
+   "url": "https://mailchimp.com/resources"
+  },
+  {
+   "name": "Litmus Blog",
+   "group": "增长黑客、社媒与转化率优化博客",
+   "url": "https://litmus.com/blog"
+  },
+  {
+   "name": "Animalz Blog",
+   "group": "增长黑客、社媒与转化率优化博客",
+   "url": "https://animalz.co/blog",
+   "role": "creator"
+  },
+  {
+   "name": "Copyblogger",
+   "group": "增长黑客、社媒与转化率优化博客",
+   "url": "https://copyblogger.com",
+   "role": "creator"
+  },
+  {
+   "name": "VeryGoodCopy",
+   "group": "增长黑客、社媒与转化率优化博客",
+   "url": "https://www.verygoodcopy.com/",
+   "role": "creator"
+  },
+  {
+   "name": "Demand Curve",
+   "group": "增长黑客、社媒与转化率优化博客",
+   "url": "https://demandcurve.com/blog"
+  },
+  {
+   "name": "Lenny's Newsletter",
+   "group": "增长黑客、社媒与转化率优化博客",
+   "url": "https://www.lennysnewsletter.com/",
+   "feed": "https://www.lennysnewsletter.com/feed",
+   "role": "creator"
+  },
+  {
+   "name": "Reforge Blog",
+   "group": "增长黑客、社媒与转化率优化博客",
+   "url": "https://reforge.com/blog"
+  },
+  {
+   "name": "TrendWatching",
+   "group": "消费趋势、商业洞察与行业研究报告",
+   "url": "https://www.trendwatching.com/"
+  },
+  {
+   "name": "WGSN",
+   "group": "消费趋势、商业洞察与行业研究报告",
+   "url": "https://www.wgsn.com/en/blogs"
+  },
+  {
+   "name": "PSFK",
+   "group": "消费趋势、商业洞察与行业研究报告",
+   "url": "https://psfk.com"
+  },
+  {
+   "name": "艾瑞网",
+   "group": "消费趋势、商业洞察与行业研究报告",
+   "url": "https://report.iresearch.cn/"
+  },
+  {
+   "name": "艾媒网",
+   "group": "消费趋势、商业洞察与行业研究报告",
+   "url": "https://www.iimedia.cn/"
+  },
+  {
+   "name": "Think with Google",
+   "group": "消费趋势、商业洞察与行业研究报告",
+   "url": "https://business.google.com/us/think/"
+  },
+  {
+   "name": "Nielsen 尼尔森洞察",
+   "group": "消费趋势、商业洞察与行业研究报告",
+   "url": "https://www.nielsen.com/insights/"
+  },
+  {
+   "name": "钛媒体",
+   "group": "国内商业科技媒体与社媒数据分析平台",
+   "url": "https://www.tmtpost.com/",
+   "feed": "https://www.tmtpost.com/rss.xml"
+  },
+  {
+   "name": "浪潮新消费",
+   "group": "国内商业科技媒体与社媒数据分析平台",
+   "url": "https://www.lcxinxiaofei.com/"
+  },
+  {
+   "name": "小食代",
+   "group": "国内商业科技媒体与社媒数据分析平台",
+   "url": "https://www.foodinc.com.cn/",
+   "feed": "https://www.foodinc.com.cn/feed/"
+  },
+  {
+   "name": "Growth.design",
+   "group": "新闻聚合器、热点追踪与营销网址导航",
+   "url": "https://growth.design/case-studies"
+  },
+  {
+   "name": "Marketing Examples",
+   "group": "新闻聚合器、热点追踪与营销网址导航",
+   "url": "https://marketingexamples.com/"
   }
  ],
  "bylines": [
@@ -1101,6 +1359,90 @@
   "吴晓波频道",
   "商业评论",
   "营销智库",
-  "市场部网"
+  "市场部网",
+  "全球HAOAD",
+  "浪潮新消费"
+ ],
+ "references": [
+  {
+   "name": "文案狗",
+   "url": "https://www.wenangou.com/",
+   "kind": "文案查询工具"
+  },
+  {
+   "name": "文案迷",
+   "url": "https://wenanmi.com/",
+   "kind": "广告语资料库"
+  },
+  {
+   "name": "洞见研报",
+   "url": "https://www.djyanbao.com/",
+   "kind": "研报聚合目录"
+  },
+  {
+   "name": "发现报告",
+   "url": "https://www.fxbaogao.com/",
+   "kind": "研报聚合目录"
+  },
+  {
+   "name": "镝数聚 / 镝数据",
+   "url": "https://www.dydata.io/",
+   "kind": "图表与数据目录"
+  },
+  {
+   "name": "清博指数",
+   "url": "https://gsdata.cn",
+   "kind": "平台指数"
+  },
+  {
+   "name": "百度指数",
+   "url": "https://index.baidu.com",
+   "kind": "平台指数"
+  },
+  {
+   "name": "巨量算数",
+   "url": "https://trendinsight.oceanengine.com/",
+   "kind": "平台指数"
+  },
+  {
+   "name": "微热点",
+   "url": "https://www.wrd.cn/login.shtml",
+   "kind": "平台指数"
+  },
+  {
+   "name": "今日热榜",
+   "url": "https://tophub.today/",
+   "kind": "聚合榜单"
+  },
+  {
+   "name": "Feedly",
+   "url": "https://feedly.com",
+   "kind": "订阅阅读器"
+  },
+  {
+   "name": "Flipboard",
+   "url": "https://flipboard.com",
+   "kind": "聚合阅读器"
+  },
+  {
+   "name": "Alltop Marketing",
+   "url": "https://marketing.alltop.com",
+   "kind": "站外文章目录"
+  },
+  {
+   "name": "Really Good Emails",
+   "url": "https://reallygoodemails.com/",
+   "kind": "邮件设计档案"
+  },
+  {
+   "name": "addog",
+   "url": "https://www.addog.vip/",
+   "kind": "网址导航"
+  },
+  {
+   "name": "创造狮导航",
+   "url": "https://chuangzaoshi.com/",
+   "kind": "网址导航"
+  }
  ]
 }
